@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/data_layer/line.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/data_layer/line.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import * as d3 from 'd3';
+
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+import {STATUSES} from '../constants';
+import {applyStyles} from '../../helpers/common';
+
+/**
+ * @memberof module:LocusZoom_DataLayers~line
+ */
+const default_layout = {
+    style: {
+        fill: 'none',
+        'stroke-width': '2px',
+    },
+    interpolate: 'curveLinear',
+    x_axis: { field: 'x' },
+    y_axis: { field: 'y', axis: 1 },
+    hitarea_width: 5,
+};
+
+/*********************
+ * Line Data Layer
+ * Implements a standard line plot, representing either a trace or a filled curve. Only one line is drawn per layer used.
+ * @alias module:LocusZoom_DataLayers~line
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+*/
+class Line extends BaseDataLayer {
+    /**
+     * @param {object} [layout.style] CSS properties to control how the line is drawn
+     * @param {string} [layout.style.fill='none'] Fill color for the area under the curve
+     * @param {string} [layout.style.stroke]
+     * @param {string} [layout.style.stroke-width='2px']
+     * @param {string} [layout.interpolate='curveLinear'] The name of the d3 interpolator to use. This determines how to smooth the line in between data points.
+     * @param {number} [layout.hitarea_width=5] The size of mouse event hitareas to use. If tooltips are not used, hitareas are not very important.
+     */
+    constructor(layout) {
+        layout = merge(layout, default_layout);
+        if (layout.tooltip) {
+            throw new Error('The line / filled curve layer does not support tooltips');
+        }
+        super(...arguments);
+    }
+
+    /**
+     * Implement the main render function
+     */
+    render() {
+        // Several vars needed to be in scope
+        const panel = this.parent;
+        const x_field = this.layout.x_axis.field;
+        const y_field = this.layout.y_axis.field;
+
+        // Join data to the line selection
+        const selection = this.svg.group
+            .selectAll('path.lz-data_layer-line')
+            .data([this.data]);
+
+        // Create path element, apply class
+        this.path = selection.enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-line');
+
+        // Generate the line
+        let line;
+        const x_scale = panel['x_scale'];
+        const y_scale = panel[`y${this.layout.y_axis.axis}_scale`];
+        if (this.layout.style.fill &amp;&amp; this.layout.style.fill !== 'none') {
+            // Filled curve: define the line as a filled boundary
+            line = d3.area()
+                .x((d) => +x_scale(d[x_field]))
+                .y0(+y_scale(0))
+                .y1((d) => +y_scale(d[y_field]));
+        } else {
+            // Basic line
+            line = d3.line()
+                .x((d) => +x_scale(d[x_field]))
+                .y((d) => +y_scale(d[y_field]))
+                .curve(d3[this.layout.interpolate]);
+        }
+
+        // Apply line and style
+        selection.merge(this.path)
+            .attr('d', line)
+            .call(applyStyles, this.layout.style);
+
+        // Remove old elements as needed
+        selection.exit()
+            .remove();
+
+    }
+
+    /**
+     * Redefine setElementStatus family of methods as line data layers will only ever have a single path element
+     * @param {String} status A member of `LocusZoom.DataLayer.Statuses.adjectives`
+     * @param {String|Object} element
+     * @param {Boolean} toggle
+     */
+    setElementStatus(status, element, toggle) {
+        return this.setAllElementStatus(status, toggle);
+    }
+
+    setAllElementStatus(status, toggle) {
+        // Sanity check
+        if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
+            throw new Error('Invalid status');
+        }
+        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+            return this;
+        }
+        if (typeof toggle == 'undefined') {
+            toggle = true;
+        }
+
+        // Update global status flag
+        this.global_statuses[status] = toggle;
+
+        // Apply class to path based on global status flags
+        let path_class = 'lz-data_layer-line';
+        Object.keys(this.global_statuses).forEach((global_status) => {
+            if (this.global_statuses[global_status]) {
+                path_class += ` lz-data_layer-line-${global_status}`;
+            }
+        });
+        this.path.attr('class', path_class);
+
+        // Trigger layout changed event hook
+        this.parent.emit('layout_changed', true);
+        return this;
+    }
+}
+
+/**
+ * @memberof module:LocusZoom_DataLayers~orthogonal_line
+ */
+const default_orthogonal_layout = {
+    style: {
+        'stroke': '#D3D3D3',
+        'stroke-width': '3px',
+        'stroke-dasharray': '10px 10px',
+    },
+    orientation: 'horizontal',
+    x_axis: {
+        axis: 1,
+        decoupled: true,
+    },
+    y_axis: {
+        axis: 1,
+        decoupled: true,
+    },
+    tooltip_positioning: 'vertical',
+    offset: 0,
+};
+
+
+/**
+ *  Orthogonal Line Data Layer
+ *  Draw a horizontal or vertical line given an orientation and an offset in the layout
+ *  Does not require a data source or fields.
+ * @alias module:LocusZoom_DataLayers~orthogonal_line
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
+class OrthogonalLine extends BaseDataLayer {
+    /**
+     * @param {string} [layout.style.stroke='#D3D3D3']
+     * @param {string} [layout.style.stroke-width='3px']
+     * @param {string} [layout.style.stroke-dasharray='10px 10px']
+     * @param {'horizontal'|'vertical'} [layout.orientation] The orientation of the horizontal line
+     * @param {boolean} [layout.x_axis.decoupled=true] If true, the data in this layer will not influence the x-extent of the panel.
+     * @param {boolean} [layout.y_axis.decoupled=true] If true, the data in this layer will not influence the y-extent of the panel.
+     * @param {'horizontal'|'vertical'} [layout.tooltip_positioning='vertical'] Where to draw the tooltip relative to the mouse pointer.
+     * @param {number} [layout.offset=0] Where the line intercepts the orthogonal axis (eg, the y coordinate for a horizontal line, or x for a vertical line)
+     */
+    constructor(layout) {
+        layout = merge(layout, default_orthogonal_layout);
+        // Require that orientation be "horizontal" or "vertical" only
+        if (!['horizontal', 'vertical'].includes(layout.orientation)) {
+            layout.orientation = 'horizontal';
+        }
+        super(...arguments);
+
+        // Vars for storing the data generated line
+        /** @member {Array} */
+        this.data = [];
+    }
+
+    getElementId(element) {
+        // There is only one line per datalayer, so this is sufficient.
+        return this.getBaseId();
+    }
+
+    /**
+     * Implement the main render function
+     */
+    render() {
+        // Several vars needed to be in scope
+        const panel = this.parent;
+        const x_scale = 'x_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
+        const x_extent = 'x_extent';
+        const y_extent = `y${this.layout.y_axis.axis}_extent`;
+        const x_range = 'x_range';
+
+        // Generate data using extents depending on orientation
+        if (this.layout.orientation === 'horizontal') {
+            this.data = [
+                { x: panel[x_extent][0], y: this.layout.offset },
+                { x: panel[x_extent][1], y: this.layout.offset },
+            ];
+        } else if (this.layout.orientation === 'vertical') {
+            this.data = [
+                { x: this.layout.offset, y: panel[y_extent][0] },
+                { x: this.layout.offset, y: panel[y_extent][1] },
+            ];
+        } else {
+            throw new Error('Unrecognized vertical line type. Must be "vertical" or "horizontal"');
+        }
+
+        // Join data to the line selection
+        const selection = this.svg.group
+            .selectAll('path.lz-data_layer-line')
+            .data([this.data]);
+
+        // In some cases, a vertical line may overlay a track that has no inherent y-values (extent)
+        //  When that happens, provide a default height based on the current panel dimensions (accounting
+        //      for any resizing that happened after the panel was created)
+        const default_y = [panel.layout.cliparea.height, 0];
+
+        // Generate the line
+        const line = d3.line()
+            .x((d, i) => {
+                const x = +panel[x_scale](d['x']);
+                return isNaN(x) ? panel[x_range][i] : x;
+            })
+            .y((d, i) => {
+                const y = +panel[y_scale](d['y']);
+                return isNaN(y) ? default_y[i] : y;
+            });
+
+        // Create path element, apply class
+        this.path = selection.enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-line')
+            .merge(selection)
+            .attr('d', line)
+            .call(applyStyles, this.layout.style)
+            // Allow the layer to respond to mouseover events and show a tooltip.
+            .call(this.applyBehaviors.bind(this));
+
+        // Remove old elements as needed
+        selection.exit()
+            .remove();
+    }
+
+    _getTooltipPosition(tooltip) {
+        try {
+            const coords = d3.mouse(this.svg.container.node());
+            const x = coords[0];
+            const y = coords[1];
+            return { x_min: x - 1, x_max: x + 1, y_min: y - 1, y_max: y + 1 };
+        } catch (e) {
+            // On redraw, there won't be a mouse event, so skip tooltip repositioning.
+            return null;
+        }
+    }
+
+}
+
+
+export { Line as line, OrthogonalLine as orthogonal_line };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

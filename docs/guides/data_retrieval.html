@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Working with data</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Working with data</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#your-first-plot-defining-how-to-retrieve-data">Your first plot: defining how to retrieve data</a>
+<ul>
+<li><a href="#understanding-the-example">Understanding the example</a></li>
+<li><a href="#the-importance-of-genome-build">The importance of genome build</a></li>
+<li><a href="#what-should-the-data-look-like">What should the data look like?</a></li>
+</ul></li>
+<li><a href="#how-data-gets-to-the-plot">How data gets to the plot</a>
+<ul>
+<li><a href="#not-every-web-page-requires-an-api">Not every web page requires an API</a>
+<ul>
+<li><a href="#example-loading-data-from-static-json-files">Example: Loading data from static JSON files</a></li>
+</ul></li>
+<li><a href="#mix-and-match">Mix and match</a></li>
+<li><a href="#what-if-my-data-doesnt-fit-the-expected-format">What if my data doesn’t fit the expected format?</a></li>
+</ul></li>
+<li><a href="#creating-your-own-custom-adapter">Creating your own custom adapter</a>
+<ul>
+<li><a href="#re-using-code-via-subclasses">Re-using code via subclasses</a></li>
+<li><a href="#what-happens-during-a-data-request">What happens during a data request?</a>
+<ul>
+<li><a href="#step-1-fetching-data-from-a-remote-server">Step 1: Fetching data from a remote server</a></li>
+<li><a href="#step-2-formatting-and-parsing-the-data">Step 2: Formatting and parsing the data</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#see-also">See also</a></li>
+</ul>
+</nav>
+<h1 id="overview">Overview</h1>
+<p>LocusZoom.js aims to provide reusable and highly customizable visualizations. Towards this goal, a separation of concerns is enforced between data adapters (data) and data layers (presentation).</p>
+<h1 id="your-first-plot-defining-how-to-retrieve-data">Your first plot: defining how to retrieve data</h1>
+<p>All data retrieval is performed by <em>adapters</em>: special objects whose job is to fetch the information required to render a plot. A major strength of LocusZoom.js is that it can connect several kinds of annotation from different places into a single view: the act of organizing data requests together is managed by an object called <code>LocusZoom.DataSources</code>.</p>
+<p>Below is an example that defines how to retrieve the data for a “classic” LocusZoom plot, in which GWAS, LD, and recombination rate are overlaid on a scatter plot, with genes and gnomAD constraint information on another track below. In total, five REST API endpoints are used to create this plot: four standard datasets, and one user-provided summary statistics file.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">const</span> apiBase <span class="op">=</span> <span class="st">&#39;https://portaldev.sph.umich.edu/api/v1/&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">const</span> data_sources <span class="op">=</span> <span class="kw">new</span> LocusZoom<span class="op">.</span><span class="fu">DataSources</span>()</span>
+<span id="cb1-3"><a href="#cb1-3"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;assoc&#39;</span><span class="op">,</span> [<span class="st">&#39;AssociationLZ&#39;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> apiBase <span class="op">+</span> <span class="st">&#39;statistic/single/&#39;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">source</span><span class="op">:</span> <span class="dv">45</span><span class="op">,</span> <span class="dt">id_field</span><span class="op">:</span> <span class="st">&#39;variant&#39;</span> }}])</span>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;ld&#39;</span><span class="op">,</span> [<span class="st">&#39;LDServer&#39;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://portaldev.sph.umich.edu/ld/&#39;</span><span class="op">,</span> <span class="dt">source</span><span class="op">:</span> <span class="st">&#39;1000G&#39;</span><span class="op">,</span> <span class="dt">population</span><span class="op">:</span> <span class="st">&#39;ALL&#39;</span><span class="op">,</span> <span class="dt">build</span><span class="op">:</span> <span class="st">&#39;GRCh37&#39;</span> }])</span>
+<span id="cb1-5"><a href="#cb1-5"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;recomb&#39;</span><span class="op">,</span> [<span class="st">&#39;RecombLZ&#39;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> apiBase <span class="op">+</span> <span class="st">&#39;annotation/recomb/results/&#39;</span><span class="op">,</span> <span class="dt">build</span><span class="op">:</span> <span class="st">&#39;GRCh37&#39;</span> }])</span>
+<span id="cb1-6"><a href="#cb1-6"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;gene&#39;</span><span class="op">,</span> [<span class="st">&#39;GeneLZ&#39;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> apiBase <span class="op">+</span> <span class="st">&#39;annotation/genes/&#39;</span><span class="op">,</span> <span class="dt">build</span><span class="op">:</span> <span class="st">&#39;GRCh37&#39;</span> }])</span>
+<span id="cb1-7"><a href="#cb1-7"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;constraint&#39;</span><span class="op">,</span> [<span class="st">&#39;GeneConstraintLZ&#39;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://gnomad.broadinstitute.org/api/&#39;</span><span class="op">,</span> <span class="dt">build</span><span class="op">:</span> <span class="st">&#39;GRCh37&#39;</span> }])<span class="op">;</span></span></code></pre></div>
+<p>Of course, defining datasets is only half of the process; see the <a href="index.html">Getting Started Guide</a> for how to define rendering instructions (layout) and combine these pieces together to create the LocusZoom plot.</p>
+<h2 id="understanding-the-example">Understanding the example</h2>
+<p>In the example above, a new data source is added via a line of code such as the following:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1"></a>data_sources<span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;assoc&#39;</span><span class="op">,</span> [<span class="st">&#39;AssociationLZ&#39;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> apiBase <span class="op">+</span> <span class="st">&#39;statistic/single/&#39;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">source</span><span class="op">:</span> <span class="dv">45</span><span class="op">,</span> <span class="dt">id_field</span><span class="op">:</span> <span class="st">&#39;variant&#39;</span> }}])<span class="op">;</span></span></code></pre></div>
+<p>A lot is going on in this line!</p>
+<ul>
+<li><code>data_sources.add</code> defines a piece of information that <em>could</em> be used by the plot. (if no data layer asks for data from this source, then no API request will ever be made)</li>
+<li>The first argument to the function is a <em>namespace name</em>. It is an arbitrary reference to this particular piece of data. For example, you might want to plot three association studies together in the same window, and they could be defined as <code>.add('mystudy', ...)</code>, <code>.add('somephenotype', ...)</code>, <code>.add('founditinthegwascatalog', ...)</code>
+<ul>
+<li>In the <a href="rendering_layouts.html">layouts guide</a>, we will see how <code>data_layer.fields</code> uses these namespaces to identify what data to render.</li>
+</ul></li>
+<li>The second argument to the function is a list of values: the name of a <a href="../api/module-LocusZoom_Adapters.html">predefined adapter</a> that defines how to retrieve this data, followed by an object of configuration options (like url and params) that control which data will be fetched. Each type of data has its own options; see the documentation for a guide to available choices.
+<ul>
+<li>You are not limited to the types of data retrieval built into LocusZoom.js. See “creating your own adapter” for more information.</li>
+</ul></li>
+</ul>
+<h2 id="the-importance-of-genome-build">The importance of genome build</h2>
+<p>You may notice that in the example above, many of the datasets specify <code>build: 'GRCh37</code>. For “standard” datasets that are widely used (LD, genes, recombination, and GWAS catalog), the UMich APIs will automatically try to fetch the most up-to-date list of genes and GWAS catalog entries for the specified genome build. We currently support build <code>GRCh37</code> and <code>GRCh38</code>. Be sure to use the genome build that matches your dataset.</p>
+<p>We periodically update our API server. If you think new information is missing, please let us know.</p>
+<h2 id="what-should-the-data-look-like">What should the data look like?</h2>
+<p>In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layout to specify what fields should be used for the x and y axes.</p>
+<p>In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the <a href="https://portaldev.sph.umich.edu/docs/api/v1/">UM PortalDev API docs</a>. This is the quickest way to get started.</p>
+<p>Most users will only need to implement their own way of retrieving GWAS summary statistics; the other annotations are standard datasets and can be freely used from our public API. For complex plots (like annotations of new data), see our <a href="https://statgen.github.io/locuszoom">example gallery</a>.</p>
+<h1 id="how-data-gets-to-the-plot">How data gets to the plot</h1>
+<p>If you are building a custom tool for exploring data, it is common to show the same data in several ways (eg, a LocusZoom plot next to a table of results). The user will have a better experience if the two widgets are synchronized to always show the same data, which raises a question: which widget is responsible for making the API request?</p>
+<p>In LocusZoom.js, the user is allowed to change the information shown via mouse interaction (drag or zoom to change region, change LD calculations by clicking a button… etc). This means that LocusZoom must always be able to ask for the data it needs, and initiate a new request to the repository if the required data is not available locally: a <em>pull</em> approach. This contrasts with static plotting libraries like matplotlib or excel that render whatever data they are given initially (a <em>push</em> approach).</p>
+<p>The act of contacting an external data repository, and fetching the information needed, is coordinated by <em>Adapters</em>. It is possible to share data with other widgets on the page via event callbacks, so that those widgets retrieve the newest data whenever the plot is updated (see <code>subscribeToData</code> in the <a href="interactivity.html">guide to interactivity</a> for details).</p>
+<h2 id="not-every-web-page-requires-an-api">Not every web page requires an API</h2>
+<p>LocusZoom.js is designed to work well with REST APIs, but you do not need to create an entire web server just to render a single interactive plot. As long as the inputs can be transformed into a recognized format, they should work with the plot.</p>
+<p>Some examples of other data retrieval mechanisms used in the wild are:</p>
+<ul>
+<li>Loading the data from a static JSON file (this can be as simple as giving the URL of the JSON file, instead of the URL of an API server!). Many bioinformaticians are comfortable converting between text files, so this is a low-effort way to get started… but static files always return the same data, and they return all of it at once. This can be limiting for big datasets or “jump to region” style interactivity.</li>
+<li>Fetching the data from a Tabix-indexed file in an Amazon S3 bucket (see the <a href="../api/module-ext_lz-tabix-source.html">lz-tabix-source plugin example</a>; you will need to write your own function that parses each line into the required data format). This is exactly how our chromatin coaccessibility demo works!</li>
+<li>Loading the data into a “shared global store” that acts as a middle layer for API calls, and asking LocusZoom to query the store instead of contacting a REST API directly. (example: Vuex for a reactive single-page application) This is relatively advanced, but it can be useful if many page widgets need to share a lot of data that frequently changes in response to user interaction. (such as performing an analysis after selecting a list of variants from a table)</li>
+</ul>
+<h3 id="example-loading-data-from-static-json-files">Example: Loading data from static JSON files</h3>
+<p>One way to make a LocusZoom plot quickly is to load the data for your region in a static file, formatted as JSON objects to look like the payload from our standard REST API. The key concept below is that instead of a server, the URL points to the static file. This demonstration is subject to the limits described above, but it can be a way to get started.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1"></a>data_sources <span class="op">=</span> <span class="kw">new</span> LocusZoom<span class="op">.</span><span class="fu">DataSources</span>()</span>
+<span id="cb3-2"><a href="#cb3-2"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;assoc&quot;</span><span class="op">,</span> [<span class="st">&quot;AssociationLZ&quot;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&quot;assoc_10_114550452-115067678.json&quot;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> {<span class="dt">source</span><span class="op">:</span> <span class="kw">null</span>}}])</span>
+<span id="cb3-3"><a href="#cb3-3"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;ld&quot;</span><span class="op">,</span> [<span class="st">&quot;LDLZ&quot;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> <span class="st">&quot;ld_10_114550452-115067678.json&quot;</span> }])</span>
+<span id="cb3-4"><a href="#cb3-4"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;gene&quot;</span><span class="op">,</span> [<span class="st">&quot;GeneLZ&quot;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> <span class="st">&quot;genes_10_114550452-115067678.json&quot;</span> }])</span>
+<span id="cb3-5"><a href="#cb3-5"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;recomb&quot;</span><span class="op">,</span> [<span class="st">&quot;RecombLZ&quot;</span><span class="op">,</span> { <span class="dt">url</span><span class="op">:</span> <span class="st">&quot;recomb_10_114550452-115067678.json&quot;</span> }])</span>
+<span id="cb3-6"><a href="#cb3-6"></a>    <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;constraint&quot;</span><span class="op">,</span> [<span class="st">&quot;GeneConstraintLZ&quot;</span><span class="op">,</span> {  <span class="dt">url</span><span class="op">:</span> <span class="st">&quot;constraint_10_114550452-115067678.json&quot;</span> }])<span class="op">;</span></span></code></pre></div>
+<h2 id="mix-and-match">Mix and match</h2>
+<p>Each data adapter in the chain is largely independent, and it is entirely normal to mix data from several sources: for example, GWAS data from a tabix file alongside genes data from the UMich API server.</p>
+<p>If a single data layer needs to combine two kinds of data (eg association and LD), you will achieve the best results if the sources have some common assumptions about data format. Adapters are highly modular, but because they do not enforce a specific contract of field names or payload structure, you are responsible for ensuring that the resulting data works with the assumptions of your layout.</p>
+<h2 id="what-if-my-data-doesnt-fit-the-expected-format">What if my data doesn’t fit the expected format?</h2>
+<p>The built-in adapters are designed to work with a specific set of known REST APIs and fetch data over the web, but we provide mechanisms to customize every aspect of the data retrieval process, including how to construct the query sent to the server and how to modify the fields returned. See the guidance on “custom adapters” below.</p>
+<p>In general, the more similar that your field names are to those used in premade layouts, the easier it will be to get started with common tasks. Certain features require additional assumptions about field format, and these sorts of differences may cause behavioral (instead of cosmetic) issues. For example:</p>
+<ul>
+<li>In order to fetch LD information relative to a specific variant, the data in the summary statistics must provide the variant name as a single string that combines chromosome, position, reference, and alt allele, like <code>1:12_A/C</code>. Our builtin LD adapter tries to handle the common marker formats from various programs and normalize them into a format that the LD server will understand, but we cannot guess everything. Following the order of values and using a known format will ensure best results.</li>
+<li>JavaScript is not able to accurately represent very small pvalues (numbers smaller than ~ 5e-324), and will truncate them to 0, changing the meaning of your data. For this reason, we recommend sending your data to the web page already transformed to -log pvalue format; this is much less susceptible to problems with numerical underflow.</li>
+</ul>
+<p>If the only difference is field names, you can customize the layout to tell it where to find the required information. (see: <a href="rendering_layouts.html">guide to layouts and rendering</a> for details) <a href="../api/module-LocusZoom_TransformationFunctions.html">Transformation functions</a> (like <code>neglog10</code>) can then be used to ensure that custom data is formatted in a way suitable for rendering and plotting.</p>
+<h1 id="creating-your-own-custom-adapter">Creating your own custom adapter</h1>
+<h2 id="re-using-code-via-subclasses">Re-using code via subclasses</h2>
+<p>Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the UM PortalDev API, but a different way of constructing queries, you can change just one function and define a new data adapter:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">const</span> AssociationLZ <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Adapters</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;AssociationLZ&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">class</span> CustomAssociation <span class="kw">extends</span> AssociationLZ {</span>
+<span id="cb4-3"><a href="#cb4-3"></a>    getURL(state<span class="op">,</span> chain<span class="op">,</span> fields) {</span>
+<span id="cb4-4"><a href="#cb4-4"></a>        <span class="co">// The inputs to the function can be used to influence what query is constructed. Eg, the current view region is stored in `plot.state`.</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>        <span class="kw">const</span> {chr<span class="op">,</span> start<span class="op">,</span> end} <span class="op">=</span> state<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a>        <span class="co">// Fetch the region of interest from a hypothetical REST API that uses query parameters to define the region query, for a given study URL such as `data.example/gwas/&lt;id&gt;/?chr=_&amp;start=_&amp;end=_`</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a>        <span class="cf">return</span> <span class="vs">`</span><span class="sc">${</span><span class="kw">this</span><span class="op">.</span><span class="at">url</span><span class="sc">}</span><span class="vs">/</span><span class="sc">${</span><span class="kw">this</span><span class="op">.</span><span class="at">params</span><span class="op">.</span><span class="at">study_id</span><span class="sc">}</span><span class="vs">/?chr=</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(chr)<span class="sc">}</span><span class="vs">&amp;start=</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(start)<span class="sc">}</span><span class="vs">&amp;end</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(end)<span class="sc">}</span><span class="vs">`</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a>  }</span>
+<span id="cb4-9"><a href="#cb4-9"></a>}</span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="co">// A custom adapter should be added to the registry before using it</span></span>
+<span id="cb4-11"><a href="#cb4-11"></a>LocusZoom<span class="op">.</span><span class="at">Adapters</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> CustomAssociation)<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a></span>
+<span id="cb4-13"><a href="#cb4-13"></a><span class="co">// From there, it can be used anywhere throughout LocusZoom, in the same way as any built-in adapter</span></span>
+<span id="cb4-14"><a href="#cb4-14"></a>data_sources<span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;mystudy&#39;</span><span class="op">,</span> [<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://data.example/gwas&#39;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">study_id</span><span class="op">:</span> <span class="dv">42</span> }}])<span class="op">;</span></span></code></pre></div>
+<p>In the above example, an HTTP GET request will be sent to the server every time that new data is requested. If further control is required (like sending a POST request with custom body), you may need to override additional methods such as <a href="../api/module-LocusZoom_Adapters-BaseAdapter.html#fetchRequest">fetchRequest</a>. See below for more information, then consult the detailed developer documentation for details.</p>
+<p>Common types of data retrieval that are most often customized:</p>
+<ul>
+<li>GWAS summary statistics
+<ul>
+<li>This fetches the data directly with minor cleanup. You can customize the built-in association adapter, or swap in another way of fetching the data (like tabix).</li>
+</ul></li>
+<li>User-provided linkage disequilibrium (LD)
+<ul>
+<li>This contains special logic used to combine association data (from a previous request) with LD information. To ensure that the matching code works properly, we recommend matching the payload format of the public LDServer, but you can customize the <code>getURL</code> method to control where the data comes from.</li>
+<li>For performance reasons, connecting LD and association data together assumes that both datasets are sorted in order of increasing chromosome and position.</li>
+</ul></li>
+<li>PheWAS results</li>
+</ul>
+<h2 id="what-happens-during-a-data-request">What happens during a data request?</h2>
+<p>The adapter performs many functions related to data retrieval: constructing the query, caching to avoid unnecessary network traffic, and parsing the data into a transformed representation suitable for use in rendering.</p>
+<p>Methods are provided to override all or part of the process, called in roughly the order below:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1"></a>getData(state<span class="op">,</span> fields<span class="op">,</span> outnames<span class="op">,</span> transformations)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>    getRequest(state<span class="op">,</span> chain<span class="op">,</span> fields)</span>
+<span id="cb5-3"><a href="#cb5-3"></a>        getCacheKey(state<span class="op">,</span> chain<span class="op">,</span> fields)</span>
+<span id="cb5-4"><a href="#cb5-4"></a>        fetchRequest(state<span class="op">,</span> chain<span class="op">,</span> fields)</span>
+<span id="cb5-5"><a href="#cb5-5"></a>            getURL(state<span class="op">,</span> chain<span class="op">,</span> fields)</span>
+<span id="cb5-6"><a href="#cb5-6"></a>    parseResponse(resp<span class="op">,</span> chain<span class="op">,</span> fields<span class="op">,</span> outnames<span class="op">,</span> transformations)</span>
+<span id="cb5-7"><a href="#cb5-7"></a>        normalizeResponse(data)</span>
+<span id="cb5-8"><a href="#cb5-8"></a>        annotateData(data<span class="op">,</span> chain)</span>
+<span id="cb5-9"><a href="#cb5-9"></a>        extractFields(data<span class="op">,</span> fields<span class="op">,</span> outnames<span class="op">,</span> trans)</span>
+<span id="cb5-10"><a href="#cb5-10"></a>        combineChainBody(data<span class="op">,</span> chain<span class="op">,</span> fields<span class="op">,</span> outnames)</span></code></pre></div>
+<p>The parameters passed to getData are as follows:</p>
+<ul>
+<li>state - this is the current “state” of the plot. This contains information about the current region in view (<code>chr</code>, <code>start</code>, and <code>end</code>), which is often valuable in querying a remote data source for the data in a given region.</li>
+<li>fields - this is an array of field names that have been requested from this data source. Note that the “namespace:” part of the name has been removed in this array. Note: <strong>most data adapters will return <em>only</em> the fields that are requested by a data layer</strong>. Each data layer can request a different set of fields, and thus <strong>different parts of the plot may have a different view of the same data.</strong></li>
+<li>outnames - this is an array with length equal to fields with the original requested field name. This value contains the data source namespace. The data output for each field should be given the name in this array. This is rarely used directly.</li>
+<li>transformations - this is an array with length equal to fields with the collection of value transformations functions specified by the user to be run on the returned field. This is rarely used directly.</li>
+</ul>
+<h3 id="step-1-fetching-data-from-a-remote-server">Step 1: Fetching data from a remote server</h3>
+<p>The first step of the process is to retrieve the data from an external location. <code>getRequest</code> is responsible for deciding whether the query can be satisfied by a previously cached request, and if not, sending the response to the server. At the conclusion of this step, we typically have a large unparsed string: eg REST APIs generally return JSON-formatted text, and tabix sources return lines of text for records in the region of interest.</p>
+<p>Most custom data sources will focus on customizing two things:</p>
+<ul>
+<li>getURL (how to ask the external source for data)</li>
+<li>getCacheKey (decide whether the request can be satisfied by local data)
+<ul>
+<li>By default this returns a string based on the region in view: <code>'${state.chr}_${state.start}_${state.end}'</code></li>
+<li>You may need to customize this if your source has other inputs required to uniquely define the query (like LD reference variant, or calculation parameters for credible set annotation).</li>
+</ul></li>
+</ul>
+<h3 id="step-2-formatting-and-parsing-the-data">Step 2: Formatting and parsing the data</h3>
+<p>The <code>parseResponse</code> sequence handles the job of parsing the data. It can be used to convert many different API formats into a single standard form. There are four steps to the process:</p>
+<ul>
+<li><code>normalizeResponse</code> - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data handling functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be adjusted to match the expected format.
+<ul>
+<li>Internally, most data layer rendering types assume that data is an array, with each datum element represented by an object: <code>[{a_field: 1, other_field: 1}]</code></li>
+<li>Some sources, such as the UM PortalDev API, represent the data in a column-oriented format instead. (<code>{a_field: [1], other_field: [1]}</code>) The default adapter will attempt to detect this and automatically transform those columns into the row-based one-record-per-datum format.</li>
+</ul></li>
+<li><code>annotateData</code> - This can be used to add custom calculated fields to the data. For example, if your data source does not provide a variant marker field, one can be generated in javascript (by concatenating chromosome:position_ref/alt), without having to modify the web server.</li>
+<li><code>extractFields</code> - Each data layer receives only the fields it asks for, and the data is reformatted in a way that clearly identifies where they come from (the namespace is prefixed onto each field name, eg <code>{'mynamespace:a_field': 1}</code>).
+<ul>
+<li>The most common reason to override this method is if the data uses an extremely complex payload format (like genes), and a custom data layer expects to receive that entire structure as-is. If you are working with layouts, the most common sign of an adapter that does this is that the data layer asks for a nonexistent field (<code>gene:all</code> - a synthetic value whose sole purpose is to indicate that the source is used)</li>
+</ul></li>
+<li><code>combineChainBody</code>: If a single data layer asks for data from more than one source, this function is responsible for combining several different pieces of information together. For example, in order to show an association plot with points colored by LD, the LD adapter implements custom code that annotates the association data with matching LD information. At the end of this function, the data layer will receive a single combined record per visualized data element.</li>
+</ul>
+<h4 id="working-with-the-data-chain">Working with the data “chain”</h4>
+<p>Each data layer is able to request data from multiple different sources. Internally, this process is referred to as the “chain” of linked data requested. LocusZoom.js assumes that every data layer is independent and decoupled: it follows that each data layer has its own chain of requests and its own parsing process.</p>
+<p>This chain defines how to share information between different adapters. It contains of two key pieces:</p>
+<ul>
+<li><code>body</code> - the actual consolidated payload. Each subsequent link in the chain receives all the data from the previous step as <code>chain.body</code></li>
+<li><code>headers</code> - this is a “meta” section used to store information used during the consolidation process. For example, the LD adapter needs to find the most significant variant from the previous step in the chain (association data) in order to query the API for LD. The name of that variant can be stored for subsequent use during the data retrieval process.</li>
+</ul>
+<p>Only <code>chain.body</code> is sent to the data layer. All other parts of the chain are discarded at the end of the data retrieval process.</p>
+<h1 id="see-also">See also</h1>
+<ul>
+<li>LocusZoom.js is able to share its data with external widgets on the page, via event listeners that allow those widgets to update whenever the user interacts with the plot (eg panning or zooming to change the region in view). See <code>subscribeToData</code> in the <a href="interactivity.html">guide to interactivity</a> for more information.<br />
+</li>
+<li>If you are ready to go deeper, see the <a href="../api/">detailed API documentation</a>, describing all the data adapters and configuration options available.</li>
+</ul>
+</body>
+</html>

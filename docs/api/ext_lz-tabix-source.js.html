@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ext/lz-tabix-source.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ext/lz-tabix-source.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * An adapter that fetches data from a remote Tabix-indexed datafile, instead of a RESTful API.
+ * Requires a generic user-specified parser function.
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_Adapters~TabixUrlSource}
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - Vendor assets
+ * - LocusZoom
+ * - tabix-reader (available via NPM or a related CDN)
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * &lt;script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-tabix-source.min.js" type="application/javascript">&lt;/script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import LzTabixSource from 'locuszoom/esm/ext/lz-tabix-source';
+ * LocusZoom.use(LzTabixSource);
+ * ```
+ *
+ * Then use the Adapter made available by this extension. For example:
+ *
+ * ```javascript
+ * data_sources.add("assoc", ["TabixUrlSource", {
+ *     url_data: 'https://s3-bucket.example/tabix-indexed-bgzip-file.gz',
+ *     parser_func: (line_of_text) => object_of_parsed_data_for_this_line,
+ *     // Tabix performs region queries. If you are fetching interval data (one end outside the edge of the plot), then
+ *     // "overfetching" can help to ensure that data partially outside the view region is retrieved
+ *     // If you are fetching single-point data like association summary stats, then overfetching is unnecessary
+ *     params: { overfetch: 0.25 }
+ * }]);
+ * ```
+ *
+ * @module
+ */
+import tabix from 'tabix-reader';
+
+
+function install(LocusZoom) {
+    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+
+    /**
+     * Loads data from a remote Tabix file (if the file host has been configured with proper
+     *  CORS and Range header support). For instructions on how to configure a remote file host such as S3 or
+     *  Google Cloud storage to serve files in the manner required, see:
+     *  https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS
+     *
+     * @alias module:LocusZoom_Adapters~TabixUrlSource
+     * @see {@link module:ext/lz-tabix-source} for required extension and installation instructions
+     * @see module:LocusZoom_Adapters~BaseApiAdapter
+     * @param {function} config.parser_func A function that parses a single line of text and returns (usually) a
+     *  structured object of data fields
+     * @param {string} config.url_data The URL for the bgzipped and tabix-indexed file
+     * @param {string} [config.url_tbi] The URL for the tabix index. Defaults to `url_data` + '.tbi'
+     * @param {number} [config.params.overfetch = 0] Optionally fetch more data than is required to satisfy the
+     *  region query. (specified as a fraction of the region size, 0-1).
+     *  Useful for sources where interesting features might lie near the edges of the plot, eg BED track intervals.
+     */
+    class TabixUrlSource extends BaseAdapter {
+        parseInit(init) {
+            if (!init.parser_func || !init.url_data) {
+                throw new Error('Tabix source is missing required configuration options');
+            }
+            this.parser = init.parser_func;
+            // TODO: In the future, accept a pre-configured reader instance (as an alternative to the URL). Most useful
+            //   for UIs that want to validate the tabix file before adding it to the plot, like LocalZoom.
+            this.url_data = init.url_data;
+            this.url_tbi = init.url_tbi || `${this.url_data}.tbi`;
+
+            // In tabix mode, sometimes we want to fetch a slightly larger region than is displayed, in case a
+            //    feature is on the edge of what the tabix query would return.
+            //    Specify overfetch in units of % of total region size. ("fetch 10% extra before and after")
+            const params = init.params || {};
+            this.params = params;
+            this._overfetch = params.overfetch || 0;
+
+            if (this._overfetch &lt; 0 || this._overfetch > 1) {
+                throw new Error('Overfetch must be specified as a fraction (0-1) of the requested region size');
+            }
+
+            // Assuming that the `tabix-reader` library has been loaded via a CDN, this will create the reader
+            // Since fetching the index is a remote operation, all reader usages will be via an async interface.
+            this._reader_promise = tabix.urlReader(this.url_data, this.url_tbi).catch(function () {
+                throw new Error('Failed to create a tabix reader from the provided URL');
+            });
+        }
+
+        fetchRequest(state /*, chain, fields */) {
+            return new Promise((resolve, reject) => {
+                // Ensure that the reader is fully created (and index available), then make a query
+                const region_start = state.start;
+                const region_end = state.end;
+                const extra_amount = this._overfetch * (region_end - region_start);
+
+                const start = state.start - extra_amount;
+                const end = state.end + extra_amount;
+                this._reader_promise.then((reader) => {
+                    reader.fetch(state.chr, start, end, function (data, err) {
+                        if (err) {
+                            reject(new Error('Could not read requested region. This may indicate an error with the .tbi index.'));
+                        }
+                        resolve(data);
+                    });
+                });
+            });
+        }
+
+        normalizeResponse(data) {
+            // Parse the data from lines of text to objects
+            return data.map(this.parser);
+        }
+    }
+
+    LocusZoom.Adapters.add('TabixUrlSource', TabixUrlSource);
+}
+
+if (typeof LocusZoom !== 'undefined') {
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
+    // eslint-disable-next-line no-undef
+    LocusZoom.use(install);
+}
+
+
+export default install;
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

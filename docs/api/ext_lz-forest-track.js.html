@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ext/lz-forest-track.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ext/lz-forest-track.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Forest plot track, designed for use with PheWAS style datasets.
+ *   This is not part of the core LocusZoom library, but can be included as a standalone file.
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_DataLayers~forest}
+ * * {@link module:LocusZoom_DataLayers~category_forest}
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * &lt;script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-forest-track.min.js" type="application/javascript">&lt;/script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import ForestTrack from 'locuszoom/esm/ext/lz-forest-track';
+ * LocusZoom.use(ForestTrack);
+ * ```
+ *
+ * Then use the layouts made available by this extension. (see demos and documentation for guidance)
+ *
+ * @module
+ */
+import * as d3 from 'd3';
+
+
+function install (LocusZoom) {
+    const BaseDataLayer = LocusZoom.DataLayers.get('BaseDataLayer');
+    const default_layout = {
+        point_size: 40,
+        point_shape: 'square',
+        color: '#888888',
+        fill_opacity: 1,
+        y_axis: {
+            axis: 2,
+        },
+        id_field: 'id',
+        confidence_intervals: {
+            start_field: 'ci_start',
+            end_field: 'ci_end',
+        },
+    };
+
+    /**
+     * (**extension**) Forest Data Layer
+     * Implements a standard forest plot. In order to space out points, any layout using this must specify axis ticks
+     *  and extent in advance.
+     *
+     * If you are using dynamically fetched data, consider using `category_forest` instead.
+     * @alias module:LocusZoom_DataLayers~forest
+     * @see module:LocusZoom_DataLayers~BaseDataLayer
+     * @see {@link module:ext/lz-forest-track} for required extension and installation instructions
+     */
+    class Forest extends BaseDataLayer {
+        /**
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size=40] The size (area) of the point for each datum
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='square'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown".
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#888888'] The color of each point
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1] Opacity (0..1) for each datum point
+         * @param {string} layout.x_axis.field A field specifying the x-coordinate of the mark (eg square)
+         * @param {string} layout.y_axis.field A field specifying the y-coordinate. Use `category_forest` if you just want to
+         *  lay out a series of forest markings in order without worrying about this.
+         * @param [layout.confidence_intervals.start_field='ci_start'] The field that specifies the start of confidence interval
+         * @param [layout.confidence_intervals.end_field='ci_end'] The field that specifies the start of confidence interval
+         */
+        constructor(layout) {
+            layout = LocusZoom.Layouts.merge(layout, default_layout);
+            super(...arguments);
+        }
+
+        _getTooltipPosition(tooltip) {
+            const x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
+            const y_scale = `y${this.layout.y_axis.axis}_scale`;
+            const y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
+
+            const point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+            const offset = Math.sqrt(point_size / Math.PI);
+            return {
+                x_min: x_center - offset,
+                x_max: x_center + offset,
+                y_min: y_center - offset,
+                y_max: y_center + offset,
+            };
+        }
+
+        /**
+         * @fires event:element_clicked
+         */
+        render() {
+            // Apply filters to only render a specified set of points
+            const track_data = this._applyFilters();
+
+            const x_scale = 'x_scale';
+            const y_scale = `y${this.layout.y_axis.axis}_scale`;
+
+            // Generate confidence interval paths if fields are defined
+            if (this.layout.confidence_intervals
+                &amp;&amp; this.layout.fields.includes(this.layout.confidence_intervals.start_field)
+                &amp;&amp; this.layout.fields.includes(this.layout.confidence_intervals.end_field)) {
+                // Generate a selection for all forest plot confidence intervals
+                const ci_selection = this.svg.group
+                    .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')
+                    .data(track_data, (d) => {
+                        return d[this.layout.id_field];
+                    });
+
+                const ci_transform = (d) => {
+                    let x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
+                    let y = this.parent[y_scale](d[this.layout.y_axis.field]);
+                    if (isNaN(x)) {
+                        x = -1000;
+                    }
+                    if (isNaN(y)) {
+                        y = -1000;
+                    }
+                    return `translate(${x}, ${y})`;
+                };
+                const ci_width = (d) => {
+                    return this.parent[x_scale](d[this.layout.confidence_intervals.end_field])
+                        - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
+                };
+                const ci_height = 1;
+                // Create confidence interval rect elements
+                ci_selection.enter()
+                    .append('rect')
+                    .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
+                    .attr('id', (d) => `${this.getElementId(d)}_ci`)
+                    .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`)
+                    .merge(ci_selection)
+                    .attr('transform', ci_transform)
+                    .attr('width', ci_width)
+                    .attr('height', ci_height);
+
+                // Remove old elements as needed
+                ci_selection.exit()
+                    .remove();
+            }
+
+            // Generate a selection for all forest plot points
+            const points_selection = this.svg.group
+                .selectAll('path.lz-data_layer-forest.lz-data_layer-forest-point')
+                .data(track_data, (d) => {
+                    return d[this.layout.id_field];
+                });
+
+            // Create elements, apply class, ID, and initial position
+            const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
+
+            // Generate new values (or functions for them) for position, color, size, and shape
+            const transform = (d) => {
+                let x = this.parent[x_scale](d[this.layout.x_axis.field]);
+                let y = this.parent[y_scale](d[this.layout.y_axis.field]);
+                if (isNaN(x)) {
+                    x = -1000;
+                }
+                if (isNaN(y)) {
+                    y = -1000;
+                }
+                return `translate(${x}, ${y})`;
+            };
+
+            const fill = (d, i) => this.resolveScalableParameter(this.layout.color, d, i);
+            const fill_opacity = (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i);
+
+            const shape = d3.symbol()
+                .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
+                .type((d, i) => {
+                    // Legend shape names are strings; need to connect this to factory. Eg circle --> d3.symbolCircle
+                    const shape_name = this.resolveScalableParameter(this.layout.point_shape, d, i);
+                    const factory_name = `symbol${shape_name.charAt(0).toUpperCase() + shape_name.slice(1)}`;
+                    return d3[factory_name] || null;
+                });
+
+            points_selection.enter()
+                .append('path')
+                .attr('class', 'lz-data_layer-forest lz-data_layer-forest-point')
+                .attr('id', (d) => this.getElementId(d))
+                .attr('transform', `translate(0, ${initial_y})`)
+                .merge(points_selection)
+                .attr('transform', transform)
+                .attr('fill', fill)
+                .attr('fill-opacity', fill_opacity)
+                .attr('d', shape);
+
+            // Remove old elements as needed
+            points_selection.exit()
+                .remove();
+
+            // Apply behaviors to points
+            this.svg.group
+                .on('click.event_emitter', (element_data) => {
+                    this.parent.emit('element_clicked', element_data, true);
+                }).call(this.applyBehaviors.bind(this));
+        }
+    }
+
+    /**
+     * (**extension**) A y-aligned forest plot in which the y-axis represents item labels, which are dynamically
+     *   chosen when data is loaded. Each item is assumed to include both data and confidence intervals.
+     *   This allows generating forest plots without defining the layout in advance.
+     * @alias module:LocusZoom_DataLayers~category_forest
+     * @see module:LocusZoom_DataLayers~BaseDataLayer
+     * @see {@link module:ext/lz-forest-track} for required extension and installation instructions
+     */
+    class CategoryForest extends Forest {
+        _getDataExtent(data, axis_config) {
+            // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
+            const ci_config = this.layout.confidence_intervals;
+            if (ci_config
+                &amp;&amp; this.layout.fields.includes(ci_config.start_field)
+                &amp;&amp; this.layout.fields.includes(ci_config.end_field)) {
+                const min = (d) => +d[ci_config.start_field];
+                const max = (d) => +d[ci_config.end_field];
+                return [d3.min(data, min), d3.max(data, max)];
+            }
+
+            // If there are no confidence intervals set, then range must depend only on a single field
+            return super._getDataExtent(data, axis_config);
+        }
+
+        getTicks(dimension, config) { // Overrides parent method
+            if (!['x', 'y1', 'y2'].includes(dimension)) {
+                throw new Error(`Invalid dimension identifier ${dimension}`);
+            }
+
+            // Design assumption: one axis (y1 or y2) has the ticks, and the layout says which to use
+            // Also assumes that every tick gets assigned a unique matching label
+            const axis_num = this.layout.y_axis.axis;
+            if (dimension === (`y${axis_num}`)) {
+                const category_field = this.layout.y_axis.category_field;
+                if (!category_field) {
+                    throw new Error(`Layout for ${this.layout.id} must specify category_field`);
+                }
+
+                return this.data.map((item, index) => ({ y: index + 1, text: item[category_field] }));
+            } else {
+                return [];
+            }
+        }
+
+        applyCustomDataMethods () {
+            // Add a synthetic yaxis field to ensure data is spread out on plot. Then, set axis floor and ceiling to
+            //  correct extents.
+            const field_to_add = this.layout.y_axis.field;
+            if (!field_to_add) {
+                throw new Error(`Layout for ${this.layout.id} must specify yaxis.field`);
+            }
+
+            this.data = this.data.map((item, index) => {
+                item[field_to_add] = index + 1;
+                return item;
+            });
+            // Update axis extents based on one label for every point (with a bit of padding above and below)
+            this.layout.y_axis.floor = 0;
+            this.layout.y_axis.ceiling = this.data.length + 1;
+            return this;
+        }
+    }
+
+    LocusZoom.DataLayers.add('forest', Forest);
+    LocusZoom.DataLayers.add('category_forest', CategoryForest);
+}
+
+if (typeof LocusZoom !== 'undefined') {
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
+    // eslint-disable-next-line no-undef
+    LocusZoom.use(install);
+}
+
+export default install;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

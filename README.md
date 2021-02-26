@@ -27,7 +27,12 @@ The page you build that embeds the LocusZoom plugin must include the following r
 
 Instead of copying the files to your project, **we recommend using CDN links are for these resources** (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
 
-*The above instructions describe using LocusZoom with pure JS and HTML. If you are using a module build system, LocusZoom supports usage via ES6 imports, eg `import LocusZoom from 'locuszoom';` and `import 'locuszoom/dist/locuszoom.css';`* 
+*The above instructions describe using LocusZoom with pure JS and HTML. If you are using a module build system, LocusZoom supports usage via ES6 imports, eg:* 
+
+```javascript
+import LocusZoom from 'locuszoom';
+import 'locuszoom/dist/locuszoom.css';
+```` 
 
 ### 2. Define Data Sources
 
@@ -37,16 +42,16 @@ Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/", params: {source: 1} }]);
+data_sources.add("assoc", ["AssociationLZ", { url: "http://server.com/api/", params: {source: 1} }]);
 ```
 
-The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "trait".
+The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "assoc".
 
 Data sources can also be local files:
 
 ```javascript
 data_sources = new LocusZoom.DataSources();
-data_sources.add("trait", ["AssociationLZ", { url: "file:///path/to/data.json" }]);
+data_sources.add("assoc", ["AssociationLZ", { url: "file:///path/to/data.json" }]);
 ```
 
 Refer to the [Working with data guide](https://statgen.github.io/locuszoom/docs/guides/data_retrieval.html) for more information on using predefined data sources or extending/creating custom data sources.
@@ -55,7 +60,7 @@ Refer to the [Working with data guide](https://statgen.github.io/locuszoom/docs/
 
 **Layout** is a serializable object that describes the configuration of the LocusZoom plot, including what data will be pulled from the data sources and displayed in what way, along with visual characteristics like color and geometry.
 
-A layout definition may look something like this:
+A layout definition may look something like this (simplified example; consult docs for details):
 
 ```javascript
 var layout = {
@@ -68,9 +73,9 @@ var layout = {
          {
            id: "association",
            type: "scatter",
-           fields: ["trait:position", "trait:pvalue"],
-           x_axis: { field: "trait:position" },
-           y_axis: { field: "trait:pvalue" }
+           fields: ["assoc:position", "assoc:pvalue"],
+           x_axis: { field: "assoc:position" },
+           y_axis: { field: "assoc:pvalue" }
          }
       ]
     }
@@ -98,7 +103,7 @@ A basic example may then look like this:
     <div id="plot"></div>
     <script type="text/javascript">
       var data_sources = new LocusZoom.DataSources();
-      data_sources.add("trait", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
+      data_sources.add("assoc", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
       var layout = {
         width: 500,
         panels: [
@@ -109,9 +114,9 @@ A basic example may then look like this:
               {
                 id: "association",
                 type: "scatter",
-                fields: ["trait:position", "trait:pvalue"],
-                x_axis: { field: "trait:position" },
-                y_axis: { field: "trait:pvalue" }
+                fields: ["assoc:position", "assoc:pvalue"],
+                x_axis: { field: "assoc:position" },
+                y_axis: { field: "assoc:pvalue" }
               }
             ]
           }
