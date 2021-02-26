@@ -1,8 +1,11 @@
 /* eslint-env node */
 const path = require('path');
 const webpack = require('webpack');
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+
 
 const PACKAGE = require('./package.json');
 
@@ -14,7 +17,9 @@ const FILENAMES = {
     LocusZoom: 'locuszoom.app.min.js',
     LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
     LzWidgetAddons: 'ext/lz-widget-addons.min.js',
+    LzForestTrack: 'ext/lz-forest-track.min.js',
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
+    LzIntervalsEnrichment: 'ext/lz-intervals-enrichment.min.js',
     LzCredibleSets: 'ext/lz-credible-sets.min.js',
     LzTabix: 'ext/lz-tabix-source.min.js',
     LzAggregationTests: 'ext/lz-aggregation-tests.min.js',
@@ -27,7 +32,9 @@ module.exports = {
         LocusZoom: path.resolve(srcPath, 'index.js'),
         LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
         LzWidgetAddons: path.resolve(srcPath, 'ext', 'lz-widget-addons.js'),
+        LzForestTrack: path.resolve(srcPath, 'ext', 'lz-forest-track.js'),
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
+        LzIntervalsEnrichment: path.resolve(srcPath, 'ext', 'lz-intervals-enrichment.js'),
         LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
         LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
         LzAggregationTests: path.resolve(srcPath, 'ext', 'lz-aggregation-tests.js'),
@@ -39,28 +46,21 @@ module.exports = {
         }),
         new webpack.BannerPlugin(`Locuszoom ${PACKAGE.version}`), // add after uglify step
         new FriendlyErrorsWebpackPlugin(),
+        new ESLintPlugin(),
     ],
     resolve: {
         modules: [
-            'node_modules'
+            'node_modules',
         ],
     },
     module: {
         rules: [
             {
-                test: /\.m?js$/,
-                exclude: (file) => (/node_modules/.test(file)),
-                use: [
-                    { loader: 'babel-loader', options: { presets: ['@babel/preset-env'] } },
-                    'eslint-loader'
-                ]
-            },
-            {
                 test: /\.js$/,
                 use: ['source-map-loader'],
                 enforce: 'pre',
             },
-        ]
+        ],
     },
     output: {
         path: outputPath,
@@ -83,5 +83,5 @@ module.exports = {
         'gwas-credible-sets': 'gwasCredibleSets',
         'tabix-reader': 'tabix',
         'raremetal.js': 'raremetal',
-    }
+    },
 };

@@ -2,10 +2,10 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import { LAYOUTS } from '../../../esm/registry';
-import {populate} from '../../../esm/helpers/display';
+import Plot, {_updateStatePosition} from '../../../esm/components/plot';
 import DataSources from '../../../esm/data';
-import {_updateStatePosition} from '../../../esm/components/plot';
+import {populate} from '../../../esm/helpers/display';
+import { LAYOUTS } from '../../../esm/registry';
 
 describe('LocusZoom.Plot', function() {
     // Tests
@@ -14,9 +14,6 @@ describe('LocusZoom.Plot', function() {
         beforeEach(function() {
             const layout = {
                 width: 100,
-                height: 100,
-                min_width: 1,
-                min_height: 1,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -46,70 +43,62 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[1].foo, 'baz');
         });
         it('should allow for removing panels', function() {
-            const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar' });
-            const panelB = this.plot.addPanel({ id: 'panelB', foo: 'baz' });
+            const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar', height: 10 });
+            const panelB = this.plot.addPanel({ id: 'panelB', foo: 'baz', height: 20 });
             assert.hasAnyKeys(this.plot.panels, ['panelA']);
             assert.equal(this.plot.panels[panelA.id].id, panelA.id);
             assert.equal(this.plot.layout.panels.length, 2);
+
+            assert.equal(this.plot._total_height, 30, 'Initial height is sum of the two panels');
 
             this.plot.removePanel('panelA');
             assert.doesNotHaveAnyKeys(this.plot.panels, ['panelA']);
             assert.equal(this.plot.layout.panels.length, 1);
             assert.equal(this.plot.layout.panels[0].id, 'panelB');
             assert.equal(this.plot.panels[panelB.id].layout_idx, 0);
+
+            assert.equal(this.plot._total_height, 20, 'Final height is the space requested by the remaining single panel');
         });
-        it('should allow setting dimensions, bounded by layout minimums', function() {
+        it('should allow setting dimensions', function() {
             this.plot.setDimensions(563, 681);
             assert.equal(this.plot.layout.width, 563);
-            assert.equal(this.plot.layout.height, 681);
 
+            // Tests for awkward API choice: invalid numbers can be provided but are quietly ignored.
             this.plot.setDimensions(1320.3, -50);
             assert.equal(this.plot.layout.width, 563);
-            assert.equal(this.plot.layout.height, 681);
 
             this.plot.setDimensions('q', 0);
-            assert.equal(this.plot.layout.width, 563);
-            assert.equal(this.plot.layout.height, 681);
+            assert.equal(this.plot.layout.width, 563, 'Non-numeric value is ignored');
+        });
+        it('show rescale all panels equally when resizing the plot', function () {
+            assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
 
-            this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.width, this.plot.layout.min_width);
-            assert.equal(this.plot.layout.height, this.plot.layout.min_height);
+            const panelA = this.plot.addPanel({ id: 'panelA', height: 100 });
+            const panelB = this.plot.addPanel({ id: 'panelB', height: 200 });
+
+            this.plot.setDimensions(100, 600);
+
+            assert.equal(this.plot._total_height, 600, 'Plot is set to the specified height');
+
+            assert.equal(panelA.layout.height, 200, 'Panel A doubles in size because plot doubles in size');
+            assert.equal(panelB.layout.height, 400, 'Panel B doubles in size because plot doubles in size');
         });
-        it('should enforce minimum dimensions based on its panels', function() {
-            this.plot.addPanel({ id: 'p1', width: 50, height: 30, min_width: 50, min_height: 30 });
-            this.plot.addPanel({ id: 'p2', width: 20, height: 10, min_width: 20, min_height: 10 });
-            this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.min_width, 50);
-            assert.equal(this.plot.layout.min_height, 40);
-            assert.equal(this.plot.layout.width, this.plot.layout.min_width);
-            assert.equal(this.plot.layout.height, this.plot.layout.min_height);
-        });
-        it('should allow for responsively positioning panels using a proportional dimensions', function() {
-            const responsive_layout = LAYOUTS.get('plot', 'standard_association', {
-                responsive_resize: true,
-                panels: [
-                    { id: 'positions', proportional_width: 1, proportional_height: 0.6, min_height: 60 },
-                    { id: 'genes', proportional_width: 1, proportional_height: 0.4, min_height: 40 },
-                ],
-            });
-            responsive_layout.state = { chr: '1', start: 1, end: 100000 };
-            this.plot = populate('#plot', null, responsive_layout);
-            assert.equal(this.plot.layout.panels[0].height / this.plot.layout.height, 0.6);
-            assert.equal(this.plot.layout.panels[1].height / this.plot.layout.height, 0.4);
-            this.plot.setDimensions(2000);
-            assert.equal(this.plot.layout.panels[0].height / this.plot.layout.height, 0.6);
-            assert.equal(this.plot.layout.panels[1].height / this.plot.layout.height, 0.4);
-            this.plot.setDimensions(900, 900);
-            assert.equal(this.plot.layout.panels[0].height / this.plot.layout.height, 0.6);
-            assert.equal(this.plot.layout.panels[1].height / this.plot.layout.height, 0.4);
+        it('should rescale all panels and the plot, but only down to the specified minimum size', function () {
+            assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
+
+            const panelA = this.plot.addPanel({ id: 'panelA', min_height: 50, height: 100 });
+            const panelB = this.plot.addPanel({ id: 'panelB', min_height: 100, height: 200 });
+
             this.plot.setDimensions(100, 100);
-            assert.equal(this.plot.layout.panels[0].height / this.plot.layout.height, 0.6);
-            assert.equal(this.plot.layout.panels[1].height / this.plot.layout.height, 0.4);
+
+            assert.equal(this.plot._total_height, 150, 'Plot cannot be smaller than min_heights');
+
+            assert.equal(panelA.layout.height, 50, 'Panel A does not shrink below the minimum size');
+            assert.equal(panelB.layout.height, 100, 'Panel B does not shrink below the minimum size');
         });
         it('should enforce consistent data layer widths and x-offsets across x-linked panels', function() {
             const layout = {
                 width: 1000,
-                height: 500,
                 panels: [
                     LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
                     LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } }),
@@ -122,21 +111,14 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[1].margin.right, 300);
             assert.equal(this.plot.layout.panels[0].cliparea.origin.x, 200);
             assert.equal(this.plot.layout.panels[1].cliparea.origin.x, 200);
-            assert.equal(this.plot.layout.panels[0].width, this.plot.layout.panels[0].width);
             assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
         });
         it('should not allow for a non-numerical / non-positive predefined dimensions', function() {
             assert.throws(() => {
-                populate('#plot', null, { width: 0, height: 0 });
+                populate('#plot', null, { width: 0 });
             });
             assert.throws(() => {
-                populate('#plot', null, { width: 20, height: -20 });
-            });
-            assert.throws(() => {
-                populate('#plot', null, { width: 'foo', height: 40 });
-            });
-            assert.throws(() => {
-                populate('#plot', null, { width: 60, height: [1, 2] });
+                populate('#plot', null, { width: 'foo' });
             });
         });
     });
@@ -160,84 +142,60 @@ describe('LocusZoom.Plot', function() {
             const datasources = new DataSources();
             const layout = {
                 width: 100,
-                height: 100,
                 min_width: 100,
-                min_height: 100,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
-        it('Should adjust the size of the panel if a single panel is added that does not completely fill min_height', function() {
-            const panelA = { id: 'panelA', width: 100, height: 50 };
+        it('Should allocate the space requested by the panel, even if less than plot height', function() {
+            const panelA = { id: 'panelA', height: 50 };
             this.plot.addPanel(panelA);
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 100);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 100);
-            assert.equal(this.plot.panels.panelA.layout.width, 100);
-            assert.equal(this.plot.panels.panelA.layout.height, 100);
-            assert.equal(this.plot.panels.panelA.layout.proportional_height, 1);
-            assert.equal(this.plot.panels.panelA.layout.proportional_origin.y, 0);
+            assert.equal((+svg.attr('height')), 50);
+            assert.equal(this.plot.panels.panelA.layout.height, 50);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
-            assert.equal(this.plot.sumProportional('height'), 1);
         });
         it('Should extend the size of the plot if panels are added that expand it, and automatically prevent panels from overlapping vertically', function() {
-            const panelA = { id: 'panelA', width: 100, height: 60 };
-            const panelB = { id: 'panelB', width: 100, height: 60 };
+            const panelA = { id: 'panelA', height: 60 };
+            const panelB = { id: 'panelB', height: 60 };
             this.plot.addPanel(panelA);
             this.plot.addPanel(panelB);
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 160);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 160);
-            assert.equal(this.plot.panels.panelA.layout.width, 100);
-            assert.equal(this.plot.panels.panelA.layout.height, 100);
-            assert.equal(this.plot.panels.panelA.layout.proportional_height, 0.625);
-            assert.equal(this.plot.panels.panelA.layout.proportional_origin.y, 0);
+            assert.equal((+svg.attr('height')), 120);
+            assert.equal(this.plot.panels.panelA.layout.height, 60);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
-            assert.equal(this.plot.panels.panelB.layout.width, 100);
             assert.equal(this.plot.panels.panelB.layout.height, 60);
-            assert.equal(this.plot.panels.panelB.layout.proportional_height, 0.375);
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 0.625);
-            assert.equal(this.plot.panels.panelB.layout.origin.y, 100);
-            assert.equal(this.plot.sumProportional('height'), 1);
+            assert.equal(this.plot.panels.panelB.layout.origin.y, 60);
         });
         it('Should resize the plot as panels are removed', function() {
-            const panelA = { id: 'panelA', width: 100, height: 60 };
-            const panelB = { id: 'panelB', width: 100, height: 60 };
+            const panelA = { id: 'panelA', height: 60 };
+            const panelB = { id: 'panelB', height: 60 };
             this.plot.addPanel(panelA);
             this.plot.addPanel(panelB);
             this.plot.removePanel('panelA');
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 100);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 100);
-            assert.equal(this.plot.panels.panelB.layout.width, 100);
-            assert.equal(this.plot.panels.panelB.layout.height, 100);
-            assert.equal(this.plot.panels.panelB.layout.proportional_height, 1);
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 0);
+            assert.equal((+svg.attr('height')), 60);
+            assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 0);
-            assert.equal(this.plot.sumProportional('height'), 1);
         });
         it('Should resize the plot as panels are removed, when panels specify min_height', function() {
-            // Regression test for a reported edge case where `min_height` caused resizing logic to work differently
-
             // Small hack; resize the plot after it was created
-            this.plot.layout.min_height = this.plot._base_layout.min_height = 600;
-            this.plot.layout.height = this.plot._base_layout.height = 600;
-            this.plot.layout.width = this.plot._base_layout.width = 800;
-            this.plot.layout.min_width = this.plot._base_layout.min_width = 800;
-            this.plot.layout.responsive_resize = this.plot._base_layout.responsive_resize = true;
+            this.plot.layout.height = 600;
+            this.plot.layout.width = 800;
+            this.plot.layout.responsive_resize = true;
 
             // These numbers are based on a real plot. Expected behavior is chosen to match behavior of a layout where
             //   panels had no min_height specified.
-            const panelA = { id: 'panelA', width: 800, height: 300, min_height: 300 };
-            const panelB = { id: 'panelB', width: 800, height: 50, min_height: 50 };
-            const panelC = { id: 'panelC', width: 800, height: 225, min_height: 112.5 };
+            const panelA = { id: 'panelA', height: 300 };
+            const panelB = { id: 'panelB', height: 50 };
+            const panelC = { id: 'panelC', height: 225 };
 
             // Set up the scenario
             this.plot.addPanel(panelA);
@@ -246,19 +204,11 @@ describe('LocusZoom.Plot', function() {
 
             this.plot.removePanel('panelC');
             // Check dimensions. Some checks are approximate due to floating point rounding issues.
-            assert.equal(this.plot.layout.width, 800, 'Plot width is incorrect');
-            assert.approximately(this.plot.layout.height, 650, 0.000001, 'Plot height is incorrect');
-
-            assert.equal(this.plot.panels.panelB.layout.width, 800, 'Panel B width is incorrect');
-            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height is incorrect');
+            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height matches layout value');
             // When the overall plot specifies a min_height larger than any panel, the final resizing of the panels
             //   must respect that setting. Thus, panels A and B will not have the same relative proportions
             //   after panel C is removed.
-            assert.approximately(this.plot.panels.panelA.layout.proportional_height, 600 / 650, 0.000001, 'Panel A proportional height is incorrect');
-            assert.approximately(this.plot.panels.panelB.layout.proportional_height, 50 / 650, 0.000001, 'Panel B proportional height is incorrect');
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 1 - 50 / 650, 'Panel B proportional_origin.y is incorrect');
-            assert.equal(this.plot.panels.panelB.layout.origin.y, 600, 'Panel B origin.y is incorrect');
-            assert.approximately(this.plot.sumProportional('height'), 1, 0.000001, 'Total height should be 1');
+            assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y matches layout value');
         });
         it('Should resize the plot while retaining panel proportions when panel is removed, if plot min_height does not take precedence', function() {
             // When we remove a panel, we often want the plot to shrink by exactly that size. (so that the bottom
@@ -266,9 +216,9 @@ describe('LocusZoom.Plot', function() {
             //   min_height is larger than any one panel, the space actually gets reallocated, and the remaining
             //   panels stretch or shrink.
             // This test ensures that we will see the desired behavior when plot min_height isn't dominant.
-            const panelA = { id: 'panelA', width: 800, height: 300, min_height: 300 };
-            const panelB = { id: 'panelB', width: 800, height: 50, min_height: 50 };
-            const panelC = { id: 'panelC', width: 800, height: 225, min_height: 112.5 };
+            const panelA = { id: 'panelA', height: 300 };
+            const panelB = { id: 'panelB', height: 50 };
+            const panelC = { id: 'panelC', height: 225 };
 
             // Set up the scenario
             this.plot.addPanel(panelA);
@@ -276,47 +226,44 @@ describe('LocusZoom.Plot', function() {
             this.plot.addPanel(panelC);
 
             // Verify that panel A and B adopt a specific proportion (when 3 panels are present)
-            assert.equal(this.plot.panels.panelA.layout.height, 300, 'Panel A height is incorrect (before)');
-            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height is incorrect (before)');
+            assert.equal(this.plot.panels.panelA.layout.height, 300, 'Panel A height matches layout value (before)');
+            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height matches layout value (before)');
 
             this.plot.removePanel('panelC');
             // Check dimensions. Some checks are approximate due to floating point rounding issues.
-            assert.equal(this.plot.layout.width, 800, 'Plot width is incorrect');
-            assert.equal(this.plot.layout.height, 350, 'Plot height is incorrect');
-
             // Panels A and B will have the same size and relative proportions after resize as before
-            assert.equal(this.plot.panels.panelA.layout.height, 300, 'Panel A height is incorrect (after)');
-            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height is incorrect (after)');
-            assert.equal(this.plot.panels.panelB.layout.width, 800, 'Panel B width is incorrect');
-
-            assert.approximately(this.plot.panels.panelA.layout.proportional_height, 300 / 350, 0.000001, 'Panel A proportional height is incorrect');
-            assert.approximately(this.plot.panels.panelB.layout.proportional_height, 50 / 350, 0.000001, 'Panel B proportional height is incorrect');
-            assert.approximately(this.plot.panels.panelB.layout.proportional_origin.y, 1 - 50 / 350, 0.000001, 'Panel B proportional_origin.y is incorrect');
-            assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y is incorrect');
-            assert.approximately(this.plot.sumProportional('height'), 1, 0.000001, 'Total proportional height should be 1');
+            assert.equal(this.plot.panels.panelA.layout.height, 300, 'Panel A height matches layout (after)');
+            assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height matches layout (after)');
+            assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y appears immediately after panel A');
         });
         it('Should allow for inserting panels at discrete y indexes', function() {
-            const panelA = { id: 'panelA', width: 100, height: 60 };
-            const panelB = { id: 'panelB', idth: 100, height: 60 };
+            const panelA = { id: 'panelA', height: 60 };
+            const panelB = { id: 'panelB', height: 61 };
             this.plot.addPanel(panelA);
             this.plot.addPanel(panelB);
-            const panelC = { id: 'panelC', width: 100, height: 60, y_index: 1 };
+            const panelC = { id: 'panelC', height: 62, y_index: 1 }; // In between A and B
             this.plot.addPanel(panelC);
             assert.equal(this.plot.panels.panelA.layout.y_index, 0);
             assert.equal(this.plot.panels.panelB.layout.y_index, 2);
             assert.equal(this.plot.panels.panelC.layout.y_index, 1);
             assert.deepEqual(this.plot.panel_ids_by_y_index, ['panelA', 'panelC', 'panelB']);
+
+            assert.deepEqual(panelA.height, 60, 'panel A height matches layout value');
+            assert.deepEqual(panelB.height, 61, 'panel B height matches layout value');
+            assert.deepEqual(panelC.height, 62, 'panel C height matches layout value');
+
+            assert.deepEqual(panelA.height + panelB.height + panelC.height, this.plot._total_height, 'Plot height is equal to sum of panels');
         });
         it('Should allow for inserting panels at negative discrete y indexes', function() {
-            const panelA = { id: 'panelA', width: 100, height: 60 };
-            const panelB = { id: 'panelB', width: 100, height: 60 };
-            const panelC = { id: 'panelC', width: 100, height: 60 };
-            const panelD = { id: 'panelD', width: 100, height: 60 };
+            const panelA = { id: 'panelA', height: 60 };
+            const panelB = { id: 'panelB', height: 60 };
+            const panelC = { id: 'panelC', height: 60 };
+            const panelD = { id: 'panelD', height: 60 };
             this.plot.addPanel(panelA);
             this.plot.addPanel(panelB);
             this.plot.addPanel(panelC);
             this.plot.addPanel(panelD);
-            const panelE = { id: 'panelE', width: 100, height: 60, y_index: -1 };
+            const panelE = { id: 'panelE', height: 60, y_index: -1 };
             this.plot.addPanel(panelE);
             assert.equal(this.plot.panels.panelA.layout.y_index, 0);
             assert.equal(this.plot.panels.panelB.layout.y_index, 1);
@@ -332,9 +279,6 @@ describe('LocusZoom.Plot', function() {
             const datasources = new DataSources();
             const layout = {
                 width: 100,
-                height: 100,
-                min_width: 100,
-                min_height: 100,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -409,7 +353,7 @@ describe('LocusZoom.Plot', function() {
     describe('State and Requests', function() {
         beforeEach(function() {
             this.datasources = new DataSources();
-            this.layout = { width: 100, height: 100 };
+            this.layout = { width: 100 };
             d3.select('body').append('div').attr('id', 'plot');
         });
         afterEach(function() {
@@ -577,6 +521,32 @@ describe('LocusZoom.Plot', function() {
             });
         });
 
+        it('allows listening to all plot events via a special event name', function () {
+            const fixture = new Plot('hi', {}, {});
+            const spy = sinon.spy();
+
+            fixture.on('custom_event', spy);
+            fixture.on('any_lz_event', spy);
+            fixture.emit('custom_event', { thing1: 'redfish', thing2: 'bluefish'});
+
+            const baseExpected = {sourceID: 'hi', data: { thing1: 'redfish', thing2: 'bluefish'}};
+
+            assert.ok(spy.calledTwice, 'Event listener was called twice');
+            sinon.assert.calledWithMatch(spy.firstCall, baseExpected);
+            sinon.assert.calledWithMatch(spy.secondCall, Object.assign(baseExpected, {event_name: 'custom_event'}));
+        });
+
+        it('allows catch-all events even without a more specific listener', function () {
+            const fixture = new Plot('hi', {}, {});
+            const spy = sinon.spy();
+
+            fixture.on('any_lz_event', spy);
+            fixture.emit('custom_event', { thing1: 'redfish', thing2: 'bluefish'});
+            assert.ok(spy.calledOnce, 'Event listener was called only as a catchall');
+            sinon.assert.calledWithMatch(spy.firstCall, {event_name: 'custom_event'});
+        });
+
+
         describe('allows communication between layers via match events', function () {
             beforeEach(function() {
                 this.plot = null;
@@ -621,16 +591,14 @@ describe('LocusZoom.Plot', function() {
                 delete this.plot;
             });
 
+            const get_matches = function (data) {
+                return data.map((item) => item.lz_is_match);
+            };
+
             it('notifies all layers to find matches when an event fires', function () {
                 // This is the end result of triggering a match event, and lets us test after render promise complete
                 const plot = this.plot;
                 return this.plot.applyState({ lz_match_value: 0 }).then(function() {
-
-                    const get_matches = function (data) {
-                        return data.map(function (item) {
-                            return item.lz_highlight_match;
-                        });
-                    };
                     const d1 = get_matches(plot.panels.p.data_layers.d1.data);
                     const d2 = get_matches(plot.panels.p.data_layers.d2.data);
                     const d3 = get_matches(plot.panels.p.data_layers.d3.data);
@@ -638,6 +606,60 @@ describe('LocusZoom.Plot', function() {
                     assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
                     assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
                     assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+                });
+            });
+
+            it('allows matching rules to use transforms (on send)', function (done) {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.send = 's:x|scinotation';
+
+                // We can validate the send rule by checking what value gets broadcast
+                layer1.parent.on('match_requested', (event) => {
+                    assert.equal(event.data.value, '0', 'The item value was converted from a number to a string before being broadcast to other panels');
+                    done();
+                });
+
+                // Trigger the match event on datapoint 1 from layer 1
+                layer1.setElementStatus('selected', { 's:id': 'a', 's:x': 0, 's:y': false }, true, true);
+            });
+
+            it('allows matching rules to use transforms (on receive)', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.receive = 's:x|scinotation';
+                return this.plot.applyState({lz_match_value: '1.000'}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'The broadcast value is compared to the modified value for a data item');
+                });
+            });
+
+            it('allows matching rules to use any match operators from the registry', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.operator = '>=';
+                return this.plot.applyState({lz_match_value: 0.5}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'Can match on a rule other than exact match');
+                });
+            });
+
+            it('allows a match event to trigger filtering behavior', function () {
+                // Example use case: click a data layer element, and other layers update to only render items that match that point
+                // Originally, match functionality was only used to change HOW something was shown. This allows
+                //  matching to also change IF something is shown. Here we capture that this works, but to be honest,
+                //  it's not often recommended- the user could get into a situation where they hid all their points, and
+                //  have no way to "reset/clear" the match rule to show things again.
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                // In a real use, we could trigger "only filter on match" with a custom function that returned true
+                //  if EITHER a match occurred, OR lz_is_match was undefined (eg, no match had been attempted).
+                layer1.layout.filters = [{field: 'lz_is_match', operator: '=', value: true}];
+                return this.plot.applyState({lz_match_value: 1}).then(() => {
+                    // layer.data contains everything; select only filtered data elements
+                    const filtered = layer1._applyFilters();
+                    assert.equal(filtered.length, 1, 'Only one data item is shown');
+                    assert.equal(
+                        filtered[0]['s:id'],
+                        'b',
+                        'This item displayed is the one that satisfies matching rules'
+                    );
                 });
             });
         });

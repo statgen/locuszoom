@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ext/lz-credible-sets.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ext/lz-credible-sets.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Custom code used to power credible sets demonstration example. This is not part of the core LocusZoom library,
+ * but can be included as a standalone file.
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_Adapters~CredibleSetLZ}
+ * * {@link module:LocusZoom_Layouts~association_credible_set_tooltip}
+ * * {@link module:LocusZoom_Layouts~annotation_credible_set_tooltip}
+ * * {@link module:LocusZoom_Layouts~association_credible_set}
+ * * {@link module:LocusZoom_Layouts~annotation_credible_set_layer}
+ * * {@link module:LocusZoom_Layouts~annotation_credible_set}
+ * * {@link module:LocusZoom_Layouts~association_credible_set}
+ * * {@link module:LocusZoom_Layouts~association_credible_set_plot}
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ *  - LocusZoom
+ *  - gwas-credible-sets (available via NPM or a related CDN)
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * &lt;script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-credible-sets.min.js" type="application/javascript">&lt;/script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import credibleSets from 'locuszoom/esm/ext/lz-credible-sets';
+ * LocusZoom.use(credibleSets);
+ * ```
+ @module
+*/
+
+import {marking, scoring} from 'gwas-credible-sets';
+
+function install (LocusZoom) {
+    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+
+    /**
+     * (**extension**) Custom data adapter that calculates the 95% credible set based on provided association data.
+     * This source must be requested as the second step in a chain, after a previous step that returns fields required
+     *  for the calculation. (usually, it follows a request for GWAS summary statistics)
+     * @alias module:LocusZoom_Adapters~CredibleSetLZ
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    class CredibleSetLZ extends BaseAdapter {
+        /**
+         * @param {String} config.params.fields.log_pvalue The name of the field containing -log10 pvalue information
+         * @param {Number} [config.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
+         *  until the posterior probabilities add up to at least this fraction of the total.
+         * @param {Number} [config.params.significance_threshold=7.301] Do not perform a credible set calculation for this
+         *  region unless AT LEAST ONE SNP (as -log10p) exceeds the line of GWAS signficance. Otherwise we are declaring a
+         *  credible set when there is no evidence of anything being significant at all. If one snp is significant, it will
+         *  create a credible set for the entire region; the resulting set may include things below the line of significance.
+         */
+        constructor(config) {
+            super(...arguments);
+            this.dependentSource = true; // Don't do calcs for a region with no assoc data
+        }
+
+        parseInit(config) {
+            super.parseInit(...arguments);
+            if (!(this.params.fields &amp;&amp; this.params.fields.log_pvalue)) {
+                throw new Error(`Source config for ${this.constructor.SOURCE_NAME} must specify how to find 'fields.log_pvalue'`);
+            }
+
+            // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
+            this.params = Object.assign(
+                { threshold: 0.95, significance_threshold: 7.301 },
+                this.params
+            );
+        }
+
+        getCacheKey (state, chain, fields) {
+            const threshold = state.credible_set_threshold || this.params.threshold;
+            return [threshold, state.chr, state.start, state.end].join('_');
+        }
+
+        fetchRequest(state, chain) {
+            if (!chain.body.length) {
+                // No credible set can be calculated because there is no association data for this region
+                return Promise.resolve([]);
+            }
+
+            const self = this;
+            // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
+            const threshold = state.credible_set_threshold || this.params.threshold;
+            // Calculate raw bayes factors and posterior probabilities based on information returned from the API
+            if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
+                throw new Error('Credible set source could not locate the required fields from a previous request.');
+            }
+            const nlogpvals = chain.body.map((item) => item[self.params.fields.log_pvalue]);
+
+            if (!nlogpvals.some((val) => val >= self.params.significance_threshold)) {
+                // If NO points have evidence of significance, define the credible set to be empty
+                //  (rather than make a credible set that we don't think is meaningful)
+                return Promise.resolve([]);
+            }
+
+            const credset_data = [];
+            try {
+                const scores = scoring.bayesFactors(nlogpvals);
+                const posteriorProbabilities = scoring.normalizeProbabilities(scores);
+
+                // Use scores to mark the credible set in various ways (depending on your visualization preferences,
+                //   some of these may not be needed)
+                const credibleSet = marking.findCredibleSet(posteriorProbabilities, threshold);
+                const credSetScaled = marking.rescaleCredibleSet(credibleSet);
+                const credSetBool = marking.markBoolean(credibleSet);
+
+                // Annotate each response record based on credible set membership
+                for (let i = 0; i &lt; chain.body.length; i++) {
+                    credset_data.push({
+                        posterior_prob: posteriorProbabilities[i],
+                        contrib_fraction: credSetScaled[i],
+                        is_member: credSetBool[i],
+                    });
+                }
+            } catch (e) {
+                // If the calculation cannot be completed, return the data without annotation fields
+                console.error(e);
+            }
+            return Promise.resolve(credset_data);
+        }
+
+        combineChainBody(data, chain, fields, outnames, trans) {
+            // At this point namespacing has been applied; add the calculated fields for this source to the chain
+            if (chain.body.length &amp;&amp; data.length) {
+                for (let i = 0; i &lt; data.length; i++) {
+                    const src = data[i];
+                    const dest = chain.body[i];
+                    Object.keys(src).forEach(function (attr) {
+                        dest[attr] = src[attr];
+                    });
+                }
+            }
+            return chain.body;
+        }
+    }
+
+    LocusZoom.Adapters.add('CredibleSetLZ', CredibleSetLZ);
+
+    // Add related layouts to the central global registry
+    /**
+     * (**extension**) Tooltip layout that appends credible set posterior probability to the default association tooltip (for SNPs in the credible set)
+     * @alias module:LocusZoom_Layouts~association_credible_set_tooltip
+     * @type tooltip
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const association_credible_set_tooltip = function () {
+        // Extend a known tooltip with an extra row of info showing posterior probabilities
+        const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        l.html += '{{#if {{namespace[credset]}}posterior_prob}}&lt;br>Posterior probability: &lt;strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}&lt;/strong>{{/if}}';
+        return l;
+    }();
+
+    LocusZoom.Layouts.add('tooltip', 'association_credible_set', association_credible_set_tooltip);
+
+    /**
+     * (**extension**) A tooltip layout for annotation (rug) tracks that provides information about credible set members
+     * @alias module:LocusZoom_Layouts~annotation_credible_set_tooltip
+     * @type tooltip
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const annotation_credible_set_tooltip = {
+        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+        closable: true,
+        show: { or: ['highlighted', 'selected'] },
+        hide: { and: ['unhighlighted', 'unselected'] },
+        html: '&lt;strong>{{{{namespace[assoc]}}variant|htmlescape}}&lt;/strong>&lt;br>'
+            + 'P Value: &lt;strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}&lt;/strong>&lt;br>' +
+            '{{#if {{namespace[credset]}}posterior_prob}}&lt;br>Posterior probability: &lt;strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}&lt;/strong>{{/if}}',
+    };
+    LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', annotation_credible_set_tooltip);
+
+    /**
+     * (**extension**) A data layer layout that shows GWAS summary statistics overlaid with credible set membership information
+     * @alias module:LocusZoom_Layouts~association_credible_set_layer
+     * @type data_layer
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+
+    const association_credible_set_layer = function () {
+        const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
+            unnamespaced: true,
+            id: 'associationcredibleset',
+            namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
+            fill_opacity: 0.7,
+            tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
+            fields: [
+                '{{namespace[assoc]}}variant', '{{namespace[assoc]}}position',
+                '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation',
+                '{{namespace[assoc]}}ref_allele',
+                '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
+                '{{namespace[credset]}}is_member',
+                '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar',
+            ],
+            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
+        });
+        base.color.unshift({
+            field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#FFf000',
+            },
+        });
+        return base;
+    }();
+    LocusZoom.Layouts.add('data_layer', 'association_credible_set', association_credible_set_layer);
+
+    /**
+     * (**extension**) A data layer layout that shows a vertical mark whenever a SNP is a member of the credible set
+     * @alias module:LocusZoom_Layouts~annotation_credible_set_layer
+     * @type data_layer
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const annotation_credible_set_layer = {
+        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+        id: 'annotationcredibleset',
+        type: 'annotation_track',
+        id_field: '{{namespace[assoc]}}variant',
+        x_axis: {
+            field: '{{namespace[assoc]}}position',
+        },
+        color: [
+            {
+                field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
+                scale_function: 'if',
+                parameters: {
+                    field_value: true,
+                    then: '#001cee',
+                },
+            },
+            '#00CC00',
+        ],
+        fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
+        match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
+        filters: [
+            // Specify which points to show on the track. Any selection must satisfy ALL filters
+            { field: '{{namespace[credset]}}is_member', operator: '=', value: true },
+        ],
+        behaviors: {
+            onmouseover: [
+                { action: 'set', status: 'highlighted' },
+            ],
+            onmouseout: [
+                { action: 'unset', status: 'highlighted' },
+            ],
+            onclick: [
+                { action: 'toggle', status: 'selected', exclusive: true },
+            ],
+            onshiftclick: [
+                { action: 'toggle', status: 'selected' },
+            ],
+        },
+        tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
+        tooltip_positioning: 'top',
+    };
+    LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', annotation_credible_set_layer);
+
+    /**
+     * (**extension**) A panel layout that shows a vertical mark whenever a SNP is a member of the credible set
+     * @alias module:LocusZoom_Layouts~annotation_credible_set
+     * @type panel
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const annotation_credible_set = {
+        id: 'annotationcredibleset',
+        title: { text: 'SNPs in 95% credible set', x: 50, style: { 'font-size': '14px' } },
+        min_height: 45,
+        height: 45,
+        margin: { top: 25, right: 50, bottom: 0, left: 50 },
+        inner_border: 'rgb(210, 210, 210)',
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
+        axes: {
+            x: {
+                extent: 'state',
+            },
+        },
+        interaction: {
+            drag_background_to_pan: true,
+            scroll_to_zoom: true,
+            x_linked: true,
+        },
+        data_layers: [
+            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true }),
+        ],
+    };
+    LocusZoom.Layouts.add('panel', 'annotation_credible_set', annotation_credible_set);
+
+    /**
+     * (**extension**) A panel layout that shows GWAS summary statistics in a standard LocusZoom view, overlaid with credible set membership information
+     * @alias module:LocusZoom_Layouts~association_credible_set
+     * @type panel
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const association_credible_set_panel = function () {
+        const l = LocusZoom.Layouts.get('panel', 'association', {
+            unnamespaced: true,
+            id: 'associationcrediblesets',
+            namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+            data_layers: [
+                LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'association_credible_set', { unnamespaced: true }),
+            ],
+        });
+        // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
+        l.toolbar.widgets.push(
+            {
+                type: 'display_options',
+                position: 'right',
+                color: 'blue',
+                // Below: special config specific to this widget
+                button_html: 'Display options...',
+                button_title: 'Control how plot items are displayed',
+                layer_name: 'associationcredibleset',
+                default_config_display_name: 'Linkage Disequilibrium (default)', // display name for the default plot color option (allow user to revert to plot defaults)
+
+                options: [
+                    {
+                        // First dropdown menu item
+                        display_name: '95% credible set (boolean)',  // Human readable representation of field name
+                        display: {  // Specify layout directives that control display of the plot for this option
+                            point_shape: 'circle',
+                            point_size: 40,
+                            color: {
+                                field: '{{namespace[credset]}}is_member',
+                                scale_function: 'if',
+                                parameters: {
+                                    field_value: true,
+                                    then: '#00CC00',
+                                    else: '#CCCCCC',
+                                },
+                            },
+                            legend: [ // Tells the legend how to represent this display option
+                                {
+                                    shape: 'circle',
+                                    color: '#00CC00',
+                                    size: 40,
+                                    label: 'In credible set',
+                                    class: 'lz-data_layer-scatter',
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#CCCCCC',
+                                    size: 40,
+                                    label: 'Not in credible set',
+                                    class: 'lz-data_layer-scatter',
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        // Second option. The same plot- or even the same field- can be colored in more than one way.
+                        display_name: '95% credible set (gradient by contribution)',
+                        display: {
+                            point_shape: 'circle',
+                            point_size: 40,
+                            color: [
+                                {
+                                    field: '{{namespace[credset]}}contrib_fraction',
+                                    scale_function: 'if',
+                                    parameters: {
+                                        field_value: 0,
+                                        then: '#777777',
+                                    },
+                                },
+                                {
+                                    scale_function: 'interpolate',
+                                    field: '{{namespace[credset]}}contrib_fraction',
+                                    parameters: {
+                                        breaks: [0, 1],
+                                        values: ['#fafe87', '#9c0000'],
+                                    },
+                                },
+                            ],
+                            legend: [
+                                {
+                                    shape: 'circle',
+                                    color: '#777777',
+                                    size: 40,
+                                    label: 'No contribution',
+                                    class: 'lz-data_layer-scatter',
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#fafe87',
+                                    size: 40,
+                                    label: 'Some contribution',
+                                    class: 'lz-data_layer-scatter',
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#9c0000',
+                                    size: 40,
+                                    label: 'Most contribution',
+                                    class: 'lz-data_layer-scatter',
+                                },
+                            ],
+                        },
+                    },
+                ],
+            }
+        );
+        return l;
+    }();
+    LocusZoom.Layouts.add('panel', 'association_credible_set', association_credible_set_panel);
+
+    /**
+     * (**extension**) A standard LocusZoom plot layout, with additional credible set information.
+     * @alias module:LocusZoom_Layouts~association_credible_set_plot
+     * @type plot
+     * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
+     */
+    const association_credible_set_plot = {
+        state: {},
+        width: 800,
+        height: 450,
+        responsive_resize: true,
+        min_region_scale: 20000,
+        max_region_scale: 1000000,
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        panels: [
+            LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
+            LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),
+            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true }),
+        ],
+    };
+    LocusZoom.Layouts.add('plot', 'association_credible_set', association_credible_set_plot);
+}
+
+
+if (typeof LocusZoom !== 'undefined') {
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
+    // eslint-disable-next-line no-undef
+    LocusZoom.use(install);
+}
+
+
+export default install;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

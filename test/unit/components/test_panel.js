@@ -66,29 +66,13 @@ describe('Panel', function() {
         it('should allow changing dimensions', function() {
             // TODO: What, exactly, is this testing?
             this.association_panel.setDimensions(840, 560);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
 
             this.association_panel.setDimensions(9000, -50);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
 
             this.association_panel.setDimensions('q', 942);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
-        });
-
-        it('should enforce minimum dimensions', function() {
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(this.association_panel.layout.min_width / 2, 0);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(0, this.association_panel.layout.min_height / 2);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
         });
 
         it('should allow setting origin irrespective of plot dimensions', function() {
@@ -119,7 +103,7 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.margin.left, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.y, 1);
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.layout.width - (2 + 4));
+            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.parent.layout.width - (2 + 4));
             assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (1 + 3));
 
             this.association_panel.setMargin(0, '12', -17, {foo: 'bar'});
@@ -130,7 +114,7 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.y, 0);
 
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.layout.width - (12 + 4));
+            assert.equal(this.association_panel.layout.cliparea.width, this.plot.layout.width - (12 + 4));
             assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (0 + 3));
         });
 
@@ -180,9 +164,8 @@ describe('Panel', function() {
         beforeEach(function() {
             const layout = {
                 width: 800,
-                height: 400,
                 panels: [
-                    { id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1 },
+                    { id: 'panel0', height: 400 },
                 ],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -232,17 +215,8 @@ describe('Panel', function() {
             const datasources = new DataSources();
             this.layout = {
                 width: 100,
-                height: 100,
-                min_width: 100,
-                min_height: 100,
                 resizable: false,
-                panels: [
-                    {
-                        id: 'test',
-                        width: 100,
-                        height: 100,
-                    },
-                ],
+                panels: [{ id: 'test', height: 100 }],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, this.layout);
@@ -280,32 +254,36 @@ describe('Panel', function() {
         });
 
         it('should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors', function() {
-            const loader = this.panel.loader;
-            assert.isObject(this.panel.loader);
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+            return this.plot.applyState().then(() => {
+                const loader = this.panel.loader;
+                assert.isObject(this.panel.loader);
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
+            });
         });
 
         it('should show/hide/update on command and track shown status', function() {
-            const loader = this.panel.loader;
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+            return this.plot.applyState().then(() => {
+                const loader = this.panel.loader;
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
 
-            loader.show('test content');
-            assert.isTrue(loader.showing);
-            assert.isFalse(loader.selector.empty());
-            assert.isFalse(loader.content_selector.empty());
-            assert.equal(loader.content_selector.html(), 'test content');
-            assert.isFalse(loader.progress_selector.empty());
-            loader.hide();
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+                loader.show('test content');
+                assert.isTrue(loader.showing);
+                assert.isFalse(loader.selector.empty());
+                assert.isFalse(loader.content_selector.empty());
+                assert.equal(loader.content_selector.html(), 'test content');
+                assert.isFalse(loader.progress_selector.empty());
+                loader.hide();
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
+            });
         });
 
         it('should allow for animating or showing discrete percentages of completion', function() {
@@ -335,11 +313,9 @@ describe('Panel', function() {
                 .add('static', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }] ]);
             this.layout = {
                 width: 100,
-                height: 100,
                 panels: [
                     {
                         id: 'p',
-                        width: 100,
                         height: 100,
                         axes: {
                             x: { label: 'x' },
@@ -380,7 +356,6 @@ describe('Panel', function() {
             d3.select('body').append('div').attr('id', 'plot');
             const layout = {
                 width: 100,
-                height: 100,
                 panels: [
                     { id: 'p1', interaction: { x_linked: true } },
                     { id: 'p2', interaction: { y1_linked: true } },
@@ -681,6 +656,19 @@ describe('Panel', function() {
             assert.ok(plot_spy.calledWith(expectedEvent), 'Plot called with expected event');
             assert.ok(panel_spy.calledOnce, 'Panel event was fired');
             assert.ok(panel_spy.calledWith(expectedEvent), 'Panel called with expected event');
+        });
+
+        it('should bubble events to plot if a plot-level listener is defined (even if there is no listener on the panel', function () {
+            const plot_spy = sinon.spy();
+
+            this.plot.on('element_clicked', plot_spy);
+            this.panel.emit('element_clicked', {something: 1}, true);
+
+            assert.isUndefined(this.panel.event_hooks['element_clicked'], 'Panel listener is not defined');
+            assert.isDefined(this.plot.event_hooks['element_clicked'], 'Plot listener is defined');
+            assert.equal(this.plot.event_hooks['element_clicked'].length, 1, 'Plot listener is defined and attached');
+
+            assert.ok(plot_spy.calledOnce, 'Plot event was bubbled up even though there is no listener on the panel');
         });
 
         it('should bubble events to plot (overloaded no-data call signature)', function() {

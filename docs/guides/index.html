@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Getting started with LocusZoom.js</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Getting started with LocusZoom.js</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#first-steps">First steps</a>
+<ul>
+<li><a href="#add-the-library-to-your-page">Add the library to your page</a>
+<ul>
+<li><a href="#plain-html-and-javascript-defines-locuszoom-as-a-global-variable">Plain HTML and JavaScript (defines LocusZoom as a global variable)</a></li>
+<li><a href="#modern-js-frameworks-with-a-build-step">Modern JS frameworks with a “build” step</a></li>
+</ul></li>
+<li><a href="#create-your-first-plot">Create your first plot</a></li>
+<li><a href="#do-you-really-need-to-write-code">Do you really need to write code?</a></li>
+</ul></li>
+<li><a href="#what-does-locuszoom.js-provide">What does LocusZoom.js provide?</a></li>
+<li><a href="#key-concepts-for-developers-looking-to-go-deeper">Key concepts for developers looking to go deeper</a>
+<ul>
+<li><a href="#declarative-and-configuration-driven">Declarative and configuration driven</a></li>
+<li><a href="#visual-building-blocks">Visual building blocks</a>
+<ul>
+<li><a href="#elements-communicate-through-events">Elements communicate through events</a></li>
+</ul></li>
+<li><a href="#separation-of-concerns">Separation of concerns</a></li>
+<li><a href="#documentation-by-example">Documentation by example</a></li>
+<li><a href="#open-source-software">Open source software</a></li>
+</ul></li>
+<li><a href="#resources">Resources</a>
+<ul>
+<li><a href="#see-it-in-action">See it in action</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="overview">Overview</h1>
+<p>LocusZoom.js provides many powerful options for visualizing genetic data in biological context. Our goal is to make the most common tasks easy, while providing advanced options for custom visualization and interactivity. For an overview of capabilities (and places where it is used), see our preprint: <a href="https://www.biorxiv.org/content/10.1101/2021.01.01.423803v1">“LocusZoom.js: Interactive and embeddable visualization of genetic association study results”</a></p>
+<h1 id="first-steps">First steps</h1>
+<h2 id="add-the-library-to-your-page">Add the library to your page</h2>
+<p>LocusZoom.js is designed to work with your web page, regardless of your skill level or the tools you are used to using.</p>
+<h3 id="plain-html-and-javascript-defines-locuszoom-as-a-global-variable">Plain HTML and JavaScript (defines LocusZoom as a global variable)</h3>
+<p>Many of our users work on small projects with a single HTML file and no special tools. By loading three files, the library will be automatically available as a global variable <code>LocusZoom</code> that provides access to all helper methods (<code>LocusZoom.populate(...)</code>, etc).</p>
+<p>In the example below, be sure to replace <code>VERSION_GOES_HERE</code> with the actual version of the <a href="https://github.com/statgen/locuszoom/releases">newest release</a>. It is possible to omit <code>@VERSION</code> entirely, but in order to keep up with a fast changing field, sometimes we need to make breaking changes. Using a real version string allows you to avoid things breaking by surprise later.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1"></a><span class="op">&lt;</span>link rel<span class="op">=</span><span class="st">&quot;stylesheet&quot;</span> href<span class="op">=</span><span class="st">&quot;https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.css&quot;</span> type<span class="op">=</span><span class="st">&quot;text/css&quot;</span><span class="op">/&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="op">&lt;</span>script src<span class="op">=</span><span class="st">&quot;https://cdn.jsdelivr.net/npm/d3@^5.16.0&quot;</span> type<span class="op">=</span><span class="st">&quot;application/javascript&quot;</span><span class="op">&gt;&lt;/</span>script<span class="op">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="op">&lt;</span>script src<span class="op">=</span><span class="st">&quot;https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.app.min.js&quot;</span> type<span class="op">=</span><span class="st">&quot;application/javascript&quot;</span><span class="op">&gt;&lt;/</span>script<span class="op">&gt;</span></span></code></pre></div>
+<h3 id="modern-js-frameworks-with-a-build-step">Modern JS frameworks with a “build” step</h3>
+<p>Many “modern” JS frameworks (like React or Vue.js) use package managers (npm) and build tools (such as webpack) to manage the code and assets for your app. LocusZoom.js can be incorporated into fully modern tools as follows:</p>
+<p>First install the library using your package manager, which will keep track of the version known to work with your app:</p>
+<p><code>$ npm install locuszoom</code></p>
+<p>Then, load the code where it is used, and write code as normally. This will load from native ES6 module files for a smaller build size. From there, you can access all helper methods from the parent symbol, eg <code>LocusZoom.populate()</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1"></a><span class="im">import</span> LocusZoom <span class="im">from</span> <span class="st">&#39;locuszoom&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="im">import</span> <span class="st">&#39;locuszoom/dist/locuszoom.css&#39;</span><span class="op">;</span></span></code></pre></div>
+<blockquote>
+<p>TIP: Many build tools will recognize the import of a CSS file, and automatically combine it with your other CSS files into a single bundle. If you have problems importing CSS this way, you can instead load the stylesheet from a <code>&lt;link&gt;</code> tag in your HTML, as in the previous section.</p>
+</blockquote>
+<p>If you are a very experienced developer, you may notice that we are using helper methods like <code>LocusZoom.populate()</code>, instead of importing individual symbols like <code>populate</code>. We have chosen this coding style because it lets us write a single set of instructions for all of our users, regardless of what tools they use.</p>
+<h2 id="create-your-first-plot">Create your first plot</h2>
+<p>Creating a LocusZoom plot requires three pieces of information:</p>
+<ul>
+<li>Where to render the plot (eg, the unique ID of an HTML element on the page)</li>
+<li>Where to find data (see: <a href="data_retrieval.html">Working with data</a>)</li>
+<li>How to render the data (see: <a href="rendering_layouts.html">Layouts and visualization options</a>)</li>
+</ul>
+<p>Once defined, these values can be passed to the populate() method along with a selector to identify a div, like so:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">const</span> plot <span class="op">=</span> LocusZoom<span class="op">.</span><span class="fu">populate</span>(selector_id<span class="op">,</span> data_sources<span class="op">,</span> layout)<span class="op">;</span></span></code></pre></div>
+<p>The “classic” LocusZoom plot consists of two panels: a GWAS scatter plot on top, and a view of nearby genes in the region on bottom. See <a href="simplest_template.html">simple GWAS template</a> for the code you will need to get started. This introduction describes the very broad outlines of the process, but additional guides are available that cover each piece in more detail.</p>
+<h2 id="do-you-really-need-to-write-code">Do you really need to write code?</h2>
+<p>If your only goal is to generate a LocusZoom plot, we provide two “plot your own data” services that provide the benefits of LocusZoom.js without writing any code at all:</p>
+<ul>
+<li><a href="https://statgen.github.io/localzoom/">LocalZoom</a> - Generate plots from a tabix-indexed file, without uploading for a shared server. Good for sensitive data.</li>
+<li><a href="https://my.locuszoom.org">my.locuszoom.org</a> - Upload your data to our server to create interactive, shareable plots plus summary information (such as a manhattan plot and list of top loci). The upload process will add annotations such as rsID and nearby genes of interest.</li>
+</ul>
+<h1 id="what-does-locuszoom.js-provide">What does LocusZoom.js provide?</h1>
+<p>LocusZoom-style visualizations are widely used throughout the field of genetics, and this is by no means the only tool available for creating them. However, many existing tools only create a static image. LocusZoom.js was designed to power large data-exploration hubs such as PheWeb or the HuGeAMP family of knowledge portals: it can be used by websites that want to take full advantage of what the web browser has to offer.</p>
+<ul>
+<li>A public <a href="https://portaldev.sph.umich.edu/docs/api/v1/#introduction">REST API</a> with “standard” datasets that are useful for any LocusZoom plot (genes, recombination rate, etc), and an associated <a href="https://portaldev.sph.umich.edu/playground">LDServer</a> to calculate on-the-fly Linkage Disequilibrium for 1000G</li>
+<li>Data Adapters that support fetching your data from a variety of sources, such as dynamic REST APIs, static blobs, or tabix-indexed files on a static web host.</li>
+<li>Visualization types for several common types of data (including scatter plot, genes, PheWAS, and chromatin coaccessibility)</li>
+<li>Interactive features allow the user to change the region that is displayed, form connections between the data shown on related tracks, or filter out data elements to focus on the most interesting parts of your data<br />
+</li>
+<li>A toolkit for building advanced, interactive plots that connect to other data on the page
+<ul>
+<li>Toolbar buttons that perform calculations or change what is displayed</li>
+<li>Tables that can update whenever data changes</li>
+<li>Plugins to update the page URL and create bookmarkable views for interesting regions</li>
+</ul></li>
+</ul>
+<h1 id="key-concepts-for-developers-looking-to-go-deeper">Key concepts for developers looking to go deeper</h1>
+<h2 id="declarative-and-configuration-driven">Declarative and configuration driven</h2>
+<p>As you read the examples, you may notice that all of our instructions are based on layout objects that ask for features by name (a declarative style), rather than creating new classes directly and managing every aspect of the plot yourself (imperative). This is for two reasons:</p>
+<ol type="1">
+<li>LocusZoom.js provides a number of plugins that make it easy to inject custom user-provided functions that modify the behavior of existing rendering types. The declarative layout system (asking for features by name) makes it easy to use both premade features and “extra” code from plugins in a consistent way, without extra work.</li>
+<li>These configuration options allow you to activate complex functionality (like interactivity) using one or two lines of code.</li>
+</ol>
+<p>Each piece of the system has many configuration options; we provide a <a href="../api">full developer reference</a> with exhaustive details. Most websites will only need a small subset of the options, like “layout point color”. We encourage you to try the premade layouts first, and use the “how to” guidance below to help you focus on the specific page required for a given task.</p>
+<h2 id="visual-building-blocks">Visual building blocks</h2>
+<p>LocusZoom.js defines reusable, highly configurable building blocks that can be combined to create many kinds of visualization. This approach grants enormous flexibility, but it also means that the configuration (<em>layout</em>) can be very overwhelming at first. Understanding the basic structure and terminology can be very helpful in knowing where to look for more information.</p>
+<p>The key pieces are:</p>
+<ul>
+<li>A Plot is an instance of LocusZoom, and it is almost always created by the <code>LocusZoom.populate(...)</code> method. A plot is defined in terms of a layout. The visualization can be controlled programmatically by the initialized <code>plot</code> instance, with various <a href="../api/Plot.html">options and supported methods</a><br />
+</li>
+<li>A Panel is a subdivided area of a plot. Panels contain graph features such as titles, axes, and toolbar buttons, but they are not responsible for actual data. Panels occupy the full width the of the plot and are stacked vertically along the y-axis (typically in the order they are added). They are usually created through <a href="../api/Panel.html">layout configuration options</a> rather than custom code.</li>
+<li>A Data Layer is a layer within a panel that is responsible for rendering data. Data layers are stacked depth-wise along the z-axis, typically in the order they are added. They are usually created via layout configuration objects rather than custom mode. There are several <a href="../api/module-LocusZoom_DataLayers.html">rendering types</a> available, each with their own set of pre-defined behaviors.</li>
+<li>A Toolbar is an area above the plot and/or individual panels. It can show title text or user interface widgets that control how data is shown, or simply provide additional information for context. They are described with their own configuration rules, and a range of <a href="../api/module-LocusZoom_Widgets.html">interactive widgets</a> are available.</li>
+<li>A <a href="../api/module-components_legend-Legend.html">Legend</a> provides information needed to interpret the visualization. To show a legend, configuration must be provided in two places: the panel describes the legend position, and each specific data layer describes which elements should appear in the legend. Most data layers require the legend to be defined manually, to reflect the specific options of color/size/shape that are most relevant to the visualization. (see panel and layer documentation for legend configuration options)</li>
+</ul>
+<p>To achieve high reusability, each of these building blocks is intended to be loosely coupled: building blocks typically do not know about or depend on the internal data structures, state, or behavior of other pieces. For example, each data layer is responsible for requesting its own data and maintaining its own state. Similarly, scale functions are generally stateless (eg, operate only on a single scalar value from a single datum element).</p>
+<figure>
+<img src="../svg_architecture.svg" alt="" /><figcaption>Each plot can have several sections (panels), each with several types of data stacked as layers</figcaption>
+</figure>
+<h3 id="elements-communicate-through-events">Elements communicate through events</h3>
+<p>Plots are not limited to a static visualization: they are capable of sharing data with elements outside the page, as well as forming connections with matching data elements on other panels. (see: <a href="interactivity.html">guide to interactivity</a>)</p>
+<p>This is achieved via <em>events</em>. Common actions (such as clicking a point, dragging to change the view, or receiving new data) will emit an event, along with information about how the event was triggered. Events are used for internal features (such as match events between decoupled data layers), but they can also be used to communicate with external widgets like a table of data on the page.</p>
+<p>See the full <a href="../api/global.html#event:baseLZEvent">developer documentation</a> for a list of available events and how they are emitted.</p>
+<h2 id="separation-of-concerns">Separation of concerns</h2>
+<p>Visualizations are responsible for displaying the information given. Each element is intended to be largely isolated and decoupled: for the most part, pieces can be mixed and matched without needing to know about (or influence) the internal behavior of other pieces.</p>
+<p>Operations on data are performed by the following elements, * <a href="../api/module-LocusZoom_Adapters.html">Adapters</a> coordinate the formatting and retrieval of data (see: <a href="data_retrieval.html">guide to working with data</a>) * Various function registries provide a way to modify the display or behavior of elements by injecting custom user-defined code into existing reusable elements:<br />
+* <a href="../api/module-LocusZoom_MatchFunctions.html">Matching functions</a> coordinate filter and match operations that affect which items are displayed across different panels (see: <a href="interactivity.html">guide to interactivity</a>). * <a href="../api/module-LocusZoom_ScaleFunctions.html">Scale functions</a> can be used to control the size, shape, or color of various plot elements. These are used in any layout directives marked as <code>ScalableParameter</code> in the developer configuration documentation. * <a href="../api/module-LocusZoom_TransformationFunctions.html">Transformation Functions</a> are used to control the display or content of field values in tooltips, axis labels, etc. They are used in the template syntax <code>{{fieldname|functionname}}</code></p>
+<h2 id="documentation-by-example">Documentation by example</h2>
+<p>Plots are highly customizable, and it can be easy to get lost in the dense web of configuration options. In addition to the <a href="..">prose documentation</a>, we provide a wide range of source code examples that demonstrate how to do specific things. (see the resources below for details) Documentation by example is an explicit and formal part of our documentation process.</p>
+<h2 id="open-source-software">Open source software</h2>
+<p>LocusZoom.js is an <a href="https://github.com/statgen/locuszoom">open source</a> project under the permissive MIT license. We welcome and encourage contributions from our users. If there is a new visualization or feature that you would like to see, please reach out via our <a href="https://github.com/statgen/locuszoom/issues">public issue tracker</a> or <a href="https://groups.google.com/forum/#!forum/locuszoom">mailing list</a> to get started.</p>
+<h1 id="resources">Resources</h1>
+<h2 id="see-it-in-action">See it in action</h2>
+<p>LocusZoom.js has many advanced features. Some are implemented in code, and others are available as configuration options. We provide a range of examples for how to use it. Many of the examples below are open source.</p>
+<ul>
+<li><a href="https://statgen.github.io/locuszoom">LocusZoom.js example gallery</a> - Demonstrates how to use LocusZoom.js for common visualization types, with minor customization and interactivity. A focus on built-in features and layouts, with some introductory text.</li>
+<li><a href="https://my.locuszoom.org">my.locuszoom.org</a> - Plot your own data without having to write JavaScript. Built on <a href="https://statgen.github.io/localzoom/">LocalZoom</a>, an <a href="https://github.com/statgen/localzoom">open-source</a> tool that shows how to use LocusZoom.js with modern javascript frameworks like vue.js.</li>
+<li><a href="https://github.com/statgen/pheweb">PheWeb</a> - A tool to build multi-phenotype GWAS browsers. Used by dozens of research groups worldwide. (<a href="https://doi.org/10.1038/s41588-020-0622-5">paper</a>)</li>
+<li><a href="https://hugeamp.org/">HuGeAMP</a> - Knowledge Portals that bring together genetic, epigenomic, and computational results for multiple diseases and traits.</li>
+<li><a href="https://eqtl.pheweb.org/">FIVEx</a> - An interactive multi-tissue eQTL browser. (<a href="https://www.biorxiv.org/content/10.1101/2021.01.22.426874v1">preprint</a>)</li>
+<li><a href="https://www.crocpot.org/crocpot/">CROCPOT</a> - ChROmatin-based Collection of Predicted Target genes. A repository and genome browser of data linking pairs of genomic loci for example from 3D chromatin interaction, single cell chromatin accessibility and CRISPRi screen assays</li>
+<li>…and others! Let us know if you have a tool you would like to share.</li>
+</ul>
+<h2 id="documentation">Documentation</h2>
+<p>LocusZoom provides a lot of functionality, but getting the most of it does requires some help. We provide prose guides on the following topics:</p>
+<ul>
+<li>Where to find data (see: <a href="data_retrieval.html">Working with data</a>)</li>
+<li>How to render the data (see: <a href="rendering_layouts.html">Layouts and visualization options</a>)</li>
+<li>Advanced interactive features (see: <a href="interactivity.html">Mechanisms for Interactivity</a>)</li>
+</ul>
+<p>If you are ready to go deeper, see the <a href="../api/">detailed API documentation</a>, describing all the configuration options, plugins, and visualization types available.</p>
+</body>
+</html>

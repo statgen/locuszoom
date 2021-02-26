@@ -1,4 +1,8 @@
-/** @module */
+/**
+ * Helpers that control the display of individual points and field values
+ * @module
+ * @private
+ */
 import * as d3 from 'd3';
 
 import Field from '../data/field';
@@ -135,16 +139,18 @@ function prettyTicks(range, clip_range, target_tick_count) {
  *  Only works on scalar values in data! Will ignore non-scalars. This is useful in, eg, tooltip templates.
  *
  *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
- * @param {Object} data
  * @param {String} html A placeholder string in which to substitute fields. Supports several template options:
  *   `{{field_name}}` is a variable placeholder for the value of `field_name` from the provided data
  *   `{{#if field_name}} Conditional text {{/if}}` will insert the contents of the tag only if the value exists.
- *     Since this is only an existence check, **variables with a value of 0 will be evaluated as true**.
  *     This can be used with namespaced values, `{{#if assoc:field}}`; any dynamic namespacing will be applied when the
- *     layout is first retrieved.
+ *     layout is first retrieved. For numbers, transforms like `{{#if field|is_numeric}}` can help to ensure that 0
+ *     values are displayed when expected.
+ *     Can optionally take an else block, useful for things like toggle buttons: {{#if field}} ... {{#else}} ... {{/if}}
+ * @param {Object} data The data associated with a particular element. Eg, tooltips often appear over a specific point.
+ * @param {Object|null} extra Any additional fields (eg element annotations) associated with the specified datum
  * @returns {string}
  */
-function parseFields(data, html) {
+function parseFields(html, data, extra) {
     if (typeof data != 'object') {
         throw new Error('invalid arguments: data is not an object');
     }
@@ -154,19 +160,27 @@ function parseFields(data, html) {
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
     const tokens = [];
-    const regex = /{{(?:(#if )?([A-Za-z0-9_:|]+)|(\/if))}}/;
+    const regex = /{{(?:(#if )?([A-Za-z0-9_:|]+)|(#else)|(\/if))}}/;
     while (html.length > 0) {
         const m = regex.exec(html);
         if (!m) {
-            tokens.push({text: html}); html = '';
+            tokens.push({text: html});
+            html = '';
         } else if (m.index !== 0) {
-            tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index);
+            tokens.push({text: html.slice(0, m.index)});
+            html = html.slice(m.index);
         } else if (m[1] === '#if ') {
-            tokens.push({condition: m[2]}); html = html.slice(m[0].length);
+            tokens.push({condition: m[2]});
+            html = html.slice(m[0].length);
         } else if (m[2]) {
-            tokens.push({variable: m[2]}); html = html.slice(m[0].length);
-        } else if (m[3] === '/if') {
-            tokens.push({close: 'if'}); html = html.slice(m[0].length);
+            tokens.push({variable: m[2]});
+            html = html.slice(m[0].length);
+        } else if (m[3] === '#else') {
+            tokens.push({branch: 'else'});
+            html = html.slice(m[0].length);
+        } else if (m[4] === '/if') {
+            tokens.push({close: 'if'});
+            html = html.slice(m[0].length);
         } else {
             console.error(`Error tokenizing tooltip when remaining template is ${JSON.stringify(html)} and previous tokens are ${JSON.stringify(tokens)} and current regex match is ${JSON.stringify([m[1], m[2], m[3]])}`);
             html = html.slice(m[0].length);
@@ -177,13 +191,19 @@ function parseFields(data, html) {
         if (typeof token.text !== 'undefined' || token.variable) {
             return token;
         } else if (token.condition) {
-            token.then = [];
+            let dest = token.then = [];
+            token.else = [];
+            // Inside an if block, consume all tokens related to text and/or else block
             while (tokens.length > 0) {
                 if (tokens[0].close === 'if') {
                     tokens.shift();
                     break;
                 }
-                token.then.push(astify());
+                if (tokens[0].branch === 'else') {
+                    tokens.shift();
+                    dest = token.else;
+                }
+                dest.push(astify());
             }
             return token;
         } else {
@@ -200,7 +220,7 @@ function parseFields(data, html) {
 
     const resolve = function (variable) {
         if (!Object.prototype.hasOwnProperty.call(resolve.cache, variable)) {
-            resolve.cache[variable] = (new Field(variable)).resolve(data);
+            resolve.cache[variable] = (new Field(variable)).resolve(data, extra);
         }
         return resolve.cache[variable];
     };
@@ -224,8 +244,10 @@ function parseFields(data, html) {
         } else if (node.condition) {
             try {
                 const condition = resolve(node.condition);
-                if (condition || condition === 0) {
+                if (condition) {
                     return node.then.map(render_node).join('');
+                } else if (node.else) {
+                    return node.else.map(render_node).join('');
                 }
             } catch (error) {
                 console.error(`Error while processing condition ${JSON.stringify(node.variable)}`);
@@ -241,10 +263,11 @@ function parseFields(data, html) {
 /**
  * Populate a single element with a LocusZoom plot. This is the primary means of generating a new plot, and is part
  *  of the public interface for LocusZoom.
+ * @alias module:LocusZoom~populate
  * @public
  * @param {String|d3.selection} selector CSS selector for the container element where the plot will be mounted. Any pre-existing
  *   content in the container will be completely replaced.
- * @param {DataSources} datasource Ensemble of data providers used by the plot
+ * @param {module:LocusZoom~DataSources} datasource Ensemble of data providers used by the plot
  * @param {Object} layout A JSON-serializable object of layout configuration parameters
  * @returns {Plot} The newly created plot instance
  */

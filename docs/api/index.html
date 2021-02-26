@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>LocusZoom</h1>
+<p>LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.</p>
+<p><img src="https://github.com/statgen/locuszoom/workflows/Unit%20tests/badge.svg?branch=develop" alt="Build Status"></p>
+<p>See <a href="https://github.com/statgen/locuszoom/wiki">github.com/statgen/locuszoom/wiki</a> for full documentation and API reference.</p>
+<p>To see functional examples of plots generated with LocusZoom.js see <a href="http://statgen.github.io/locuszoom/">statgen.github.io/locuszoom</a> and <a href="http://statgen.github.io/locuszoom/#examples">statgen.github.io/locuszoom/#examples</a>.</p>
+<p><img src="http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png" alt="LocusZoom.js Standard Association Plot"></p>
+<h2>Making a LocusZoom Plot</h2>
+<h3>1. Include Necessary JavaScript and CSS</h3>
+<p>The page you build that embeds the LocusZoom plugin must include the following resources, found in the <code>dist</code> directory:</p>
+<ul>
+<li>
+<p><code>d3.js</code><br>
+<a href="https://d3js.org/">D3.js</a> v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded <a href="https://cdn.jsdelivr.net/npm/d3@%5E5.16.0">via a CDN</a>. It must be present before LocusZoom is loaded.</p>
+</li>
+<li>
+<p><code>locuszoom.app.min.js</code><br>
+This is the primary application logic. It should only be included <em>after</em> the vendor dependencies have been included.</p>
+</li>
+<li>
+<p><code>locuszoom.css</code><br>
+This is the primary stylesheet. It is namespaced so as not to conflict with any other styles defined on the same page.</p>
+</li>
+</ul>
+<p>Instead of copying the files to your project, <strong>we recommend using CDN links are for these resources</strong> (see <a href="http://statgen.github.io/locuszoom/">statgen.github.io/locuszoom/</a>).</p>
+<p><em>The above instructions describe using LocusZoom with pure JS and HTML. If you are using a module build system, LocusZoom supports usage via ES6 imports, eg:</em></p>
+<pre class="prettyprint source lang-javascript"><code>import LocusZoom from 'locuszoom';
+import 'locuszoom/dist/locuszoom.css';
+</code></pre>
+<h3>2. Define Data Sources</h3>
+<p><strong>Data Sources</strong> is an object representing a collection of arbitrarily many sources from which data for the plot can be requested. When adding sources to the collection they must be namespaced so that retrieving specific fields can be done with respect to specific data sources.</p>
+<p>Here's an example of defining a data sources object for a remote API:</p>
+<pre class="prettyprint source lang-javascript"><code>var data_sources = new LocusZoom.DataSources();
+data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;http://server.com/api/&quot;, params: {source: 1} }]);
+</code></pre>
+<p>The above example adds an &quot;AssociationLZ&quot; data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is &quot;assoc&quot;.</p>
+<p>Data sources can also be local files:</p>
+<pre class="prettyprint source lang-javascript"><code>data_sources = new LocusZoom.DataSources();
+data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;file:///path/to/data.json&quot; }]);
+</code></pre>
+<p>Refer to the <a href="https://statgen.github.io/locuszoom/docs/guides/data_retrieval.html">Working with data guide</a> for more information on using predefined data sources or extending/creating custom data sources.</p>
+<h3>3. Define a Layout</h3>
+<p><strong>Layout</strong> is a serializable object that describes the configuration of the LocusZoom plot, including what data will be pulled from the data sources and displayed in what way, along with visual characteristics like color and geometry.</p>
+<p>A layout definition may look something like this (simplified example; consult docs for details):</p>
+<pre class="prettyprint source lang-javascript"><code>var layout = {
+  width: 500,
+  height: 500,
+  panels: [
+    {
+      id: &quot;association&quot;,
+      data_layers: [
+         {
+           id: &quot;association&quot;,
+           type: &quot;scatter&quot;,
+           fields: [&quot;assoc:position&quot;, &quot;assoc:pvalue&quot;],
+           x_axis: { field: &quot;assoc:position&quot; },
+           y_axis: { field: &quot;assoc:pvalue&quot; }
+         }
+      ]
+    }
+  ]
+};
+</code></pre>
+<p>The above example defines a basic plot that is 500 pixels on a side and has one panel with one scatter plot data layer that pulls in position and pvalue from the &quot;trait&quot; data source, mapping position to the x axis and pvalue to the y axis.</p>
+<p>The LocusZoom.js library provides several pre-defined layouts for entire plots and subdivisions of plots such as panels, data layers, tool tips, etc. Refer to the <a href="https://statgen.github.io/locuszoom/guides/rendering_layouts.html">Layouts and visualization options guide</a> for more information.</p>
+<h3>4. Put it Together with <code>LocusZoom.populate()</code></h3>
+<p>With includes included, data sources defined, and a layout defined, <code>LocusZoom.populate()</code> will accept a CSS selector string to populate the first matching element with a plot.</p>
+<p>A basic example may then look like this:</p>
+<pre class="prettyprint source lang-html"><code>&lt;html>
+  &lt;head>
+    &lt;script src=&quot;locuszoom.app.min.js&quot; type=&quot;text/javascript&quot;>&lt;/script>
+    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;locuszoom.css&quot;/>
+  &lt;/head>
+  &lt;body>
+    &lt;div id=&quot;plot&quot;>&lt;/div>
+    &lt;script type=&quot;text/javascript&quot;>
+      var data_sources = new LocusZoom.DataSources();
+      data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;https://server.com/api/single/&quot;, params: {source: 1} }]);
+      var layout = {
+        width: 500,
+        panels: [
+          {
+            id : &quot;association&quot;,
+            height: 500,
+            data_layers: [
+              {
+                id: &quot;association&quot;,
+                type: &quot;scatter&quot;,
+                fields: [&quot;assoc:position&quot;, &quot;assoc:pvalue&quot;],
+                x_axis: { field: &quot;assoc:position&quot; },
+                y_axis: { field: &quot;assoc:pvalue&quot; }
+              }
+            ]
+          }
+        ]
+      };
+      var plot = LocusZoom.populate(&quot;#lz-plot&quot;, data_sources, layout);
+    &lt;/script>
+  &lt;/body>
+&lt;/html>
+</code></pre>
+<h3>Other Ways To Make a LocusZoom Plot</h3>
+<h4>Use a Predefined Layout</h4>
+<p>The core LocusZoom library comes equipped with several predefined layouts, organized by type (&quot;plot&quot;, &quot;panel&quot;, &quot;data_layer&quot;, and &quot;toolbar&quot;). You can see what layouts are predefined by reading the contents of <code>assets/js/app/Layouts.js</code> or in the browser by entering <code>LocusZoom.Layouts.list()</code> (or to list one specific type: <code>LocusZoom.Layouts.list(type)</code>).</p>
+<p>Get any predefined layout by type and name using <code>LocusZoom.Layouts.get(type, name)</code>.</p>
+<p>If your data matches the field names and formats of the <a href="https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints">UMich PortalDev API</a>, these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary.</p>
+<p>See the <a href="https://statgen.github.io/locuszoom/docs/guides/rendering_layouts.html">guide to working with layouts</a> for further details.</p>
+<h4>Build a Layout Using Some Predefined Pieces</h4>
+<p><code>LocusZoom.Layouts.get(type, name)</code> can also be used to pull predefined layouts of smaller pieces, like data layers or
+toolbars, into a custom layout:</p>
+<pre class="prettyprint source lang-javascript"><code>const layout = {
+  width: 1000,
+  height: 500,
+  panels: [
+    LocusZoom.Layouts.get(&quot;panel&quot;, &quot;gwas&quot;),
+    {
+      id: &quot;custom_panel&quot;,
+      ...options
+    },
+    LocusZoom.Layouts.get(&quot;panel&quot;, &quot;genes&quot;)
+  ],
+  ...
+};
+</code></pre>
+<h4>Modify a Predefined Layout</h4>
+<p>The <code>get()</code> function also accepts a partial layout to be merged with the predefined layout as a third argument, providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:</p>
+<pre class="prettyprint source lang-javascript"><code>const changes = {
+  label_font_size: 20,
+  transition: false
+};
+LocusZoom.Layouts.get(&quot;data_layer&quot;, &quot;genes&quot;, changes);
+</code></pre>
+<h4>Predefining State by Building a State Object</h4>
+<p><strong>State</strong> is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the state object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization as a top-level parameter in the layout. For example:</p>
+<pre class="prettyprint source lang-javascript"><code>const layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
+</code></pre>
+<h4>Predefining State With <code>data-region</code></h4>
+<p>You can also describe the locus query aspect of the State (chromosome, start, and end position) using a <code>data-region</code> attribute of the containing element before populating it, like so:</p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;lz-plot&quot; data-region=&quot;10:114550452-115067678&quot;>&lt;/div>
+</code></pre>
+<p>When <code>LocusZoom.populate()</code> is executed on the element defined above it will automatically parse any <code>data-region</code> parameter to convert those values into the initial state.</p>
+<h2>Development Setup</h2>
+<h3>Dependencies</h3>
+<p>LocusZoom is an entirely client-side library designed to plug into arbitrary data sets, be they local files, APIs, or something else entirely. It has the following external dependencies:</p>
+<ul>
+<li><a href="http://d3js.org/">d3</a> for data visualization</li>
+</ul>
+<h3>Build System and Automated Testing</h3>
+<p>LocusZoom is bundled using Webpack. To install all necessary dependencies for a development environment, run:</p>
+<pre class="prettyprint source lang-bash"><code>$ npm install
+</code></pre>
+<p>We recommend using node.js v12 or greater to build the library and run tests.</p>
+<p>Once complete run <code>npm run build</code> from the top of the application directory to run all tests and build the LocusZoom library bundle.</p>
+<p>This build process will also write sourcemaps, to help with debugging code even in production environments.</p>
+<h4>Other supported build commands:</h4>
+<ul>
+<li><code>npm run test</code> - Run unit tests (optional: <code>npm run test:coverage</code> to output a code coverage report)</li>
+<li><code>npm run dev</code> - Automatically rebuild the library whenever code changes (development mode)</li>
+<li><code>npm run build</code> - Run tests, and if they pass, build the library for release</li>
+<li><code>npm run css</code> - Rebuild the CSS using SASS</li>
+<li><code>npm run docs</code> - Build the library documentation</li>
+</ul>
+<h4>Automated Testing</h4>
+<p>LocusZoom uses <a href="https://mochajs.org/">Mocha</a> for unit testing. Tests are located in the <code>test</code> subdirectory. Use <code>npm run test</code>.</p>
+<h3>Static analysis and code style</h3>
+<p>LocusZoom runs code quality checks via <a href="http://eslint.org/">ESLint</a>, the rules for which can be found in <code>.eslintrc</code>. This will run automatically as part of all new code commits, and during every build.</p>
+<h2>Help and Support</h2>
+<p>Full documentation can be found here: <a href="https://statgen.github.io/locuszoom/docs/">docs/</a></p>
+<p>A LocusZoom discussion forum is available here: <a href="https://groups.google.com/forum/#!forum/locuszoom">groups.google.com/forum/#!forum/locuszoom</a>.
+For the most effective help, please specify that your question  is about &quot;LocusZoom.js&quot;.</p>
+<p>If you have questions or feedback please file an issue on the <a href="https://github.com/statgen/locuszoom/issues">LocusZoom.js GitHub repository</a> or post at the discussion forum referenced above.</p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

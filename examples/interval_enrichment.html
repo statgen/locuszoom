@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+    <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+   <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+
+    <!-- Helpers that use an extension to add functionality to LocusZoom -->
+    <script src="../dist/ext/lz-intervals-enrichment.min.js" type="application/javascript"></script>
+
+    <title>LocusZoom.js ~ Interval Enrichment Example</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body style="background-color: #FAFAFA; margin-left: 20px; margin-right: 20px;">
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Interval Annotations Example</h3>
+      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>
+        This example shows a typical LocusZoom plot with an additional panel to depict Interval Enrichment Tracks.
+        This track relies on an API unique to the HuGeAMP family of knowledge portals; thus, this demo uses a formatted JSON file and offers limited interactivity.
+      </p>
+      <div class="row">
+        <div class="twelve columns">
+          <div id="plot" data-region="1:55499000-55530502"></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+
+    </div>
+
+    <script type="text/javascript">
+
+    // Define Data Sources
+    var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+    var data_sources = new LocusZoom.DataSources()
+      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+      // There's no special transformation being done to intervals data- just fetch from a URL
+      .add("intervals", ["BaseApiAdapter", { url: 'data/intervals_enrichment_simplified.json' }])
+      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+
+    // Get the standard assocation plot layout from LocusZoom's built-in layouts
+    const layout = LocusZoom.Layouts.get("plot", "intervals_association_enrichment");
+
+    // In the demo, we use a static JSON file. Disable all pan and zoom interactions because there's no data out of range.
+    for (let panel of layout.panels) {
+        panel.interaction = {};
+    }
+
+    // Generate the LocusZoom plot
+    var plot = LocusZoom.populate("#plot", data_sources, layout);
+  </script>
+
+  </body>
+</html>

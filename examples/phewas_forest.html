@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,9 +7,11 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
     <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+    <!-- Helpers that use an extension to add functionality to LocusZoom -->
+    <script src="../dist/ext/lz-forest-track.min.js" type="text/javascript"></script>
 
     <title>LocusZoom.js ~ PheWAS (Forest) Example</title>
 
@@ -57,15 +59,14 @@
 
         // Define a reusable layout, and then retrieve it so that the namespaces get filled in
         LocusZoom.Layouts.add("plot", "phewas_forest", {
+            min_width: 400,
             width: 800,
-            height: 800,
             responsive_resize: true,
             panels: [
                 {
                     id: "phewasforest",
-                    width: 800,
+                    min_height: 400,
                     height: 800,
-                    proportional_width: 1,
                     margin: { top: 35, right: 220, bottom: 50, left: 20 },
                     inner_border: "rgba(210, 210, 210, 0.85)",
                     toolbar: {

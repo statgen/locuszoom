@@ -1,14 +1,45 @@
 /**
-Interval annotation track (for chromatin state, etc). Useful for BED file data with non-overlapping intervals.
-This is not part of the core LocusZoom library, but can be included as a standalone file.
-
-The page must incorporate and load all libraries before this file can be used, including:
- - Vendor assets
- - LocusZoom
- @module
-*/
+ * Interval annotation track (for chromatin state, etc). Useful for BED file data with non-overlapping intervals.
+ *  This is not part of the core LocusZoom library, but can be included as a standalone file.
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_Adapters~IntervalLZ}
+ * * {@link module:LocusZoom_Widgets~toggle_split_tracks}
+ * * {@link module:LocusZoom_ScaleFunctions~to_rgb}
+ * * {@link module:LocusZoom_DataLayers~intervals}
+ * * {@link module:LocusZoom_Layouts~standard_intervals}
+ * * {@link module:LocusZoom_Layouts~intervals_layer}
+ * * {@link module:LocusZoom_Layouts~intervals}
+ * * {@link module:LocusZoom_Layouts~interval_association}
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-intervals-track.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import IntervalsTrack from 'locuszoom/esm/ext/lz-intervals-track';
+ * LocusZoom.use(IntervalsTrack);
+ * ```
+ *
+ * Then use the features made available by this extension. (see demos and documentation for guidance)
+ * @module
+ */
 
 import * as d3 from 'd3';
+
+
+// Coordinates (start, end) are cached to facilitate rendering
+const XCS = Symbol.for('lzXCS');
+const YCS = Symbol.for('lzYCS');
+const XCE = Symbol.for('lzXCE');
+const YCE = Symbol.for('lzYCE');
 
 
 function install (LocusZoom) {
@@ -17,8 +48,12 @@ function install (LocusZoom) {
     const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
     /**
-     * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
+     * (**extension**) Retrieve Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
      * @public
+     * @alias module:LocusZoom_Adapters~IntervalLZ
+     * @see module:LocusZoom_Adapters~BaseApiAdapter
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     * @param {number} config.params.source The numeric ID for a specific dataset as assigned by the API server
      */
     class IntervalLZ extends BaseApiAdapter {
         getURL(state, chain, fields) {
@@ -29,9 +64,16 @@ function install (LocusZoom) {
     }
 
     /**
-     * Button to toggle split tracks
+     * (**extension**) Button to toggle split tracks mode in an intervals track. This button only works as a panel-level toolbar
+     *   and when used with an intervals data layer from this extension.
+     * @alias module:LocusZoom_Widgets~toggle_split_tracks
+     * @see module:LocusZoom_Widgets~BaseWidget
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      */
     class ToggleSplitTracks extends _BaseWidget {
+        /**
+         * @param {string} layout.data_layer_id The ID of the data layer that this button is intended to control.
+         */
         constructor(layout) {
             super(...arguments);
             if (!layout.data_layer_id) {
@@ -57,6 +99,9 @@ function install (LocusZoom) {
                     .setTitle('Toggle whether tracks are split apart or merged together')
                     .setOnclick(() => {
                         data_layer.toggleSplitTracks();
+                        // FIXME: the timeout calls to scale and position (below) cause full ~5 additional re-renders
+                        //  If we can remove these it will greatly speed up re-rendering.
+                        // The key problem here is that the height is apparently not known in advance and is determined after re-render.
                         if (this.scale_timeout) {
                             clearTimeout(this.scale_timeout);
                         }
@@ -73,11 +118,12 @@ function install (LocusZoom) {
 
 
     /**
-     * Convert a value ""rr,gg,bb" (if given) to a css-friendly color string: "rgb(rr,gg,bb)".
+     * (**extension**) Convert a value ""rr,gg,bb" (if given) to a css-friendly color string: "rgb(rr,gg,bb)".
      * This is tailored specifically to the color specification format embraced by the BED file standard.
-     * @function to_rgb
+     * @alias module:LocusZoom_ScaleFunctions~to_rgb
      * @param {Object} parameters This function has no defined configuration options
      * @param {String|null} value The value to convert to rgb
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      */
     function to_rgb(parameters, value) {
         return value ? `rgb(${value})` : null;
@@ -104,24 +150,157 @@ function install (LocusZoom) {
         tooltip_positioning: 'vertical',
     };
 
+    const BaseLayer = LocusZoom.DataLayers.get('BaseDataLayer');
 
     /**
-     * Intervals Data Layer
-     * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
+     * (**extension**) Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
+     * Each interval (such as from a BED file) will be rendered as a rectangle. All spans can be rendered on the same
+     *  row, or each (auto-detected) category can be rendered as one row per category.
+     *
+     * This layer is intended to work with a variety of datasets with special requirements. As such, it has a lot
+     *  of configuration options devoted to identifying how to fill in missing information (such as color)
+     *
+     * @alias module:LocusZoom_DataLayers~intervals
+     * @see module:LocusZoom_DataLayers~BaseDataLayer
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      */
-    const BaseLayer = LocusZoom.DataLayers.get('BaseDataLayer');
     class LzIntervalsTrack extends BaseLayer {
+        /**
+         * @param {string} [layout.start_field='start'] The field that defines interval start position
+         * @param {string} [layout.end_field='end'] The field that defines interval end position
+         * @param {string} [layout.track_label_field='state_name'] Used to label items on the y-axis
+         * @param {string} [layout.track_split_field='state_id'] Used to define categories on the y-axis. It is usually most convenient to use
+         *  the same value for state_field and label_field (eg 1:1 correspondence).
+         * @param {*|'DESC'} [layout.track_split_order='DESC'] When in split tracks mode, should categories be shown in
+         *  the order given, or descending order
+         * @param {number} [layout.track_split_legend_to_y_axis=2]
+         * @param {boolean} [layout.split_tracks=true] Whether to show tracks as merged (one row) or split (many rows)
+         *  on initial render.
+         * @param {number} [layout.track_height=15] The height of each interval rectangle, in px
+         * @param {number} [layout.track_vertical_spacing=3]
+         * @param {number} [layout.bounding_box_padding=2]
+         * @param {boolean} [layout.always_hide_legend=false] Normally the legend is shown in merged mode and hidden
+         *  in split mode. For datasets with a very large number of categories, it may make sense to hide the legend at all times.
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#B8B8B8'] The color of each datum rectangle
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1]
+         * @param {string} [layout.tooltip_positioning='vertical']
+         */
         constructor(layout) {
             LocusZoom.Layouts.merge(layout, default_layout);
             super(...arguments);
-            this.tracks = 1;
-            this.previous_tracks = 1;
+            this._previous_categories = [];
+            this._categories = [];
+        }
 
-            // track-number-indexed object with arrays of interval indexes in the dataset
-            this.interval_track_index = { 1: [] };
+        initialize() {
+            super.initialize();
+            this._statusnodes_group = this.svg.group.append('g')
+                .attr('class', 'lz-data-layer-intervals lz-data-layer-intervals-statusnode');
+            this._datanodes_group = this.svg.group.append('g')
+                .attr('class', 'lz-data_layer-intervals');
         }
 
         /**
+         * Split data into tracks such that anything with a common grouping field is in the same track
+         * @param data
+         * @return {unknown[]}
+         * @private
+         */
+        _arrangeTrackSplit(data) {
+            const {track_split_field} = this.layout;
+            const result = {};
+            data.forEach((item) => {
+                const item_key = item[track_split_field];
+                if (!Object.prototype.hasOwnProperty.call(result, item_key)) {
+                    result[item_key] = [];
+                }
+                result[item_key].push(item);
+            });
+            return result;
+        }
+
+        /**
+         * Split data into rows using a simple greedy algorithm such that no two items overlap (share same interval)
+         * Assumes that the data are sorted so item1.start always <= item2.start.
+         *
+         * This function can also simply return all data on a single row. This functionality may become configurable
+         *  in the future but for now reflects a lack of clarity in the requirements/spec. The code to split
+         *  overlapping items is present but may not see direct use.
+         */
+        _arrangeTracksLinear(data, allow_overlap = true) {
+            if (allow_overlap) {
+                // If overlap is allowed, then all the data can live on a single row
+                return [data];
+            }
+
+            // ASSUMPTION: Data is given to us already sorted by start position to facilitate grouping.
+            // We do not sort here because JS "sort" is not stable- if there are many intervals that overlap, then we
+            //   can get different layouts (number/order of rows) on each call to "render".
+            //
+            // At present, we decide how to update the y-axis based on whether current and former number of rows are
+            //  the same. An unstable sort leads to layout thrashing/too many re-renders. FIXME: don't rely on counts
+            const {start_field, end_field} = this.layout;
+
+            const grouped_data = [[]]; // Prevent two items from colliding by rendering them to different rows, like genes
+            data.forEach((item, index) => {
+                for (let i = 0; i < grouped_data.length; i++) {
+                    // Iterate over all rows of the
+                    const row_to_test = grouped_data[i];
+                    const last_item = row_to_test[row_to_test.length - 1];
+                    // Some programs report open intervals, eg 0-1,1-2,2-3; these points are not considered to overlap (hence the test isn't "<=")
+                    const has_overlap = last_item && (item[start_field] < last_item[end_field]) && (last_item[start_field] < item[end_field]);
+                    if (!has_overlap) {
+                        // If there is no overlap, add item to current row, and move on to the next item
+                        row_to_test.push(item);
+                        return;
+                    }
+                }
+                // If this item would collide on all existing rows, create a new row
+                grouped_data.push([item]);
+            });
+            return grouped_data;
+        }
+
+        /**
+         * Annotate each item with the track number, and return.
+         * @param {Object[]}data
+         * @private
+         * @return [String[], Object[]] Return the categories and the data array
+         */
+        _assignTracks(data) {
+            // Flatten the grouped data.
+            const {x_scale} = this.parent;
+            const {start_field, end_field, bounding_box_padding, track_height} = this.layout;
+
+            const grouped_data = this.layout.split_tracks ? this._arrangeTrackSplit(data) : this._arrangeTracksLinear(data, true);
+            const categories = Object.keys(grouped_data);
+            if (this.layout.track_split_order === 'DESC') {
+                categories.reverse();
+            }
+
+            categories.forEach((key, row_index) => {
+                const row = grouped_data[key];
+                row.forEach((item) => {
+                    item[XCS] = x_scale(item[start_field]);
+                    item[XCE] = x_scale(item[end_field]);
+                    item[YCS] = row_index * this.getTrackHeight() + bounding_box_padding;
+                    item[YCE] = item[YCS] + track_height;
+                    // Store the row ID, so that clicking on a point can find the right status node (big highlight box)
+                    item.track = row_index;
+                });
+            });
+            // We're mutating elements of the original data array as a side effect: the return value here is
+            //  interchangeable with `this.data` for subsequent usages
+            // TODO: Can replace this with array.flat once polyfill support improves
+            return [categories, Object.values(grouped_data).reduce((acc, val) => acc.concat(val), [])];
+        }
+
+        /**
+         * When we are in "split tracks mode", it's convenient to wrap all individual annotations with a shared
+         *  highlight box that wraps everything on that row.
+         *
+         * This is done automatically by the "setElementStatus" code, if this function returns a non-null value
+         *
          * To define shared highlighting on the track split field define the status node id override
          * to generate an ID common to the track when we're actively splitting data out to separate tracks
          * @override
@@ -129,9 +308,13 @@ function install (LocusZoom) {
          */
         getElementStatusNodeId(element) {
             if (this.layout.split_tracks) {
-                return (`${this.getBaseId()}-statusnode-${element[this.layout.track_split_field]}`).replace(/[^\w]/g, '_');
+                // Data nodes are bound to data objects, but the "status_nodes" selection is bound to numeric row IDs
+                const track = typeof element === 'object' ? element.track : element;
+                const base = `${this.getBaseId()}-statusnode-${track}`;
+                return base.replace(/[^\w]/g, '_');
             }
-            return `${this.getElementId(element)}-statusnode`;
+            // In merged tracks mode, there is no separate status node
+            return null;
         }
 
         // Helper function to sum layout values to derive total height for a single interval track
@@ -196,243 +379,104 @@ function install (LocusZoom) {
             }
         }
 
-        // After we've loaded interval data interpret it to assign
-        // each to a track so that they do not overlap in the view
-        assignTracks() {
-            // Autogenerate layout options if not provided
-            this._applyLayoutOptions();
-
-            // Reinitialize some metadata
-            this.previous_tracks = this.tracks;
-            this.tracks = 0;
-            this.interval_track_index = { 1: [] };
-            // This maps unique values of track_split_field to unique y indices. It controls the ordering of separate tracks.
-            this.track_split_field_index = {};
-
-            // If splitting tracks by a field's value then determine how to order them. There are two options here:
-            // a) numeric IDs get sorted in numeric order (JS quirk: int object keys act like array indices), or
-            // b) text labels get sorted based on order in the source data (hash preserves insertion order)
-            if (this.layout.track_split_field && this.layout.split_tracks) {
-                this.data.forEach((d) => {
-                    this.track_split_field_index[d[this.layout.track_split_field]] = null;
-                });
-                const index = Object.keys(this.track_split_field_index);
-                if (this.layout.track_split_order === 'DESC') {
-                    index.reverse();
-                }
-                index.forEach((val) => {
-                    this.track_split_field_index[val] = this.tracks + 1;
-                    this.interval_track_index[this.tracks + 1] = [];
-                    this.tracks++;
-                });
-            }
-
-            this.data.forEach(function(d, i) {
-
-                // Stash a parent reference on the interval
-                this.data[i].parent = this;
-
-                // Determine display range start and end, based on minimum allowable interval display width,
-                // bounded by what we can see (range: values in terms of pixels on the screen)
-                this.data[i].display_range = {
-                    start: this.parent.x_scale(Math.max(d[this.layout.start_field], this.state.start)),
-                    end:   this.parent.x_scale(Math.min(d[this.layout.end_field], this.state.end)),
-                };
-                this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
-
-                // Convert and stash display range values into domain values
-                // (domain: values in terms of the data set, e.g. megabases)
-                this.data[i].display_domain = {
-                    start: this.parent.x_scale.invert(this.data[i].display_range.start),
-                    end:   this.parent.x_scale.invert(this.data[i].display_range.end),
-                };
-                this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
-
-                // If splitting to tracks based on the value of the designated track split field
-                // then don't bother with collision detection (intervals will be grouped on tracks
-                // solely by the value of track_split_field)
-                if (this.layout.track_split_field && this.layout.split_tracks) {
-                    const val = this.data[i][this.layout.track_split_field];
-                    this.data[i].track = this.track_split_field_index[val];
-                    this.interval_track_index[this.data[i].track].push(i);
-                } else {
-                    // If not splitting to tracks based on a field value then do so based on collision
-                    // detection (as how it's done for genes). Use display range/domain data generated
-                    // above and cast each interval to tracks such that none overlap
-                    this.tracks = 1;
-                    this.data[i].track = null;
-                    let potential_track = 1;
-                    while (this.data[i].track === null) {
-                        let collision_on_potential_track = false;
-                        this.interval_track_index[potential_track].map(function(placed_interval) {
-                            if (!collision_on_potential_track) {
-                                const min_start = Math.min(placed_interval.display_range.start, this.display_range.start);
-                                const max_end = Math.max(placed_interval.display_range.end, this.display_range.end);
-                                if ((max_end - min_start) < (placed_interval.display_range.width + this.display_range.width)) {
-                                    collision_on_potential_track = true;
-                                }
-                            }
-                        }.bind(this.data[i]));
-                        if (!collision_on_potential_track) {
-                            this.data[i].track = potential_track;
-                            this.interval_track_index[potential_track].push(this.data[i]);
-                        } else {
-                            potential_track++;
-                            if (potential_track > this.tracks) {
-                                this.tracks = potential_track;
-                                this.interval_track_index[potential_track] = [];
-                            }
-                        }
-                    }
-
-                }
-
-            }.bind(this));
-
-            return this;
-        }
-
         // Implement the main render function
         render() {
-            // Lay out space first
-            this.assignTracks();
+            //// Autogenerate layout options if not provided
+            this._applyLayoutOptions();
+
+            // Determine the appropriate layout for tracks. Store the previous categories (y axis ticks) to decide
+            //   whether the axis needs to be re-rendered.
+            this._previous_categories = this._categories;
+            const [categories, assigned_data] = this._assignTracks(this.data);
+            this._categories = categories;
+            // Update the legend axis if the number of ticks changed
+            const labels_changed = !categories.every( (item, index) => item === this._previous_categories[index]);
+            if (labels_changed) {
+                this.updateSplitTrackAxis(categories);
+                return;
+            }
 
             // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
-            const track_data = this._applyFilters();
+            const track_data = this._applyFilters(assigned_data);
 
-            // Remove any shared highlight nodes and re-render them if we're splitting on tracks
-            // At most there will only be dozen or so nodes here (one per track) and each time
-            // we render data we may have new tracks, so wiping/redrawing all is reasonable.
-            this.svg.group.selectAll('.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared').remove();
-            Object.keys(this.track_split_field_index).forEach((key) => {
-                // Make a psuedo-element so that we can generate an id for the shared node
-                const pseudoElement = {};
-                pseudoElement[this.layout.track_split_field] = key;
-                // Insert the shared node
-                this.svg.group.insert('rect', ':first-child')
-                    .attr('id', this.getElementStatusNodeId(pseudoElement))
+            // Clear before every render so that, eg, highlighting doesn't persist if we load a region with different
+            //  categories (row 2 might be a different category and it's confusing if the row stays highlighted but changes meaning)
+            // Highlighting will automatically get added back if it actually makes sense, courtesy of setElementStatus,
+            //  if a selected item is still in view after the new region loads.
+            this._statusnodes_group.selectAll('rect')
+                .remove();
+
+            // Reselect in order to add new data
+            const status_nodes = this._statusnodes_group.selectAll('rect')
+                .data(d3.range(categories.length));
+
+            if (this.layout.split_tracks) {
+                // Status nodes: a big highlight box around all items of the same type. Used in split tracks mode,
+                //  because everything on the same row is the same category and a group makes sense
+                // There are no status nodes in merged mode, because the same row contains many kinds of things
+
+                // Status nodes are 1 per row, so "data" can just be a dummy list of possible row IDs
+                // Each status node is a box that runs the length of the panel and receives a special "colored box" css
+                //  style when selected
+                const height = this.getTrackHeight();
+                status_nodes.enter()
+                    .append('rect')
                     .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared')
                     .attr('rx', this.layout.bounding_box_padding)
                     .attr('ry', this.layout.bounding_box_padding)
-                    .attr('width', this.parent.layout.cliparea.width)
-                    .attr('height', this.getTrackHeight() - this.layout.track_vertical_spacing)
+                    .merge(status_nodes)
+                    .attr('id', (d) => this.getElementStatusNodeId(d))
                     .attr('x', 0)
-                    .attr('y', (this.track_split_field_index[key] - 1) * this.getTrackHeight())
-                    .style('display', (this.layout.split_tracks ? null : 'none'));
-            });
-
-            // Render interval groups
-            const selection = this.svg.group.selectAll('g.lz-data_layer-intervals')
-                .data(track_data, (d) => {
-                    return d[this.layout.id_field];
-                });
-
-            selection.enter()
-                .append('g')
-                .attr('class', 'lz-data_layer-intervals')
-                .merge(selection)
-                .attr('id', (d) => this.getElementId(d))
-                .each(function(interval) {
-                    const data_layer = interval.parent;
-                    // Render interval status nodes (displayed behind intervals to show highlight
-                    // without needing to modify interval display element(s))
-                    const statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete')
-                        .data([interval], (d) => `${data_layer.getElementId(d)}-statusnode`);
-                    statusnodes.enter()
-                        .insert('rect', ':first-child')
-                        .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete')
-                        .merge(statusnodes)
-                        .attr('id', (d) => `${data_layer.getElementId(d)}-statusnode`)
-                        .attr('rx', data_layer.layout.bounding_box_padding)
-                        .attr('ry', data_layer.layout.bounding_box_padding)
-                        .style('display', data_layer.layout.split_tracks ? 'none' : null)
-                        .attr('width', (d) => d.display_range.width + (2 * data_layer.layout.bounding_box_padding))
-                        .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
-                        .attr('x', (d) => d.display_range.start - data_layer.layout.bounding_box_padding)
-                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
-
-                    statusnodes.exit()
-                        .remove();
-
-                    // Render primary interval rects
-                    const rects = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-interval_rect')
-                        .data([interval], (d) => `${d[data_layer.layout.id_field]}_interval_rect`);
-
-                    rects.enter()
-                        .append('rect')
-                        .attr('class', 'lz-data_layer-intervals lz-interval_rect')
-                        .merge(rects)
-                        .attr('width', (d) => d.display_range.width)
-                        .attr('height', data_layer.layout.track_height)
-                        .attr('x', (d) => d.display_range.start)
-                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()) + data_layer.layout.bounding_box_padding)
-                        .attr('fill', (d, i) => data_layer.resolveScalableParameter(data_layer.layout.color, d, i))
-                        .attr('fill-opacity', (d, i) => data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d, i));
-
-                    rects.exit()
-                        .remove();
-
-                    // Render interval click areas
-                    const clickareas = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-clickarea')
-                        .data([interval], (d) => `${d.interval_name}_clickarea`);
-
-                    clickareas.enter()
-                        .append('rect')
-                        .attr('class', 'lz-data_layer-intervals lz-clickarea')
-                        .merge(clickareas)
-                        .attr('id', (d) => `${data_layer.getElementId(d)}_clickarea`)
-                        .attr('rx', data_layer.layout.bounding_box_padding)
-                        .attr('ry', data_layer.layout.bounding_box_padding)
-                        .attr('width', (d) => d.display_range.width)
-                        .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
-                        .attr('x', (d) => d.display_range.start)
-                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()))
-                        // Apply default event emitters to clickareas
-                        .on('click', (element_data) => {
-                            element_data.parent.parent.emit('element_clicked', element_data, true);
-                        })
-                        // Apply mouse behaviors to clickareas
-                        .call(data_layer.applyBehaviors.bind(data_layer));
-
-                    // Remove old clickareas as needed
-                    clickareas.exit()
-                        .remove();
-                });
-
-            // Remove old elements as needed
-            selection.exit()
+                    .attr('y', (d) => (d * height))
+                    .attr('width', this.parent.layout.cliparea.width)
+                    .attr('height', height - this.layout.track_vertical_spacing);
+            }
+            status_nodes.exit()
                 .remove();
 
-            // Update the legend axis if the number of ticks changed
-            if (this.previous_tracks !== this.tracks) {
-                this.updateSplitTrackAxis();
-            }
+            // Draw rectangles for the data (intervals)
+            const data_nodes = this._datanodes_group.selectAll('rect')
+                .data(track_data, (d) => d[this.layout.id_field]);
+
+            data_nodes.enter()
+                .append('rect')
+                .merge(data_nodes)
+                .attr('id', (d) => this.getElementId(d))
+                .attr('x', (d) => d[XCS])
+                .attr('y', (d) => d[YCS])
+                .attr('width', (d) => d[XCE] - d[XCS])
+                .attr('height', this.layout.track_height)
+                .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+                .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i));
+
+            data_nodes.exit()
+                .remove();
+
+            this._datanodes_group
+                .call(this.applyBehaviors.bind(this));
 
             // The intervals track allows legends to be dynamically generated, in which case space can only be
             //  allocated after the panel has been rendered.
             if (this.parent && this.parent.legend) {
                 this.parent.legend.render();
             }
-
-            return this;
         }
 
         _getTooltipPosition(tooltip) {
-            const interval_bbox = d3.select(`#${this.getElementStatusNodeId(tooltip.data)}`).node().getBBox();
             return {
-                x_min: tooltip.data.display_range.start,
-                x_max: tooltip.data.display_range.end,
-                y_min: interval_bbox.y,
-                y_max: interval_bbox.y + interval_bbox.height,
+                x_min: tooltip.data[XCS],
+                x_max: tooltip.data[XCE],
+                y_min: tooltip.data[YCS],
+                y_max: tooltip.data[YCE],
             };
         }
 
         // Redraw split track axis or hide it, and show/hide the legend, as determined
         // by current layout parameters and data
-        updateSplitTrackAxis() {
+        updateSplitTrackAxis(categories) {
             const legend_axis = this.layout.track_split_legend_to_y_axis ? `y${this.layout.track_split_legend_to_y_axis}` : false;
             if (this.layout.split_tracks) {
-                const tracks = +this.tracks || 0;
+                const tracks = +categories.length || 0;
                 const track_height = +this.layout.track_height || 0;
                 const track_spacing = 2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
                 const target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);
@@ -452,13 +496,13 @@ function install (LocusZoom) {
                     // The list of unique keys corresponds to the order along the y-axis
                     this.layout.legend.forEach((element) => {
                         const key = element[this.layout.track_split_field];
-                        let track = this.track_split_field_index[key];
-                        if (track) {
+                        let track = categories.findIndex((item) => item === key);
+                        if (track !== -1) {
                             if (this.layout.track_split_order === 'DESC') {
                                 track = Math.abs(track - tracks - 1);
                             }
                             this.parent.layout.axes[legend_axis].ticks.push({
-                                y: track,
+                                y: track - 1,
                                 text: element.label,
                             });
                         }
@@ -468,8 +512,8 @@ function install (LocusZoom) {
                         floor: 1,
                         ceiling: tracks,
                     };
-                    this.parent.render();
                 }
+                // This will trigger a re-render
                 this.parent_plot.positionPanels();
             } else {
                 if (legend_axis && this.parent.legend) {
@@ -491,7 +535,6 @@ function install (LocusZoom) {
                 this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
             }
             this.render();
-            this.updateSplitTrackAxis();
             return this;
         }
 
@@ -551,6 +594,12 @@ function install (LocusZoom) {
         }
     }
 
+    /**
+     * (**extension**) A basic tooltip with information to be shown over an intervals datum
+     * @alias module:LocusZoom_Layouts~standard_intervals
+     * @type tooltip
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
     const intervals_tooltip_layout = {
         namespace: { 'intervals': 'intervals' },
         closable: false,
@@ -559,12 +608,19 @@ function install (LocusZoom) {
         html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}',
     };
 
+    /**
+     * (**extension**) A data layer with some preconfigured options for intervals display. This example was designed for chromHMM output,
+     *   in which various states are assigned numeric state IDs and (<= as many) text state names
+     * @alias module:LocusZoom_Layouts~intervals_layer
+     * @type data_layer
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
     const intervals_layer_layout =  {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals',
         type: 'intervals',
         fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name', '{{namespace[intervals]}}itemRgb'],
-        id_field: '{{namespace[intervals]}}start',
+        id_field: '{{namespace[intervals]}}start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
         track_split_field: '{{namespace[intervals]}}state_name',
@@ -578,6 +634,7 @@ function install (LocusZoom) {
                 scale_function: 'to_rgb',
             },
             {
+                // TODO: Consider changing this to stable_choice in the future, for more stable coloring
                 field: '{{namespace[intervals]}}state_name',
                 scale_function: 'categorical_bin',
                 parameters: {
@@ -606,12 +663,16 @@ function install (LocusZoom) {
         tooltip: intervals_tooltip_layout,
     };
 
+    /**
+     * (**extension**) A panel containing an intervals data layer, eg for BED tracks
+     * @alias module:LocusZoom_Layouts~intervals
+     * @type panel
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
     const intervals_panel_layout = {
         id: 'intervals',
-        width: 1000,
-        height: 50,
-        min_width: 500,
         min_height: 50,
+        height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
             const l = LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true });
@@ -637,25 +698,24 @@ function install (LocusZoom) {
         data_layers: [intervals_layer_layout],
     };
 
+    /**
+     * (**extension**) A plot layout that shows association summary statistics, genes, and interval data. This example assumes
+     *  chromHMM data. (see panel layout)
+     * @alias module:LocusZoom_Layouts~interval_association
+     * @type plot
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
     const intervals_plot_layout = {
         state: {},
         width: 800,
-        height: 550,
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association', {
-                unnamespaced: true,
-                width: 800,
-                proportional_height: (225 / 570),
-            }),
-            Object.assign(
-                { unnamespaced: true, proportional_height: (120 / 570) },
-                intervals_panel_layout
-            ),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
+            LocusZoom.Layouts.get('panel', 'association'),
+            LocusZoom.Layouts.merge({ unnamespaced: true, min_height: 120, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
 

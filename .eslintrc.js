@@ -22,7 +22,7 @@ module.exports = {
         'no-trailing-spaces': 'error',
         'no-unused-vars': [
             'error',
-            { 'args': 'none' },
+            { 'args': 'none', 'varsIgnorePattern': '^_+$' },
         ],
         'prefer-template': 'error',
         'quotes': [

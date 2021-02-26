@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Layouts and Visualization Options</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Layouts and Visualization Options</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#your-first-plot-defining-how-to-render-data">Your first plot: defining how to render data</a>
+<ul>
+<li><a href="#understanding-the-example">Understanding the example</a></li>
+</ul></li>
+<li><a href="#composition-of-pieces">Composition of pieces</a>
+<ul>
+<li><a href="#plugins-via-a-central-registry">Plugins via a central registry</a></li>
+</ul></li>
+<li><a href="#working-with-layouts">Working with layouts</a>
+<ul>
+<li><a href="#how-to-read-a-layout">How to read a layout</a>
+<ul>
+<li><a href="#will-this-layout-work-with-my-data">Will this layout work with my data?</a></li>
+</ul></li>
+<li><a href="#working-with-the-registry">Working with the Registry</a>
+<ul>
+<li><a href="#what-pieces-are-available">What pieces are available?</a></li>
+<li><a href="#abstract-vs-concrete">Abstract vs concrete</a></li>
+<li><a href="#modifying-all-or-part-of-a-layout">Modifying all (or part) of a layout</a></li>
+</ul></li>
+<li><a href="#nested-rule-example-scalable-parameters">Nested rule example: scalable parameters</a></li>
+<li><a href="#documentation-by-example">Documentation by example</a></li>
+</ul></li>
+<li><a href="#advanced-use-cases">Advanced use cases</a>
+<ul>
+<li><a href="#plotting-more-than-one-study">Plotting more than one study</a>
+<ul>
+<li><a href="#using-namespaces">Using namespaces</a></li>
+<li><a href="#adding-panels">Adding panels</a></li>
+<li><a href="#common-issues">Common issues</a></li>
+</ul></li>
+<li><a href="#layouts-also-control-behavior">Layouts also control behavior</a></li>
+<li><a href="#where-to-find-more-information">Where to find more information</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="overview">Overview</h1>
+<p>LocusZoom provides a rich set of features for visualizing and comparing genetic data, including by comparing multiple datasets within the same plot. It does so by embracing a configuration-driven model that decouples content (<a href="data_retrieval.html">data adapters</a>) from presentation (data layers).</p>
+<p>Although the individual pieces are <a href="../">documented</a> in depth, many of the most interesting features arise from combining those pieces together in new ways. <em>Layouts</em> are the “glue” that connects pieces together, as well as being the primary means through which plots and data sources are created and configured.</p>
+<p>At the simplest, a layout is a JSON-serializable object that describes every customizable feature of a LocusZoom plot. A layout should only ever contain scalar values, arrays, and objects - no functions!</p>
+<h1 id="your-first-plot-defining-how-to-render-data">Your first plot: defining how to render data</h1>
+<p>We provide a set of built-in layouts for rendering common types of LocusZoom plots. If your field names match the assumptions of the <a href="https://portaldev.sph.umich.edu/docs/api/v1/">UMich Portaldev API</a>, you should be able to create common types of visualization with very little modification.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">// Define the layout</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">const</span> layout <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(</span>
+<span id="cb1-3"><a href="#cb1-3"></a>    <span class="st">&#39;plot&#39;</span><span class="op">,</span> </span>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="st">&#39;standard_association&#39;</span><span class="op">,</span> </span>
+<span id="cb1-5"><a href="#cb1-5"></a>    { <span class="dt">state</span><span class="op">:</span> { <span class="dt">genome_build</span><span class="op">:</span> <span class="st">&#39;GRCh37&#39;</span><span class="op">,</span> <span class="dt">chr</span><span class="op">:</span> <span class="dv">10</span><span class="op">,</span> <span class="dt">start</span><span class="op">:</span> <span class="dv">114550452</span><span class="op">,</span> <span class="dt">end</span><span class="op">:</span> <span class="dv">115067678</span>} }</span>
+<span id="cb1-6"><a href="#cb1-6"></a>)<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">// Use the layout to render the plot (with data sources defined from the previous guide)</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="kw">const</span> plot <span class="op">=</span> LocusZoom<span class="op">.</span><span class="fu">populate</span>(<span class="st">&#39;#lz-plot&#39;</span><span class="op">,</span> data_sources<span class="op">,</span> layout)<span class="op">;</span></span></code></pre></div>
+<p>Highly customized LocusZoom usages may create their own layout from scratch, but it is much more common to start with a pre-existing layout.</p>
+<h2 id="understanding-the-example">Understanding the example</h2>
+<p>In the example above, a pre-defined layout is retrieved from the <em>registry</em> of common options: <code>LocusZoom.Layouts</code>. This registry is organized by type of building block (plot, panel, data layer, etc), and the specific layout requested is the “classic” LocusZoom plot (called <code>standard_association</code>). See the <a href="../api/module-LocusZoom_Layouts.html">developer documentation</a> for a full list of the pre-defined options, or introspect the currently available options in the javascript console using the following command:</p>
+<p><code>LocusZoom.Layouts.list()</code></p>
+<p>The final argument used to retrieve the layout above is an object containing “overrides”: values that, if present, will replace the default configuration. In this case, we do not override any display options, but we do provide <em>state</em> information that controls what is shown: specifically, a default set of region coordinates that define the region for the first plot added to the page.</p>
+<p>Running these commands in the JS developer console will allow you to examine the entire layout in detail. Introspecting the behavior of the plot is an extremely powerful tool for learning and debugging!</p>
+<h1 id="composition-of-pieces">Composition of pieces</h1>
+<p>The key to rendering multiple kinds of data is <em>composition</em>. LocusZoom provides a broad set of reusable building blocks, which can be stacked on top of each other (data layers), or adjacent (panels). New developers often begin by inspecting the entire layout at once (top-down), but breaking it into individual pieces (reading the layout “bottom-up”) is much more effective (and less intimidating). Oftentimes, you can achieve the customizations you want by modifying only a few options.</p>
+<p>Understanding the basic building blocks is key to customizing a rendering for your needs. See: <a href="index.html">Getting started</a> for a guide to these building blocks and how they are arranged, or skip to “how to read a layout” below.</p>
+<h2 id="plugins-via-a-central-registry">Plugins via a central registry</h2>
+<p>LocusZoom supports plugins without additional installation code, via a central <em>registry</em> that tracks available features. For example, the known data rendering options are registered in <code>LocusZoom.DataLayers</code>.</p>
+<p>A layout object does not define code or new features: layouts are simple JSON-serializable configuration objects that spell out how to use existing rendering types. Custom data sources, layers, or scale functions must be defined before use. The dependence on the central registry means that code features (like a particular type of data layer or scale function) are requested by name, as strings.</p>
+<p>In order to ensure that each rendering is totally isolated and de-coupled, all <strong>layouts must be JSON-serializable</strong>. Simple types like strings, objects, numbers, and lists are allowed, but a layout cannot contain code. At plot creation, LocusZoom will interpret the layout and locate the features you request by name.</p>
+<h1 id="working-with-layouts">Working with layouts</h1>
+<h2 id="how-to-read-a-layout">How to read a layout</h2>
+<p>A good way to practice reading layouts (as a combination of several pieces) is to look at the <a href="https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js">source code</a> where standard layouts are defined. Consider the <code>standard_association</code> plot:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1"></a>LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;plot&#39;</span><span class="op">,</span> <span class="st">&#39;standard_association&#39;</span><span class="op">,</span> {</span>
+<span id="cb2-2"><a href="#cb2-2"></a>    <span class="dt">state</span><span class="op">:</span> {}<span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a>    <span class="dt">responsive_resize</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a>    <span class="dt">min_region_scale</span><span class="op">:</span> <span class="dv">20000</span><span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a>    <span class="dt">max_region_scale</span><span class="op">:</span> <span class="dv">1000000</span><span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>    <span class="dt">dashboard</span><span class="op">:</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;dashboard&#39;</span><span class="op">,</span> <span class="st">&#39;standard_plot&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">,</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>    <span class="dt">panels</span><span class="op">:</span> [</span>
+<span id="cb2-9"><a href="#cb2-9"></a>        LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;association&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">225</span> })<span class="op">,</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a>        LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;genes&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">225</span> })</span>
+<span id="cb2-11"><a href="#cb2-11"></a>    ]</span>
+<span id="cb2-12"><a href="#cb2-12"></a>})<span class="op">;</span></span></code></pre></div>
+<p>In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, each panel is 225px high, so the total plot height will be the sum of panels (450 px); if more panels are added, the plot height will increase to match. The actual details of what to render are defined as nested layouts (association and genes panels), and the registry also contains predefined options for each of these smaller pieces- <code>LocusZoom.Layouts.get(...)</code> returns a JSON object.</p>
+<p>Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries.</p>
+<p>Note that this layout is added to the registry using <code>LocusZoom.Layouts.add(...)</code>. We will cover this in “working with the registry”, below.</p>
+<h3 id="will-this-layout-work-with-my-data">Will this layout work with my data?</h3>
+<p>LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the field names (and formats) used by the <a href="https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints">UMich Portaldev API</a>. If your data source returns a different payload format, field names, or notation conventions, you may need to modify a pre-existing layout in order to plot that data.</p>
+<p>Consider this fragment of the standard association data layer, shown below:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1"></a>LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span><span class="op">,</span> {</span>
+<span id="cb3-2"><a href="#cb3-2"></a>    <span class="dt">namespace</span><span class="op">:</span> { <span class="st">&#39;assoc&#39;</span><span class="op">:</span> <span class="st">&#39;assoc&#39;</span><span class="op">,</span> <span class="st">&#39;ld&#39;</span><span class="op">:</span> <span class="st">&#39;ld&#39;</span> }<span class="op">,</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a>    <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;scatter&#39;</span><span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a>    <span class="dt">fields</span><span class="op">:</span> [<span class="st">&#39;{{namespace[assoc]}}variant&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}position&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue|logtoscinotation&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}ref_allele&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}state&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}isrefvar&#39;</span>]<span class="op">,</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a>    <span class="dt">id_field</span><span class="op">:</span> <span class="st">&#39;{{namespace[assoc]}}variant&#39;</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a>    <span class="dt">x_axis</span><span class="op">:</span> {</span>
+<span id="cb3-7"><a href="#cb3-7"></a>        <span class="dt">field</span><span class="op">:</span> <span class="st">&#39;{{namespace[assoc]}}position&#39;</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a>    }</span>
+<span id="cb3-9"><a href="#cb3-9"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Key things to notice are:</p>
+<ol type="1">
+<li>The data layer will only see the fields requested by name. Even if a field is present in the API payload, it will not be visible in the data layer unless explicitly referenced in the <code>fields</code> array for that data layer.</li>
+<li>This layout is generic: the use of namespaces means “given association data from somewhere”. See “using namespaces” below for more details on how to use an abstract layout with a specific dataset (via namespaces).</li>
+<li>Other sections of the layout (such as <code>x_axis</code>) can reference the fields requested, using the same syntax. But the field must always be requested in the <code>fields</code> array.</li>
+</ol>
+<p>You will sometimes see fields referenced elsewhere with an additional syntax, like <code>{{namespace[assoc]}}variant|htmlescape</code>. The <code>|htmlescape</code> is a <a href="../api/module-LocusZoom_TransformationFunctions.html"><em>transform</em></a> that affects value display. The fields array only needs to specify the names of fields; transforms can be applied at any time later.</p>
+<h4 id="no-system-of-notation-survives-contact-with-developers">No system of notation survives contact with developers</h4>
+<p>There are some exceptions to this rule- it is difficult to support every possible combination of data sources from every possible set of API conventions.</p>
+<p>One place where this breaks down is <em>dependent</em> sources- eg, LD information is requested relative to the most significant variant in the association data. Differences in field formatting or nomenclature can sometimes break the ability to find the relevant information that the second data source requires; efforts are made to handle common use cases. These sources gradually become more generic over time based on user feedback and needs.</p>
+<p>The other main exception to the <code>fields</code> mechanism involves API endpoints that return complex nested objects (eg the list of genes in a region, a standard dataset that few people will ever need to customize directly). By notation convention, the default LocusZoom layouts will indicate that special behavior is in effect via a dummy field called <code>all</code>, eg</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1"></a>{ </span>
+<span id="cb4-2"><a href="#cb4-2"></a>  <span class="dt">fields</span><span class="op">:</span> [<span class="st">&#39;{{namespace[gene]}}all&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[constraint]}}all&#39;</span>] </span>
+<span id="cb4-3"><a href="#cb4-3"></a>}</span></code></pre></div>
+<blockquote>
+<p>Explanation: a data layer will not fetch from a source unless the fields array references at least one piece of data from that source. Since the genes source contains special code to bypass fetching explicit fields, the data layer uses a dummy field to trigger the request.</p>
+</blockquote>
+<p>Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the <code>extractFields</code> method of <code>BaseAdapter</code>. (see: <a href="data_retrieval.html">guide to working with data</a>)</p>
+<h2 id="working-with-the-registry">Working with the Registry</h2>
+<p>Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a layout converts it from the abstract definition to one that works with a specific dataset.</p>
+<p>Since the registry just returns JSON-serializable objects, you could create a plot or panel configuration by hand. But this is often tedious, and using the registry will save you from writing many lines of boilerplate code.</p>
+<h3 id="what-pieces-are-available">What pieces are available?</h3>
+<p>To see the list of pre-defined layouts (as well as any custom ones you have created):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">list</span>()<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>{<span class="dt">plot</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">4</span>)<span class="op">,</span> <span class="dt">panel</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">7</span>)<span class="op">,</span> <span class="dt">data_layer</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">9</span>)<span class="op">,</span> <span class="dt">dashboard</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">4</span>)<span class="op">,</span> <span class="dt">dashboard_components</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">1</span>)<span class="op">,</span><span class="dt"> tooltip</span><span class="op">:</span> <span class="bu">Array</span>(<span class="dv">5</span>) }</span></code></pre></div>
+<p>This will return a top level representation of the available types, showing the available categories. Note that even data layers are composed of smaller building blocks. This lets you use individual parts of a representation (like association tooltips) without committing to the other design choices for a common piece (like the association layer).</p>
+<p>Asking for just the plots shows a list of specific options. Typically, we try to provide example pages that use (most) of the layouts that come with LocusZoom; see the <a href="http://statgen.github.io/locuszoom/">example gallery</a> to preview how these layouts would look.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">list</span>(<span class="st">&#39;plot&#39;</span>)<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>(<span class="dv">4</span>) [<span class="st">&quot;standard_association&quot;</span><span class="op">,</span> <span class="st">&quot;association_catalog&quot;</span><span class="op">,</span> <span class="st">&quot;standard_phewas&quot;</span><span class="op">,</span> <span class="st">&quot;interval_association&quot;</span>]</span></code></pre></div>
+<p>You may find that the example gallery performs additional customizations on a layout, so this can be a source of ideas. Typically, we try very hard to not make major changes in a layout that is widely in use. Any backwards-incompatible changes will usually be identified in the <a href="https://github.com/statgen/locuszoom/releases">release notes</a>.</p>
+<h3 id="abstract-vs-concrete">Abstract vs concrete</h3>
+<p>When a layout is first loaded into the registry, it is defined to work in the abstract- given any data. This allows the same layout to be re-used on two different association datasets. The syntax used is <code>{{namespace[assoc]}}variant</code>, where namespaces are replaced by a specific datasource name later on.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1"></a>LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span><span class="op">,</span> { <span class="co">// Define a new datalayer</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>    <span class="dt">namespace</span><span class="op">:</span> { <span class="st">&#39;assoc&#39;</span><span class="op">:</span> <span class="st">&#39;assoc&#39;</span><span class="op">,</span> <span class="st">&#39;ld&#39;</span><span class="op">:</span> <span class="st">&#39;ld&#39;</span> }<span class="op">,</span>  <span class="co">// Provides default namespaces, eg look for &quot;assoc&quot; data in a source called &quot;assoc&quot;</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a>    <span class="dt">fields</span><span class="op">:</span> [<span class="st">&#39;{{namespace[assoc]}}variant&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}position&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue|logtoscinotation&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}ref_allele&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}state&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}isrefvar&#39;</span>]<span class="op">,</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a>})<span class="op">;</span></span></code></pre></div>
+<p>It is the act of fetching the layout from the registry that turns it into a concrete one- “find the association data from a particular source”. There are three ways to fetch something, and each behaves in a unique way:</p>
+<ol type="1">
+<li><p>Fetch an existing layout, and tell it where to find the required data. (the third argument, “modifications”, is given an explicit set of namespaces)</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb8-1"><a href="#cb8-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span><span class="op">,</span> { <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;my_dataset_1&#39;</span> } } )<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>{</span>
+<span id="cb8-3"><a href="#cb8-3"></a>    <span class="dt">fields</span><span class="op">:</span> [<span class="st">&quot;my_dataset_1:variant&quot;</span><span class="op">,</span><span class="st">&quot;my_dataset_1:position&quot;</span><span class="op">,</span><span class="st">&quot;my_dataset_1:log_pvalue&quot;</span><span class="op">,</span><span class="st">&quot;my_dataset_1:log_pvalue|logtoscinotation&quot;</span><span class="op">,</span><span class="st">&quot;my_dataset_1:ref_allele&quot;</span><span class="op">,</span><span class="st">&quot;ld:state&quot;</span><span class="op">,</span><span class="st">&quot;ld:isrefvar&quot;</span>]</span>
+<span id="cb8-4"><a href="#cb8-4"></a>}</span></code></pre></div></li>
+<li><p>Fetch an existing layout, and use the “default” data sources. If you follow the examples very closely (eg naming your data source “assoc” and “ld”), this will automatically find the right data.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb9-1"><a href="#cb9-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span>)<span class="op">;</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>{</span>
+<span id="cb9-3"><a href="#cb9-3"></a>    <span class="dt">fields</span><span class="op">:</span> [<span class="st">&quot;assoc:variant&quot;</span><span class="op">,</span> <span class="st">&quot;assoc:position&quot;</span><span class="op">,</span> <span class="st">&quot;assoc:log_pvalue&quot;</span><span class="op">,</span> <span class="st">&quot;assoc:log_pvalue|logtoscinotation&quot;</span><span class="op">,</span> <span class="st">&quot;assoc:ref_allele&quot;</span><span class="op">,</span> <span class="st">&quot;ld:state&quot;</span><span class="op">,</span> <span class="st">&quot;ld:isrefvar&quot;</span>] </span>
+<span id="cb9-4"><a href="#cb9-4"></a>}</span></code></pre></div></li>
+<li><p>Fetch an existing abstract layout for further modification, and keep it abstract. Note the special <code>unnamespaced: true</code> option, which causes the layout to be returned exactly as it appears in the registry (<em>abstract</em>). This option is used quite a lot in the LZ source code (<code>Layouts.js</code>), because it makes it easy to build a reusable abstract layout (like a panel) out of smaller reusable pieces (like datalayers).</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb10-1"><a href="#cb10-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span>
+<span id="cb10-2"><a href="#cb10-2"></a>{</span>
+<span id="cb10-3"><a href="#cb10-3"></a>    <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;assoc&#39;</span><span class="op">,</span> <span class="dt">ld</span><span class="op">:</span> <span class="st">&#39;ld&#39;</span> }<span class="op">,</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a>    <span class="dt">fields</span><span class="op">:</span> [<span class="st">&#39;{{namespace[assoc]}}variant&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}position&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue|logtoscinotation&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[assoc]}}ref_allele&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}state&#39;</span><span class="op">,</span> <span class="st">&#39;{{namespace[ld]}}isrefvar&#39;</span>]<span class="op">,</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a>}</span></code></pre></div></li>
+</ol>
+<h3 id="modifying-all-or-part-of-a-layout">Modifying all (or part) of a layout</h3>
+<p>If you are building your own API aimed at use with LocusZoom, then the path of least resistance is to use the same field names as the pre-defined layouts.</p>
+<p>The most straightforward way to modify a layout is to pass just a few overrides. This works will for simple values (like strings), or keys of nested objects:</p>
+<p>Consider an association plot, where the only requested change is to use the right side y-axis (2) instead of the left side y-axis (1, the default). This can be accomplished by adding a key to the third argument of <code>LocusZoom.Layouts.get(...)</code>. Note how the other existing options are preserved.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb11-1"><a href="#cb11-1"></a><span class="op">&gt;</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;data_layer&#39;</span><span class="op">,</span> <span class="st">&#39;association_pvalues&#39;</span><span class="op">,</span> { <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;my_dataset_1&#39;</span> }<span class="op">,</span> <span class="dt">y_axis</span><span class="op">:</span> { <span class="dt">axis</span><span class="op">:</span> <span class="dv">2</span> } } )<span class="op">;</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>{ </span>
+<span id="cb11-3"><a href="#cb11-3"></a>  <span class="dt">y_axis</span><span class="op">:</span> { <span class="dt">axis</span><span class="op">:</span> <span class="dv">2</span><span class="op">,</span> <span class="dt">field</span><span class="op">:</span> <span class="st">&quot;my_dataset_1:log_pvalue&quot;</span><span class="op">,</span> <span class="dt">floor</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">upper_buffer</span><span class="op">:</span> <span class="fl">0.1</span><span class="op">,</span> <span class="dt">min_extent</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">10</span>] }</span>
+<span id="cb11-4"><a href="#cb11-4"></a>}</span></code></pre></div>
+<p>The “modifications” object does not work as well for compound values, like a list, because this behavior is not well defined: changing the 5th element of a list could mean replacement, removal, or minor additions to fields… etc. In practice, this is quite often relevant… because panels and data layers are specified as lists. (order matters)</p>
+<p>For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via <em>self-calling functions</em> that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar (dashboard) that adds just one extra button to an existing layout:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb12-1"><a href="#cb12-1"></a>{</span>
+<span id="cb12-2"><a href="#cb12-2"></a>    <span class="dt">dashboard</span><span class="op">:</span> (<span class="kw">function</span> () {</span>
+<span id="cb12-3"><a href="#cb12-3"></a>        <span class="kw">var</span> base <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;dashboard&#39;</span><span class="op">,</span> <span class="st">&#39;standard_panel&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a>        base<span class="op">.</span><span class="at">components</span><span class="op">.</span><span class="fu">push</span>({</span>
+<span id="cb12-5"><a href="#cb12-5"></a>            <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;toggle_legend&#39;</span><span class="op">,</span></span>
+<span id="cb12-6"><a href="#cb12-6"></a>            <span class="dt">position</span><span class="op">:</span> <span class="st">&#39;right&#39;</span></span>
+<span id="cb12-7"><a href="#cb12-7"></a>        })<span class="op">;</span></span>
+<span id="cb12-8"><a href="#cb12-8"></a>        <span class="cf">return</span> base<span class="op">;</span></span>
+<span id="cb12-9"><a href="#cb12-9"></a>    })() <span class="co">// Function calls itself immediately, so &quot;dashboard&quot; is set to the return value</span></span>
+<span id="cb12-10"><a href="#cb12-10"></a>}</span></code></pre></div>
+<p>Currently, modifying every level of a deeply nested layout is not an ideal process. Although the above trick (combined with our efforts at backwards compatibility) makes the process possible without copying hundreds of lines of code, we are exploring other, more ergonomic ways to customize layouts in the future.</p>
+<blockquote>
+<p>TIP: When modifying one option from a list (like changing the label of a toolbar button), it is tempting to address it using simple JavaScript operations, like <code>widgets[0].button_html += 'something'</code>. However, this becomes very hard to read and maintain over time: if someone adds a new button to the start of the list, it will not be obvious that the meaning of <code>button[0]</code> has changed (or what the correct meaning should be). Try to use clear variable names like <code>const display_options = button[0]</code> to convey intent, and override the smallest reusable piece possible. Layouts are defined from the bottom up, not the top down!</p>
+</blockquote>
+<h2 id="nested-rule-example-scalable-parameters">Nested rule example: scalable parameters</h2>
+<p>Each key in a layout object corresponds to a set of options supported by the thing that the configuration is intended to control. For example, scatter plots provide simple options that obey exactly one rule (like what to show on the x-axis), but there are also <em>scalable</em> parameters like <code>point_size</code> and <code>point_shape</code>, in which case several rules can be tried in sequence until the first non-null result is found.</p>
+<p>Consider the rules below: in a classic LocusZoom plot, points are colored by LD information, or shown in grey if no LD information is available.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb13-1"><a href="#cb13-1"></a><span class="kw">const</span> data_layer <span class="op">=</span> { </span>
+<span id="cb13-2"><a href="#cb13-2"></a>    <span class="op">...</span><span class="at">options</span><span class="op">,</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a>    <span class="dt">color</span><span class="op">:</span> [</span>
+<span id="cb13-4"><a href="#cb13-4"></a>    {</span>
+<span id="cb13-5"><a href="#cb13-5"></a>        <span class="co">// Name of a function specified in `LocusZoom.ScaleFunctions`</span></span>
+<span id="cb13-6"><a href="#cb13-6"></a>        <span class="dt">scale_function</span><span class="op">:</span> <span class="st">&#39;if&#39;</span><span class="op">,</span></span>
+<span id="cb13-7"><a href="#cb13-7"></a>        <span class="co">// The field whose value will be passed to the scale function</span></span>
+<span id="cb13-8"><a href="#cb13-8"></a>        <span class="dt">field</span><span class="op">:</span> <span class="st">&#39;{{namespace[ld]}}isrefvar&#39;</span><span class="op">,</span></span>
+<span id="cb13-9"><a href="#cb13-9"></a>        <span class="co">// Options that will be passed to the scale function; see documentation for available options</span></span>
+<span id="cb13-10"><a href="#cb13-10"></a>        <span class="dt">parameters</span><span class="op">:</span> {</span>
+<span id="cb13-11"><a href="#cb13-11"></a>            <span class="dt">field_value</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb13-12"><a href="#cb13-12"></a>            <span class="dt">then</span><span class="op">:</span> <span class="st">&#39;#9632b8&#39;</span><span class="op">,</span></span>
+<span id="cb13-13"><a href="#cb13-13"></a>        }<span class="op">,</span></span>
+<span id="cb13-14"><a href="#cb13-14"></a>    }<span class="op">,</span></span>
+<span id="cb13-15"><a href="#cb13-15"></a>    {</span>
+<span id="cb13-16"><a href="#cb13-16"></a>        <span class="dt">scale_function</span><span class="op">:</span> <span class="st">&#39;numerical_bin&#39;</span><span class="op">,</span></span>
+<span id="cb13-17"><a href="#cb13-17"></a>        <span class="dt">field</span><span class="op">:</span> <span class="st">&#39;{{namespace[ld]}}state&#39;</span><span class="op">,</span></span>
+<span id="cb13-18"><a href="#cb13-18"></a>        <span class="dt">parameters</span><span class="op">:</span> {</span>
+<span id="cb13-19"><a href="#cb13-19"></a>            <span class="dt">breaks</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="fl">0.2</span><span class="op">,</span> <span class="fl">0.4</span><span class="op">,</span> <span class="fl">0.6</span><span class="op">,</span> <span class="fl">0.8</span>]<span class="op">,</span></span>
+<span id="cb13-20"><a href="#cb13-20"></a>            <span class="dt">values</span><span class="op">:</span> [<span class="st">&#39;#357ebd&#39;</span><span class="op">,</span> <span class="st">&#39;#46b8da&#39;</span><span class="op">,</span> <span class="st">&#39;#5cb85c&#39;</span><span class="op">,</span> <span class="st">&#39;#eea236&#39;</span><span class="op">,</span> <span class="st">&#39;#d43f3a&#39;</span>]<span class="op">,</span></span>
+<span id="cb13-21"><a href="#cb13-21"></a>        }<span class="op">,</span></span>
+<span id="cb13-22"><a href="#cb13-22"></a>    }<span class="op">,</span></span>
+<span id="cb13-23"><a href="#cb13-23"></a>    <span class="st">&#39;#B8B8B8&#39;</span><span class="op">,</span></span>
+<span id="cb13-24"><a href="#cb13-24"></a>]</span>
+<span id="cb13-25"><a href="#cb13-25"></a>}</span></code></pre></div>
+<p>Common scalable parameters include point size, color, and shape. The full developer documentation marks which parameters are scalable for each data layer rendering type, and describes the options that can be used with each scaling function rule.</p>
+<p>Custom scaling functions may be defined as follows:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb14-1"><a href="#cb14-1"></a>LocusZoom<span class="op">.</span><span class="at">ScaleFunctions</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;myfunction&#39;</span><span class="op">,</span> (parameters<span class="op">,</span> field_value) <span class="kw">=&gt;</span> calculated_result_or_null)<span class="op">;</span> </span></code></pre></div>
+<h2 id="documentation-by-example">Documentation by example</h2>
+<p>Composition of smaller pieces is a powerful strategy- but it also means that no single documentation page can explain every feature (because important behavior emerges when two building blocks are combined). As such, examples are a key and explicit part of how LocusZoom usage is documented.</p>
+<p>We encourage you to look at the builtin layouts (via the JS console, or <a href="https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js">source code</a>) as a guide to “what works”, and the <a href="http://statgen.github.io/locuszoom/">example gallery</a> (with <a href="https://github.com/statgen/locuszoom/tree/develop/examples">example code</a>) to see what options look like in practice. The full <a href="../api">developer documentation</a> enumerates every possible layout configuration option for each plot, panel, data layer rendering type, or rule.</p>
+<p>Lastly: LocusZoom works with evolving datasets, and pieces were contributed by different authors. For every hard and fast “rule”, there is always an exception! If you find gaps in the documentation, please contact the developers (or <a href="https://groups.google.com/forum/#!forum/locuszoom">mailing list</a>) and we will make improvements.</p>
+<h1 id="advanced-use-cases">Advanced use cases</h1>
+<h2 id="plotting-more-than-one-study">Plotting more than one study</h2>
+<p>It is often desirable to draw comparisons between two studies- eg, by plotting two association tracks (panels) on the same page. This means that you will need to create two association panel layouts, and each one will need to know where to find the relevant data for that track.</p>
+<p>In LocusZoom, this is accomplished via <em>namespaces</em>.</p>
+<h3 id="using-namespaces">Using namespaces</h3>
+<p>A namespaced layout (usually for panels and below) is one that identifies where to find the relevant data. Due to how separation of concerns works, this requires coordination between the data sources (content) and the layout (presentation).</p>
+<p>Consider the following example, which plots two association studies and a genes track:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb15-1"><a href="#cb15-1"></a><span class="co">// Other standard sources (genes, LD) omitted for clarity</span></span>
+<span id="cb15-2"><a href="#cb15-2"></a>data_sources</span>
+<span id="cb15-3"><a href="#cb15-3"></a>  <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;assoc_study1&quot;</span><span class="op">,</span> [<span class="st">&quot;AssociationLZ&quot;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&quot;/api/association/&quot;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">source</span><span class="op">:</span> <span class="dv">1</span> }}])</span>
+<span id="cb15-4"><a href="#cb15-4"></a>  <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;assoc_study2&quot;</span><span class="op">,</span> [<span class="st">&quot;AssociationLZ&quot;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&quot;/api/association/&quot;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">source</span><span class="op">:</span> <span class="dv">2</span> }}])<span class="op">;</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb16-1"><a href="#cb16-1"></a><span class="co">// This outer call to Layouts.get() will ensure that namespaces are applied, and the returned result is a concrete </span></span>
+<span id="cb16-2"><a href="#cb16-2"></a><span class="co">//   layout ready for use in drawing a plot with specific data sets. </span></span>
+<span id="cb16-3"><a href="#cb16-3"></a><span class="kw">const</span> plot_layout <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;plot&#39;</span><span class="op">,</span> <span class="st">&#39;standard_association&#39;</span><span class="op">,</span> { <span class="co">// Override select fields of a pre-made layout </span></span>
+<span id="cb16-4"><a href="#cb16-4"></a>    <span class="dt">responsive_resize</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb16-5"><a href="#cb16-5"></a>    <span class="dt">panels</span><span class="op">:</span> [</span>
+<span id="cb16-6"><a href="#cb16-6"></a>        LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;association&#39;</span><span class="op">,</span> {</span>
+<span id="cb16-7"><a href="#cb16-7"></a>            <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;assoc_study1&#39;</span> }<span class="op">,</span> <span class="co">// This is the key piece. It says &quot;for this panel, and its child data layers, look for the association data in a datasource called &quot;assoc_study1&quot;.</span></span>
+<span id="cb16-8"><a href="#cb16-8"></a>            <span class="dt">height</span><span class="op">:</span> <span class="dv">400</span><span class="op">,</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a>            <span class="dt">id</span><span class="op">:</span> <span class="st">&#39;assoc_study1&#39;</span><span class="op">,</span> <span class="co">// Give each panel a unique ID</span></span>
+<span id="cb16-10"><a href="#cb16-10"></a>            <span class="dt">title</span><span class="op">:</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">&#39;Study 1&#39;</span> }<span class="op">,</span></span>
+<span id="cb16-11"><a href="#cb16-11"></a>        })<span class="op">,</span></span>
+<span id="cb16-12"><a href="#cb16-12"></a>        LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;association&#39;</span><span class="op">,</span> {</span>
+<span id="cb16-13"><a href="#cb16-13"></a>            <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;assoc_study2&#39;</span> }<span class="op">,</span></span>
+<span id="cb16-14"><a href="#cb16-14"></a>            <span class="dt">height</span><span class="op">:</span> <span class="dv">400</span><span class="op">,</span></span>
+<span id="cb16-15"><a href="#cb16-15"></a>            <span class="dt">id</span><span class="op">:</span> <span class="st">&#39;assoc_study2&#39;</span><span class="op">,</span></span>
+<span id="cb16-16"><a href="#cb16-16"></a>            <span class="dt">title</span><span class="op">:</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">&#39;Study 2&#39;</span> }<span class="op">,</span></span>
+<span id="cb16-17"><a href="#cb16-17"></a>        })<span class="op">,</span></span>
+<span id="cb16-18"><a href="#cb16-18"></a>        <span class="co">// Even though genes are part of the original &quot;standard association plot&quot; layout, overriding the panels array means replacing *all* of the panels.</span></span>
+<span id="cb16-19"><a href="#cb16-19"></a>        LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;genes&#39;</span><span class="op">,</span> { <span class="dt">unnamespaced</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">400</span> })  <span class="co">// &quot;unnamespaced&quot; when using as a generic building block</span></span>
+<span id="cb16-20"><a href="#cb16-20"></a>    ]</span>
+<span id="cb16-21"><a href="#cb16-21"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Namespaces are not only external- they propagate through to how the layer actually sees its data internally. The field names inside the layer are a composite of <code>sourcename:fieldname</code>. For example, this allows the same data layer to work with two pieces of information (like summary stats and LD) even if both API endpoints provide a common field name like <code>id</code>. Namespacing ensures that duplicate field names do not collide.</p>
+<p>From the example above, the second panel (which fetches association data from <code>assoc_study2</code>) converts a “generic” specification like <code>{{namespace[assoc]}}variant</code> into a “concrete” use of one dataset: <code>assoc_study2:variant</code>.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb17-1"><a href="#cb17-1"></a><span class="op">&gt;</span> <span class="kw">var</span> layer_data <span class="op">=</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">keys</span>(plot<span class="op">.</span><span class="at">panels</span>[<span class="st">&#39;assoc_study2&#39;</span>]<span class="op">.</span><span class="at">data_layers</span>[<span class="st">&#39;associationpvalues&#39;</span>]<span class="op">.</span><span class="at">data</span>)<span class="op">;</span></span>
+<span id="cb17-2"><a href="#cb17-2"></a><span class="bu">Object</span><span class="op">.</span><span class="fu">keys</span>(layer_data[<span class="dv">0</span>])<span class="op">;</span> <span class="co">// See the field names used by the data for a single point</span></span>
+<span id="cb17-3"><a href="#cb17-3"></a>[<span class="st">&quot;assoc_study2:variant&quot;</span><span class="op">,</span> <span class="st">&quot;assoc_study2:position&quot;</span><span class="op">,</span> <span class="st">&quot;assoc_study2:log_pvalue&quot;</span><span class="op">,</span> <span class="st">&quot;assoc_study2:log_pvalue|logtoscinotation&quot;</span><span class="op">,</span> <span class="st">&quot;assoc_study2:ref_allele&quot;</span><span class="op">,</span> <span class="st">&quot;ld:state&quot;</span><span class="op">,</span> <span class="st">&quot;ld:isrefvar&quot;</span>]</span></code></pre></div>
+<h3 id="adding-panels">Adding panels</h3>
+<p>The above example demonstrates how to add multiple studies at the time of plot creation. However, sites like the T2D Portal have many datasets, and it can be helpful to let the user interactively choose which other panels to show after first render. New panels can be added dynamically! When doing so, the plot will grow to accommodate the new panel.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb18-1"><a href="#cb18-1"></a><span class="co">// This creates a new configuration object</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">var</span> extra_panel_layout <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Layouts</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;panel&#39;</span><span class="op">,</span> <span class="st">&#39;association&#39;</span><span class="op">,</span> {</span>
+<span id="cb18-3"><a href="#cb18-3"></a>    <span class="dt">namespace</span><span class="op">:</span> { <span class="dt">assoc</span><span class="op">:</span> <span class="st">&#39;assoc_study3&#39;</span> }<span class="op">,</span></span>
+<span id="cb18-4"><a href="#cb18-4"></a>    <span class="dt">id</span><span class="op">:</span> <span class="st">&#39;assoc_study3&#39;</span><span class="op">,</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a>    <span class="dt">title</span><span class="op">:</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">&#39;Study 3&#39;</span> }<span class="op">,</span></span>
+<span id="cb18-6"><a href="#cb18-6"></a>    <span class="dt">y_index</span><span class="op">:</span> <span class="dv">-1</span> <span class="co">// Special option used by addPanel: inserts this study right before the genes track</span></span>
+<span id="cb18-7"><a href="#cb18-7"></a>})<span class="op">;</span></span>
+<span id="cb18-8"><a href="#cb18-8"></a></span>
+<span id="cb18-9"><a href="#cb18-9"></a><span class="co">// Must add both data sources and panels</span></span>
+<span id="cb18-10"><a href="#cb18-10"></a>existing_datasources</span>
+<span id="cb18-11"><a href="#cb18-11"></a>  <span class="op">.</span><span class="fu">add</span>(<span class="st">&quot;assoc_study3&quot;</span><span class="op">,</span> [<span class="st">&quot;AssociationLZ&quot;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&quot;/api/association/&quot;</span><span class="op">,</span> <span class="dt">params</span><span class="op">:</span> { <span class="dt">source</span><span class="op">:</span> <span class="dv">3</span> }}])<span class="op">;</span></span>
+<span id="cb18-12"><a href="#cb18-12"></a></span>
+<span id="cb18-13"><a href="#cb18-13"></a><span class="kw">const</span> new_panel <span class="op">=</span> existing_plot<span class="op">.</span><span class="fu">addPanel</span>(extra_panel_layout)<span class="op">;</span> <span class="co">// Adds the panel and redraws plot</span></span></code></pre></div>
+<h3 id="common-issues">Common issues</h3>
+<p>One of the most common issues in working with namespaced layouts is the difference between <em>abstract</em> and <em>concrete</em> layouts. For example, imagine if the page contained a button to toggle the display of labels on the plot. This button might work by changing the plot layout options, then triggering a re-render.</p>
+<p>Here is how label options would be specified when defining a layout in the registry (abstract), so that labels were present on the very first re-render for any dataset that used this layout. Note that it identifies the key fields using a generic <code>namespace</code> reference:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb19-1"><a href="#cb19-1"></a><span class="kw">const</span> generic_layout_with_special_labels <span class="op">=</span> {</span>
+<span id="cb19-2"><a href="#cb19-2"></a>    <span class="co">// Other data layer fields omitted for clarity</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a>    <span class="dt">label</span><span class="op">:</span> {</span>
+<span id="cb19-4"><a href="#cb19-4"></a>        <span class="dt">text</span><span class="op">:</span> <span class="st">&#39;{{{{namespace[assoc]}}variant|htmlescape}}&#39;</span><span class="op">,</span></span>
+<span id="cb19-5"><a href="#cb19-5"></a>        <span class="dt">filters</span><span class="op">:</span> [ <span class="co">// Only label points if they are above significance threshold</span></span>
+<span id="cb19-6"><a href="#cb19-6"></a>            { <span class="dt">field</span><span class="op">:</span> <span class="st">&#39;{{namespace[assoc]}}log_pvalue&#39;</span><span class="op">,</span>  <span class="dt">operator</span><span class="op">:</span> <span class="st">&#39;&gt;&#39;</span><span class="op">,</span> <span class="dt">value</span><span class="op">:</span> <span class="fl">7.301</span> }<span class="op">,</span></span>
+<span id="cb19-7"><a href="#cb19-7"></a>        ]<span class="op">,</span></span>
+<span id="cb19-8"><a href="#cb19-8"></a>        <span class="dt">spacing</span><span class="op">:</span> <span class="dv">6</span><span class="op">,</span></span>
+<span id="cb19-9"><a href="#cb19-9"></a>    }</span>
+<span id="cb19-10"><a href="#cb19-10"></a>}<span class="op">;</span></span></code></pre></div>
+<p>However, once the final layout has been created and used to draw the plot, mutating the layout would require the actual field name (with namespace applied), specific to the panel being changed:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb20-1"><a href="#cb20-1"></a>plot<span class="op">.</span><span class="at">panels</span>[<span class="st">&#39;assoc_study2&#39;</span>]<span class="op">.</span><span class="at">data_layers</span>[<span class="st">&#39;associationpvalues&#39;</span>]<span class="op">.</span><span class="at">layout</span><span class="op">.</span><span class="at">label</span> <span class="op">=</span> {</span>
+<span id="cb20-2"><a href="#cb20-2"></a>    <span class="dt">text</span><span class="op">:</span> <span class="st">&#39;{{assoc_study2:variant|htmlescape}}&#39;</span><span class="op">,</span> <span class="co">// Extra outer curly braces around name = Value of field</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a>    <span class="dt">filters</span><span class="op">:</span> [ <span class="co">// Only label points if they are above significance threshold</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a>        { <span class="dt">field</span><span class="op">:</span> <span class="st">&#39;assoc_study2:log_pvalue&#39;</span><span class="op">,</span>  <span class="dt">operator</span><span class="op">:</span> <span class="st">&#39;&gt;&#39;</span><span class="op">,</span> <span class="dt">value</span><span class="op">:</span> <span class="fl">7.301</span> }<span class="op">,</span> <span class="co">// No curly braces: specifies name of field</span></span>
+<span id="cb20-5"><a href="#cb20-5"></a>    ]<span class="op">,</span></span>
+<span id="cb20-6"><a href="#cb20-6"></a>    <span class="dt">spacing</span><span class="op">:</span> <span class="dv">6</span><span class="op">,</span></span>
+<span id="cb20-7"><a href="#cb20-7"></a>}<span class="op">;</span></span>
+<span id="cb20-8"><a href="#cb20-8"></a>plot<span class="op">.</span><span class="fu">applyState</span>()<span class="op">;</span> <span class="co">// to re-render with labels</span></span></code></pre></div>
+<p>When you are not sure what notation convention to use, check the rest of your layout- the JS console is a very powerful tool, and development is much easier when you can introspect the actual behavior of your code.</p>
+<h2 id="layouts-also-control-behavior">Layouts also control behavior</h2>
+<p>In this guide, we have mostly focused on Layouts as a tool for controlling how data is rendered. However, layouts also provide configuration directives to enable powerful behaviors such as zooming, matching, and filtering. See the <a href="interactivity.html">guide to interactivity</a> for details.</p>
+<h2 id="where-to-find-more-information">Where to find more information</h2>
+<p>We also provide other tools (such as <a href="https://github.com/statgen/localzoom/blob/develop/src/util/lz-helpers.js">LocalZoom</a>), which demonstrate higher-order concepts like adding multiple panels to the same plot. Note that this code base is very heavily oriented around the idea of composition, with functions like <code>createStudyLayout</code>, <code>createStudyTabixSources</code>, and <code>addPanels</code>. Instead of defining the entire layout, this structure is focused on creating each piece required and combining them as appropriate. The same process is used to create layouts for the first study track as for the fourth.</p>
+</body>
+</html>

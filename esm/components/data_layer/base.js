@@ -1,35 +1,161 @@
-/** @module */
+/**
+ * Data layers represent instructions for how to render common types of information.
+ *  (GWAS scatter plot, nearby genes, straight lines and filled curves, etc)
+ *
+ * Each rendering type also provides helpful functionality such as filtering, matching, and interactive tooltip
+ *  display. Predefined layers can be extended or customized, with many configurable options.
+ *
+ * @module LocusZoom_DataLayers
+ */
+
 import * as d3 from 'd3';
 
 import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
 import {deepCopy, merge} from '../../helpers/layouts';
-import scalable from '../../registry/scalable';
+import MATCHERS from '../../registry/matchers';
+import SCALABLE from '../../registry/scalable';
 
 
 /**
- * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
+ * "Scalable" parameters indicate that a datum can be rendered in custom ways based on its value. (color, size, shape, etc)
+ *
+ * This means that if the value of this property is a scalar, it is used directly (`color: '#FF0000'`). But if the
+ *  value is an array of options, each will be evaluated in turn until the first non-null result is found. The syntax
+ *  below describes how each member of the array should specify the field and scale function to be used.
+ * Often, the last item in the list is a string, providing a "default" value if all scale functions evaluate to null.
+ *
+ * @typedef {object[]|string} ScalableParameter
+ * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
+ *  datum element will be passed to the scale function.
+ * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run on each individual datum
+ * @property {object} parameters A set of parameters that configure the desired scale function (options vary by function)
+ */
+
+
+/**
+ * @typedef {Object} module:LocusZoom_DataLayers~behavior
+ * @property {'set'|'unset'|'toggle'|'link'} action
+ * @property {'highlighted'|'selected'|'faded'|'hidden'} status An element display status to set/unset/toggle
+ * @property {boolean} exclusive Whether an element status should be exclusive (eg only allow one point to be selected at a time)
+ * @property {string} href For links, the URL to visit when clicking
+ * @property {string} target For links, the `target` attribute (eg, name of a window or tab in which to open this link)
+ */
+
+
+/**
+ * @typedef {object} FilterOption
+ * @property {string} field The name of a field found within each datapoint datum
+ * @property {module:LocusZoom_MatchFunctions} operator The name of a comparison function to use when deciding if the
+ *   field satisfies this filter
+ * @property value The target value to compare to
+ */
+
+
+/**
+ * @typedef {object} LegendItem
+ * @property [shape] This is optional (e.g. a legend element could just be a textual label).
+ *   Supported values are the standard d3 3.x symbol types (i.e. "circle", "cross", "diamond", "square",
+ *   "triangle-down", and "triangle-up"), as well as "rect" for an arbitrary square/rectangle or line for a path.
+ * @property {string} color The point color (hexadecimal, rgb, etc)
+ * @property {string} label The human-readable label of the legend item
+ * @property {string} [class] The name of a CSS class used to style the point in the legend
+ * @property {number} [size] The point area for each element (if the shape is a d3 symbol). Eg, for a 40 px area,
+ *  a circle would be ~7..14 px in diameter.
+ * @property {number} [length] Length (in pixels) for the path rendered as the graphical portion of the legend element
+ *  if the value of the shape parameter is "line".
+ * @property {number} [width] Width (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {number} [height] Height (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {object} style CSS styles object to be applied to the DOM element representing the graphical portion of
+ *   the legend element.
+ */
+
+
+/**
+ * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
+ * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
  * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 const default_layout = {
+    id: '',
     type: '',
-    filters: null,  // Can be an array of {field, operator, value} entries
-    fields: [],  // A list of fields required for this data layer; determines output of `extractFields`
-    x_axis: {},  // Axis options vary based on data layer type
+    fields: [],
+    id_field: 'id',
+    filters: null,
+    match: {},
+    x_axis: {},
     y_axis: {},  // Axis options vary based on data layer type
+    legend: null,
+    tooltip: {},
     tooltip_positioning: 'horizontal',  // Where to draw tooltips relative to the point. Can be "vertical" or "horizontal"
+    behaviors: {},
 };
-
 
 /**
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
- * @param {Object} layout A JSON-serializable object describing the layout for this layer
- * @param {Panel|null} parent Where this layout is used
 */
 class BaseDataLayer {
+    /**
+     * @param {string} [layout.id=''] An identifier string that must be unique across all layers within the same panel
+     * @param {string} [layout.type=''] The type of data layer. This parameter is used in layouts to specify which class
+     *   (from the registry) is created; it is also used in CSS class names.
+     * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only
+     *  these fields will be made available to the data layer, and only data sources (namespaces) referred to in
+     *  this array will be fetched. This represents the "contract" between what data is returned and what data is rendered.
+     *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
+     * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
+     *   events, etc. This should be unique to the specified datum.
+     * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
+     *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
+     *  details vary from one layer to the next. See the Interactivity Tutorial for details.
+     * @param {object} [layout.match] An object describing how to connect this data layer to other data layers in the
+     *   same plot. Specifies keys `send` and `receive` containing the names of fields with data to be matched;
+     *   `operator` specifies the name of a MatchFunction to use. If a datum matches the broadcast value, it will be
+     *   marked with the special field `lz_is_match=true`, which can be used in any scalable layout directive to control how the item is rendered.
+     * @param {boolean} [layout.x_axis.decoupled=false] If true, the data in this layer will not influence the x-extent of the panel.
+     * @param {'state'|null} [layout.x_axis.extent] If provided, the region plot x-extent will be determined from
+     *   `plot.state` rather than from the range of the data. This is the most common way of setting x-extent,
+     *   as it is useful for drawing a set of panels to reflect a particular genomic region.
+     * @param {number} [layout.x_axis.floor] The low end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {number} [layout.x_axis.ceiling] The high end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {Number[]} [layout.x_axis.min_extent] The smallest possible range [min, max] of the x-axis. If the actual values lie outside the extent, the actual data takes precedence.
+     * @param {number} [layout.x_axis.field] The datum field to look at when determining data extent along the x-axis.
+     * @param {number} [layout.x_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
+     * @param {number} [layout.x_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
+     * @param {boolean} [layout.y_axis.decoupled=false] If true, the data in this layer will not influence the y-extent of the panel.
+     * @param {object} [layout.y_axis.axis=1] Which y axis to use for this data layer (left=1, right=2)
+     * @param {number} [layout.y_axis.floor] The low end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {number} [layout.y_axis.ceiling] The high end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {Number[]} [layout.y_axis.min_extent] The smallest possible range [min, max] of the y-axis. Actual lower or higher data values will take precedence.
+     * @param {number} [layout.y_axis.field] The datum field to look at when determining data extent along the y-axis.
+     * @param {number} [layout.y_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
+     * @param {number} [layout.y_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
+     * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
+     * @param {object} [layout.tooltip.hide] Define when to hide a tooltip in terms of interaction states, eg, `{ and: ['unhighlighted', 'unselected'] }`
+     * @param {boolean} [layout.tooltip.closable] Whether a tool tip should render a "close" button in the upper right corner.
+     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax uses curly braces to allow simple expressions:
+     *   eg `{{sourcename:fieldname}} to insert a field value from the datum associated with
+     *   the tooltip/element. Conditional tags are supported using the format:
+     *   `{{#if sourcename:fieldname|transforms_can_be_used_too}}render text here{{#else}}Optional else branch{{/if}}`.
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='horizontal'] Where to draw the tooltip relative to the datum.
+     *  Typically tooltip positions are centered around the midpoint of the data element, subject to overflow off the edge of the plot.
+     * @param {object} [layout.behaviors] LocusZoom data layers support the binding of mouse events to one or more
+     *   layout-definable behaviors. Some examples of behaviors include highlighting an element on mouseover, or
+     *   linking to a dynamic URL on click, etc.
+     * @param {module:LocusZoom_DataLayers~LegendItem[]} [layout.legend] Tick marks found in the panel legend
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlshiftclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onshiftclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onmouseover]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onmouseout]
+     * @param {Panel|null} parent Where this layout is used
+     */
     constructor(layout, parent) {
         /**
          * @private
@@ -43,11 +169,18 @@ class BaseDataLayer {
         this.layout_idx = null;
 
         /**
-         * The unique identifier for this layer. Should be unique within this layer.
+         * The unique identifier for this layer. Should be unique within this panel.
          * @public
          * @member {String}
          */
         this.id     = null;
+
+        /**
+         * The fully qualified identifier for the data layer, prefixed by any parent or container elements.
+         * @type {string}
+         * @private
+         */
+        this._base_id = null;
 
         /**
          * @protected
@@ -86,11 +219,13 @@ class BaseDataLayer {
          * A user-provided function used to filter data for display. If provided, this will override any declarative
          *  options in `layout.filters`
          * @private
+         * @deprecated
          */
         this._filter_func = null;
 
         // Ensure any axes defined in the layout have an explicit axis number (default: 1)
         if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') {
+            // TODO: Example of x2? if none remove
             this.layout.x_axis.axis = 1;
         }
         if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') {
@@ -98,7 +233,10 @@ class BaseDataLayer {
         }
 
         /**
-         * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+         * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state.
+         * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
+         * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -209,10 +347,13 @@ class BaseDataLayer {
     }
 
     /**
-     * Select a filter function to be applied to the data
+     * Select a filter function to be applied to the data. DEPRECATED: Please use the LocusZoom.MatchFunctions registry
+     *  and reference via declarative filters.
      * @param func
+     * @deprecated
      */
     setFilter(func) {
+        console.warn('The setFilter method is deprecated and will be removed in the future; please use the layout API with a custom filter function instead');
         this._filter_func = func;
     }
 
@@ -240,30 +381,35 @@ class BaseDataLayer {
      * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
      *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
      * @protected
-     * @param {String|Object} element
+     * @param {Object} element
      * @returns {String}
      */
     getElementId (element) {
-        let element_id = 'element';
-        if (typeof element == 'string') {
-            element_id = element;
-        } else if (typeof element == 'object') {
-            const id_field = this.layout.id_field || 'id';
-            if (typeof element[id_field] == 'undefined') {
-                throw new Error('Unable to generate element ID');
-            }
-            element_id = element[id_field].toString().replace(/\W/g, '');
+        // Use a cached value if possible
+        const id_key = Symbol.for('lzID');
+        if (element[id_key]) {
+            return element[id_key];
         }
-        return (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
+
+        const id_field = this.layout.id_field || 'id';
+        if (typeof element[id_field] == 'undefined') {
+            throw new Error('Unable to generate element ID');
+        }
+        const element_id = element[id_field].toString().replace(/\W/g, '');
+
+        // Cache ID value for future calls
+        const key = (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
+        element[id_key] = key;
+        return key;
     }
 
     /**
      * Fetch an ID that may bind a data element to a separate visual node for displaying status
-     * Examples of this might be seperate visual nodes to show select/highlight statuses, or
+     * Examples of this might be separate visual nodes to show select/highlight statuses, or
      * even a common/shared node to show status across many elements in a set.
      * Abstract method. It should be overridden by data layers that implement seperate status
      * nodes specifically to the use case of the data layer type.
-     * @protected
+     * @private
      * @param {String|Object} element
      * @returns {String|null}
      */
@@ -275,6 +421,7 @@ class BaseDataLayer {
      * Returns a reference to the underlying data associated with a single visual element in the data layer, as
      *   referenced by the unique identifier for the element
      *
+     * @ignore
      * @protected
      * @param {String} id The unique identifier for the element, as defined by `getElementId`
      * @returns {Object|null} The data bound to that element
@@ -290,21 +437,27 @@ class BaseDataLayer {
 
     /**
      * Basic method to apply arbitrary methods and properties to data elements.
-     *   This is called on all data immediately after being fetched.
+     *   This is called on all data immediately after being fetched. (requires reMap, not just re-render)
+     *
+     * Allowing a data element to access its parent enables interactive functionality, such as tooltips that modify
+     *  the parent plot. This is also used for system-derived fields like "matching" behavior".
+     *
      * @protected
      * @returns {BaseDataLayer}
      */
     applyDataMethods() {
         const field_to_match = (this.layout.match && this.layout.match.receive);
+        const match_function = MATCHERS.get(this.layout.match && this.layout.match.operator || '=');
         const broadcast_value = this.parent_plot.state.lz_match_value;
-
+        // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
+        const field_resolver = field_to_match ? new Field(field_to_match) : null;
         this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_highlight_match = (item[field_to_match] === broadcast_value);
+                item.lz_is_match = (match_function(field_resolver.resolve(item), broadcast_value));
             }
 
             item.toHTML = () => {
@@ -334,7 +487,8 @@ class BaseDataLayer {
     }
 
     /**
-     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed
+     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed.
+     * Most data layers will never need to use this.
      * @protected
      * @returns {BaseDataLayer}
      */
@@ -349,41 +503,41 @@ class BaseDataLayer {
      * In the future this may be further expanded, so that scaling functions can operate similar to mappers
      *  (item, index, array). Additional arguments would be added as the need arose.
      *
-     * @protected
-     * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
+     * @private
+     * @param {Array|Number|String|Object} option_layout Either a scalar ("color is red") or a configuration object
      *  ("rules for how to choose color based on item value")
      * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
      * @param {Number} data_index The array index for the data element
      * @returns {*} The transformed value
      */
-    resolveScalableParameter (layout, element_data, data_index) {
+    resolveScalableParameter (option_layout, element_data, data_index) {
         let ret = null;
-        if (Array.isArray(layout)) {
+        if (Array.isArray(option_layout)) {
             let idx = 0;
-            while (ret === null && idx < layout.length) {
-                ret = this.resolveScalableParameter(layout[idx], element_data, data_index);
+            while (ret === null && idx < option_layout.length) {
+                ret = this.resolveScalableParameter(option_layout[idx], element_data, data_index);
                 idx++;
             }
         } else {
-            switch (typeof layout) {
+            switch (typeof option_layout) {
             case 'number':
             case 'string':
-                ret = layout;
+                ret = option_layout;
                 break;
             case 'object':
-                if (layout.scale_function) {
-                    const func = scalable.get(layout.scale_function);
-                    if (layout.field) {
-                        const f = new Field(layout.field);
+                if (option_layout.scale_function) {
+                    const func = SCALABLE.get(option_layout.scale_function);
+                    if (option_layout.field) {
+                        const f = new Field(option_layout.field);
                         let extra;
                         try {
-                            extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
+                            extra = this.getElementAnnotation(element_data);
                         } catch (e) {
                             extra = null;
                         }
-                        ret = func(layout.parameters || {}, f.resolve(element_data, extra), data_index);
+                        ret = func(option_layout.parameters || {}, f.resolve(element_data, extra), data_index);
                     } else {
-                        ret = func(layout.parameters || {}, element_data, data_index);
+                        ret = func(option_layout.parameters || {}, element_data, data_index);
                     }
                 }
                 break;
@@ -394,6 +548,7 @@ class BaseDataLayer {
 
     /**
      * Generate dimension extent function based on layout parameters
+     * @ignore
      * @protected
      * @param {('x'|'y')} dimension
      */
@@ -527,6 +682,7 @@ class BaseDataLayer {
      */
     _drawTooltip(tooltip, position, x_min, x_max, y_min, y_max) {
         const panel_layout = this.parent.layout;
+        const plot_layout = this.parent_plot.layout;
         const layer_layout = this.layout;
 
         // Tooltip position params: as defined in the default stylesheet, used in calculations
@@ -539,7 +695,7 @@ class BaseDataLayer {
         const page_origin = this._getPageOrigin();
         const tooltip_box = tooltip.selector.node().getBoundingClientRect();
         const data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
-        const data_layer_width = panel_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
+        const data_layer_width = plot_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
 
         // Clip the edges of the datum to the available plot area
         x_min = Math.max(x_min, 0);
@@ -570,7 +726,7 @@ class BaseDataLayer {
         } else if (placement === 'horizontal') {
             // Auto select whether to position to the left of the item, or to the right
             y_offset = 0;
-            if (x_center <= panel_layout.width / 2) {
+            if (x_center <= plot_layout.width / 2) {
                 placement = 'left';
             } else {
                 placement = 'right';
@@ -636,44 +792,34 @@ class BaseDataLayer {
     }
 
     /**
-     * Determine whether a given data element matches set criteria
+     * Determine whether a given data element matches all predefined filter criteria, usually as specified in a layout directive.
      *
-     * Typically this is used with array.filter (the first argument is curried, `filter.bind(this, options)`
-     * @protected
-     * @param {Object[]} filters A list of filter entries: {field, value, operator} describing each filter.
-     *  Operator must be from a list of built-in operators
+     * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
+     * @private
+     * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
+     *  Operator must be from a list of built-in operators. If the field is omitted, the entire datum object will be
+     *  passed to the filter, rather than a single scalar value. (this is only useful with custom `MatchFunctions` as operator)
      * @param {Object} item
      * @param {Number} index
      * @param {Array} array
      * @returns {Boolean} Whether the specified item is a match
      */
-    filter(filters, item, index, array) {
-        const test = (element, filter) => {
+    filter(filter_rules, item, index, array) {
+        let is_match = true;
+        filter_rules.forEach((filter) => { // Try each filter on this item, in sequence
             const {field, operator, value: target} = filter;
-            const operators = {
-                '=': (a, b) => a === b,
-                // eslint-disable-next-line eqeqeq
-                '!=': (a, b) => a != b, // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
-                '<': (a, b) => a < b,
-                '<=': (a, b) => a <= b,
-                '>': (a, b) => a > b,
-                '>=': (a, b) => a >= b,
-                '%': (a, b) => a % b,
-                'in': (a, b) => b && b.includes(a),  // works for strings or arrays
-                'match': (a, b) => a && a.includes(b),
-            };
-            const extra = this.layer_state.extra_fields[this.getElementId(element)];
-            const field_value = (new Field(field)).resolve(element, extra);
-            return operators[operator](field_value, target);
-        };
+            const test_func = MATCHERS.get(operator);
 
-        let match = true;
-        filters.forEach((filter) => {
-            if (!test(item, filter)) {
-                match = false;
+            // Return the field value or annotation. If no `field` is specified, the filter function will operate on
+            //  the entire data object. This behavior is only really useful with custom functions, because the
+            //  builtin ones expect to receive a scalar value
+            const extra = this.getElementAnnotation(item);
+            const field_value = field ? (new Field(field)).resolve(item, extra) : item;
+            if (!test_func(field_value, target)) {
+                is_match = false;
             }
         });
-        return match;
+        return is_match;
     }
 
     /**
@@ -681,13 +827,13 @@ class BaseDataLayer {
      *
      * @protected
      * @param {String|Object} element The data object or ID string for the element
-     * @param {String} key The name of the annotation to track
+     * @param {String} [key] The name of the annotation to track. If omitted, returns all annotations for this element as an object.
      * @return {*}
      */
     getElementAnnotation (element, key) {
         const id = this.getElementId(element);
         const extra = this.layer_state.extra_fields[id];
-        return extra && extra[key];
+        return key ? (extra && extra[key]) : extra;
     }
 
     /****** Private methods: rarely overridden or modified by external usages */
@@ -728,10 +874,10 @@ class BaseDataLayer {
         const layer_state = { status_flags: {}, extra_fields: {} };
         const status_flags = layer_state.status_flags;
         STATUSES.adjectives.forEach((status) => {
-            status_flags[status] = status_flags[status] || [];
+            status_flags[status] = status_flags[status] || new Set();
         });
         // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
-        status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
+        status_flags['has_tooltip'] = status_flags['has_tooltip'] || new Set();
 
         if (this.parent) {
             // If layer has a parent, store a reference in the overarching plot.state object
@@ -749,10 +895,14 @@ class BaseDataLayer {
      * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
      */
     getBaseId () {
+        if (this._base_id) {
+            return this._base_id;
+        }
+
         if (this.parent) {
             return `${this.parent_plot.id}.${this.parent.id}.${this.id}`;
         } else {
-            return '';
+            return (this.id || '').toString();
         }
     }
 
@@ -775,6 +925,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     initialize() {
+        this._base_id = this.getBaseId();
 
         // Append a container group element to house the main data layer group element and the clip path
         const base_id = this.getBaseId();
@@ -817,7 +968,7 @@ class BaseDataLayer {
                 .attr('class', 'lz-data_layer-tooltip')
                 .attr('id', `${id}-tooltip`),
         };
-        this.layer_state.status_flags['has_tooltip'].push(id);
+        this.layer_state.status_flags['has_tooltip'].add(id);
         this.updateTooltip(data);
         return this;
     }
@@ -838,7 +989,7 @@ class BaseDataLayer {
         this.tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html) {
-            this.tooltips[id].selector.html(parseFields(d, this.layout.tooltip.html));
+            this.tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
         }
         // If the layout allows tool tips on this data layer to be closable then add the close button
         // and add padding to the tooltip to accommodate it
@@ -882,9 +1033,8 @@ class BaseDataLayer {
         }
         // When a tooltip is removed, also remove the reference from the state
         if (!temporary) {
-            const state = this.layer_state.status_flags['has_tooltip'];
-            const label_mark_position = state.indexOf(id);
-            state.splice(label_mark_position, 1);
+            const tooltip_state = this.layer_state.status_flags['has_tooltip'];
+            tooltip_state.delete(id);
         }
         return this;
     }
@@ -895,9 +1045,9 @@ class BaseDataLayer {
      * @private
      * @returns {BaseDataLayer}
      */
-    destroyAllTooltips() {
+    destroyAllTooltips(temporary = true) {
         for (let id in this.tooltips) {
-            this.destroyTooltip(id, true);
+            this.destroyTooltip(id, temporary);
         }
         return this;
     }
@@ -1024,7 +1174,7 @@ class BaseDataLayer {
         var status_flags = {};  // {status_name: bool}
         STATUSES.adjectives.forEach((status) => {
             const antistatus = `un${status}`;
-            status_flags[status] = (layer_state.status_flags[status].includes(id));
+            status_flags[status] = (layer_state.status_flags[status].has(id));
             status_flags[antistatus] = !status_flags[status];
         });
 
@@ -1035,7 +1185,7 @@ class BaseDataLayer {
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
         //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-        const has_tooltip = (layer_state.status_flags['has_tooltip'].includes(id));
+        const has_tooltip = (layer_state.status_flags['has_tooltip'].has(id));
         const tooltip_was_closed = first_time ? false : !has_tooltip;
         if (show_resolved && !tooltip_was_closed && !hide_resolved) {
             this.createTooltip(element);
@@ -1050,7 +1200,9 @@ class BaseDataLayer {
      * Toggle a status (e.g. highlighted, selected, identified) on an element
      *
      * @private
-     *
+     * @fires event:layout_changed
+     * @fires event:element_selection
+     * @fires event:match_requested
      * @param {String} status The name of a recognized status to be added/removed on an appropriate element
      * @param {String|Object} element The data bound to the element of interest
      * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it
@@ -1080,7 +1232,7 @@ class BaseDataLayer {
             this.setAllElementStatus(status, !active);
         }
 
-        // Set/unset the proper status class on the appropriate DOM element(s)
+        // Set/unset the proper status class on the appropriate DOM element(s), *and* potentially an additional element
         d3.select(`#${element_id}`).classed(`lz-data_layer-${this.layout.type}-${status}`, active);
         const element_status_node_id = this.getElementStatusNodeId(element);
         if (element_status_node_id !== null) {
@@ -1088,13 +1240,12 @@ class BaseDataLayer {
         }
 
         // Track element ID in the proper status state array
-        const element_status_idx = this.layer_state.status_flags[status].indexOf(element_id);
-        const added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
+        const added_status = !this.layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
         if (active && added_status) {
-            this.layer_state.status_flags[status].push(element_id);
+            this.layer_state.status_flags[status].add(element_id);
         }
         if (!active && !added_status) {
-            this.layer_state.status_flags[status].splice(element_status_idx, 1);
+            this.layer_state.status_flags[status].delete(element_id);
         }
 
         // Trigger tool tip show/hide logic
@@ -1112,10 +1263,11 @@ class BaseDataLayer {
         }
 
         const value_to_broadcast = (this.layout.match && this.layout.match.send);
-        if (is_selected && value_to_broadcast && (added_status || !active)) {
+        if (is_selected && (typeof value_to_broadcast !== 'undefined') && (added_status || !active)) {
             this.parent.emit(
+                // The broadcast value can use transforms to "clean up value before sending broadcasting"
                 'match_requested',
-                { value: element[value_to_broadcast], active: active },
+                { value: new Field(value_to_broadcast).resolve(element), active: active },
                 true
             );
         }
@@ -1147,14 +1299,14 @@ class BaseDataLayer {
         if (toggle) {
             this.data.forEach((element) => this.setElementStatus(status, element, true));
         } else {
-            const status_ids = this.layer_state.status_flags[status].slice();
+            const status_ids = new Set(this.layer_state.status_flags[status]); // copy so that we don't mutate while iterating
             status_ids.forEach((id) => {
                 const element = this.getElementById(id);
                 if (typeof element == 'object' && element !== null) {
                     this.setElementStatus(status, element, false);
                 }
             });
-            this.layer_state.status_flags[status] = [];
+            this.layer_state.status_flags[status] = new Set();
         }
 
         // Update global status flag
@@ -1205,6 +1357,10 @@ class BaseDataLayer {
         };
         const self = this;
         return function(element) {
+            // This method may be used on two kinds of events: directly attached, or bubbled.
+            // D3 doesn't natively support bubbling very well; if no data is bound on the currentTarget, check to see
+            //  if there is data available at wherever the event was initiated from
+            element = element || d3.select(d3.event.target).datum();
 
             // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
             if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) {
@@ -1218,9 +1374,6 @@ class BaseDataLayer {
                 if (typeof behavior != 'object' || behavior === null) {
                     return;
                 }
-
-                const current_status_boolean = (self.layer_state.status_flags[behavior.status].includes(self.getElementId(element)));
-                const exclusive = behavior.exclusive && !current_status_boolean;
 
                 switch (behavior.action) {
 
@@ -1236,13 +1389,16 @@ class BaseDataLayer {
 
                 // Toggle a status
                 case 'toggle':
+                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].has(self.getElementId(element)));
+                    var exclusive = behavior.exclusive && !current_status_boolean;
+
                     self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                     break;
 
                 // Link to a dynamic URL
                 case 'link':
                     if (typeof behavior.href == 'string') {
-                        const url = parseFields(element, behavior.href);
+                        const url = parseFields(behavior.href, element, self.getElementAnnotation(element));
                         if (typeof behavior.target == 'string') {
                             window.open(url, behavior.target);
                         } else {
@@ -1286,16 +1442,15 @@ class BaseDataLayer {
             if (!Object.prototype.hasOwnProperty.call(status_flags, property)) {
                 continue;
             }
-            if (Array.isArray(status_flags[property])) {
-                status_flags[property].forEach((element_id) => {
-                    try {
-                        this.setElementStatus(property, this.getElementById(element_id), true);
-                    } catch (e) {
-                        console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
-                        console.error(e);
-                    }
-                });
-            }
+            status_flags[property].forEach((element_id) => {
+                try {
+                    this.setElementStatus(property, this.getElementById(element_id), true);
+                } catch (e) {
+                    console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
+                    console.error(e);
+                }
+            });
+
         }
     }
 
@@ -1357,12 +1512,8 @@ STATUSES.verbs.forEach((verb, idx) => {
      *  @private
      *  @function hideElement
      */
-    BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
+    BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive = false) {
+        exclusive = !!exclusive;
         this.setElementStatus(adjective, element, true, exclusive);
         return this;
     };

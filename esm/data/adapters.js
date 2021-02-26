@@ -1,6 +1,35 @@
 /**
  * Define standard data adapters used to retrieve data (usually from REST APIs)
- * @module
+ *
+ * ## Adapters are responsible for retrieving data
+ * In LocusZoom, the act of fetching data (from API, JSON file, or Tabix) is separate from the act of rendering data.
+ * Adapters are used to handle retrieving from different sources, and can provide various advanced functionality such
+ *  as caching, data harmonization, and annotating API responses with calculated fields. They can also be used to join
+ *  two data sources, such as annotating association summary statistics with LD information.
+ *
+ * Most of LocusZoom's builtin layouts and adapters are written for the field names and data formats of the
+ *  UMich [PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#introduction):
+ *  if your data is in a different format, an adapter can be used to coerce or rename fields.
+ *  Although it is possible to change every part of a rendering layout to expect different fields, this is often much
+ *  more work than providing data in the expected format.
+ *
+ * ## Creating data adapters
+ * The documentation in this section describes the available data types and adapters. Real LocusZoom usage almost never
+ *  creates these classes directly: rather, they are defined from configuration objects that ask for a source by name.
+ *
+ * The below example creates an object responsible for fetching two different GWAS summary statistics datasets from two different API endpoints, for any data
+ *  layer that asks for fields from `trait1:fieldname` or `trait2:fieldname`.
+ *
+ *  ```
+ *  const data_sources = new LocusZoom.DataSources();
+ *  data_sources.add("trait1", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 1}}]);
+ *  data_sources.add("trait2", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 2}}]);
+ *  ```
+ *
+ *  These data sources are then passed to the plot when data is to be rendered:
+ *  `const plot = LocusZoom.populate("#lz-plot", data_sources, layout);`
+ *
+ * @module LocusZoom_Adapters
  */
 
 function validateBuildSource(class_name, build, source) {
@@ -15,22 +44,37 @@ function validateBuildSource(class_name, build, source) {
 }
 
 
+// NOTE: Custom adapaters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
+//  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
+//  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
+//  private API methods exist in the base class.
+
 /**
- * Base class for LocusZoom data sources (any). See also: BaseApiAdapter
+ * Base class for LocusZoom data sources (any). See also: BaseApiAdapter for requests from a remote URL.
  * @public
  */
 class BaseAdapter {
+    /**
+     * @param {object} config Configuration options
+     */
     constructor(config) {
         /**
-         * Whether this source should enable caching
+         * Whether to enable caching (true for most data adapters)
+         * @private
          * @member {Boolean}
          */
         this._enableCache = true;
         this._cachedKey = null;
 
+        // Almost all LZ sources are "region based". Cache the region requested and use it to determine whether
+        //   the cache would satisfy the request.
+        this._cache_pos_start = null;
+        this._cache_pos_end = null;
+
         /**
-         * Whether this data source type is dependent on previous requests- for example, the LD source cannot annotate
+         * Whether this adapter type is dependent on previous requests- for example, the LD source cannot annotate
          *  association data if no data was found for that region.
+         * @private
          * @member {boolean}
          */
         this.__dependentSource = false;
@@ -40,7 +84,7 @@ class BaseAdapter {
     }
 
     /**
-     * Parse configuration used to create the data source. Many custom sources will override this method to suit their
+     * Parse configuration used to create the instance. Many custom sources will override this method to suit their
      *  needs (eg specific config options, or for sources that do not retrieve data from a URL)
      * @protected
      * @param {String|Object} config Basic configuration- either a url, or a config object
@@ -48,22 +92,43 @@ class BaseAdapter {
      * @param {String} [config.params] Initial config params for the datasource
      */
     parseInit(config) {
-        /** @member {Object} */
+        /**
+         * @private
+         * @member {Object}
+         */
         this.params = config.params || {};
     }
 
     /**
      * A unique identifier that indicates whether cached data is valid for this request. For most sources using GET
-     *  requests to a REST API, this is usually the URL.
+     *  requests to a REST API, this is usually the region requested. Some sources will append additional params to define the request.
+     *
+     *  This means that to change caching behavior, both the URL and the cache key may need to be updated. However,
+     *      it allows most datasources to skip an extra network request when zooming in.
      * @protected
      * @param {Object} state Information available in plot.state (chr, start, end). Sometimes used to inject globally
      *  available information that influences the request being made.
      * @param {Object} chain The data chain from previous requests made in a sequence.
      * @param fields
-     * @returns {String|undefined}
+     * @returns {String}
      */
     getCacheKey(state, chain, fields) {
-        return this.getURL(state, chain, fields);
+        // Most region sources, by default, will cache the largest region that satisfies the request: zooming in
+        //  should be satisfied via the cache, but pan or region change operations will cause a network request
+
+        // Some adapters rely on values set in chain.header during the getURL call. (eg, the LD source uses
+        //  this to find the LD refvar) Calling this method is a backwards-compatible way of ensuring that value is set,
+        //  even on a cache hit in which getURL otherwise wouldn't be called.
+        // Some of the adapters that rely on this behavior are user-defined, hence compatibility hack
+        this.getURL(state, chain, fields);
+
+        const cache_pos_chr = state.chr;
+        const {_cache_pos_start, _cache_pos_end} = this;
+        if (_cache_pos_start && state.start >= _cache_pos_start && _cache_pos_end && state.end <= _cache_pos_end ) {
+            return `${cache_pos_chr}_${_cache_pos_start}_${_cache_pos_end}`;
+        } else {
+            return `${state.chr}_${state.start}_${state.end}`;
+        }
     }
 
     /**
@@ -99,16 +164,20 @@ class BaseAdapter {
      * For most use cases, it is better to override `fetchRequest` instead, to avoid bypassing the cache mechanism
      * by accident.
      * @protected
+     * @return {Promise}
      */
     getRequest(state, chain, fields) {
         let req;
         const cacheKey = this.getCacheKey(state, chain, fields);
+
         if (this._enableCache && typeof(cacheKey) !== 'undefined' && cacheKey === this._cachedKey) {
             req = Promise.resolve(this._cachedResponse);  // Resolve to the value of the current promise
         } else {
             req = this.fetchRequest(state, chain, fields);
             if (this._enableCache) {
                 this._cachedKey = cacheKey;
+                this._cache_pos_start = state.start;
+                this._cache_pos_end = state.end;
                 this._cachedResponse = req;
             }
         }
@@ -121,7 +190,7 @@ class BaseAdapter {
      *
      * Does not apply namespacing, transformations, or field extraction.
      *
-     * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
+     * May be overridden by data adapters that inherently return more complex payloads, or that exist to annotate other
      *  sources (eg, if the payload provides extra data rather than a series of records).
      * @protected
      * @param {Object[]|Object} data The original parsed server response
@@ -245,6 +314,10 @@ class BaseAdapter {
      * Coordinates the work of parsing a response and returning records. This is broken into 4 steps, which may be
      *  overridden separately for fine-grained control. Each step can return either raw data or a promise.
      *
+     * @see {module:LocusZoom_Adapters~BaseAdapter#normalizeResponse}
+     * @see {module:LocusZoom_Adapters~BaseAdapter#annotateData}
+     * @see {module:LocusZoom_Adapters~BaseAdapter#extractFields}
+     * @see {module:LocusZoom_Adapters~BaseAdapter#combineChainBody}
      * @protected
      *
      * @param {String|Object} resp The raw data associated with the response
@@ -284,14 +357,14 @@ class BaseAdapter {
     }
 
     /**
-     * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
-     * This is the public-facing datasource method that will most be called by the plot, but custom data sources will
+     * Fetch the data from the specified data adapter, and apply transformations requested by an external consumer.
+     * This is the public-facing datasource method that will most be called by the plot, but custom data adapters will
      *  almost never want to override this method directly- more specific hooks are provided to control individual pieces
      *  of the request lifecycle.
      *
      * @private
      * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
+     * @param {String[]} fields Array of field names that the plot has requested from this data adapter. (without the "namespace" prefix)
      * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
      *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
      * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
@@ -324,14 +397,20 @@ class BaseAdapter {
 }
 
 /**
- * Base source for LocusZoom data sources that receive their data over the web. Adds default config parameters
+ * Base class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
+ * @extends module:LocusZoom_Adapters~BaseAdapter
+ * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
+ * @inheritDoc
  */
 class BaseApiAdapter extends BaseAdapter {
     parseInit(config) {
         super.parseInit(config);
 
-        /** @member {String} */
+        /**
+         * @private
+         * @member {String}
+         */
         this.url = config.url;
         if (!this.url) {
             throw new Error('Source not initialized with required URL');
@@ -340,8 +419,16 @@ class BaseApiAdapter extends BaseAdapter {
 }
 
 /**
- * Data Source for Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a requesr
+ * Retrieve Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a request
+ *  to a specific REST API.
  * @public
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @param {string} config.url The base URL for the remote data.
+ * @param {object} config.params
+ * @param [config.params.sort=false] Whether to sort the association data (by an assumed field named "position"). This
+ *   is primarily a site-specific workaround for a particular LZ usage; we encourage apis to sort by position before returning
+ *   data to the browser.
+ * @param [config.params.source] The ID of the GWAS dataset to use for this request, as matching the API backend
  */
 class AssociationLZ extends BaseApiAdapter {
     preGetData (state, fields, outnames, trans) {
@@ -357,6 +444,9 @@ class AssociationLZ extends BaseApiAdapter {
         return {fields: fields, outnames:outnames, trans:trans};
     }
 
+    /**
+     * Add query parameters to the URL to construct a query for the specified region
+     */
     getURL (state, chain, fields) {
         const analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
         if (typeof analysis == 'undefined') {
@@ -365,11 +455,16 @@ class AssociationLZ extends BaseApiAdapter {
         return `${this.url}results/?filter=analysis in ${analysis} and chromosome in  '${state.chr}' and position ge ${state.start} and position le ${state.end}`;
     }
 
+    /**
+     * Some association sources do not sort their data in a predictable order, which makes it hard to reliably
+     *   align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
+     *   TODO: Consider more fine grained sorting control in the future. This was added as a very specific
+     *    workaround for the original T2D portal.
+     * @protected
+     * @param data
+     * @return {Object}
+     */
     normalizeResponse (data) {
-        // Some association sources do not sort their data in a predictable order, which makes it hard to reliably
-        //  align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
-        // TODO: Consider more fine grained sorting control in the future. This was added as a very specific
-        //   workaround for the original T2D portal.
         data = super.normalizeResponse(data);
         if (this.params && this.params.sort && data.length && data[0]['position']) {
             data.sort(function (a, b) {
@@ -381,14 +476,41 @@ class AssociationLZ extends BaseApiAdapter {
 }
 
 /**
- * Fetch linkage disequilibrium information from a UMich LDServer-compatible API
+ * Fetch linkage disequilibrium information from a UMich LDServer-compatible API, relative to a reference variant.
+ *  If no `plot.state.ldrefvar` is explicitly provided, this source will attempt to find the most significant GWAS
+ *  variant (smallest pvalue or largest neg_log_pvalue) and yse that as the LD reference variant.
  *
  * This source is designed to connect its results to association data, and therefore depends on association data having
- *  been loaded by a previous request in the data chain.
+ *  been loaded by a previous request in the data chain. For custom association APIs, some additional options might
+ *  need to be be specified in order to locate the most significant SNP. Variant IDs of the form `chrom:pos_ref/alt`
+ *  are preferred, but this source will attempt to harmonize other common data formats into something that the LD
+ *  server can understand.
  *
- * In older versions of LocusZoom, this was known as "LDServer". A prior source (targeted at older APIs) has been removed.
+ * @public
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
  */
 class LDServer extends BaseApiAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data.
+     * @param {object} config.params
+     * @param [config.params.build='GRCh37'] The genome build to use when calculating LD relative to a specified reference variant.
+     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     * @param [config.params.source='1000G'] The name of the reference panel to use, as specified in the LD server instance.
+     *  May be overridden by a global parameter `plot.state.ld_source` to implement widgets that alter LD display.
+     * @param [config.params.population='ALL'] The sample population used to calculate LD for a specified source;
+     *  population names vary depending on the reference panel and how the server was populated wth data.
+     *  May be overridden by a global parameter `plot.state.ld_pop` to implement widgets that alter LD display.
+     * @param [config.params.method='rsquare'] The metric used to calculate LD
+     * @param [config.params.id_field] The association data field that contains variant identifier information. The preferred
+     *   format of LD server is `chrom:pos_ref/alt` and this source will attempt to normalize other common formats.
+     *   This source can auto-detect possible matches for field names containing "variant" or "id"
+     * @param [config.params.position_field] The association data field that contains variant position information.
+     *   This source can auto-detect possible matches for field names containing "position" or "pos"
+     * @param [config.params.pvalue_field] The association data field that contains pvalue information.
+     *   This source can auto-detect possible matches for field names containing "pvalue" or "log_pvalue".
+     *   The suggested LD refvar will be the smallest pvalue, or the largest log_pvalue: this source will auto-detect
+     *   the word "log" in order to determine the sign of the comparison.
+     */
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -433,7 +555,7 @@ class LDServer extends BaseApiAdapter {
             const names = Object.keys(chain.body[0]);
             const nameMatch = exactMatch(names);
             // Internally, fields are generally prefixed with the name of the source they come from.
-            // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
+            // If the user provides an id_field (like `variant`), it should work across data sources (`assoc1:variant`,
             //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
             // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
             const id_match = dataFields.id && nameMatch(new RegExp(`${dataFields.id}\\b`));
@@ -460,15 +582,25 @@ class LDServer extends BaseApiAdapter {
         return obj;
     }
 
+    /**
+     * The LD API payload does not obey standard format conventions; do not try to transform it.
+     */
     normalizeResponse (data) {
-        // The LD API payload does not obey standard format conventions; do not try to transform it.
         return data;
     }
 
     /**
      * Get the LD reference variant, which by default will be the most significant hit in the assoc results
-     *   This will be used in making the original query to the LD server for pairwise LD information
-     * @returns {*|string} The marker id (expected to be in `chr:pos_ref/alt` format) of the reference variant
+     *   This will be used in making the original query to the LD server for pairwise LD information.
+     *
+     * This is meant to join a single LD request to any number of association results, and to work with many kinds of API.
+     *   To do this, the datasource looks for fields with special known names such as pvalue, log_pvalue, etc.
+     *   If your API uses different nomenclature, an option must be specified.
+     *
+     * @protected
+     * @returns {String[]} Two strings: 1) the marker id (expected to be in `chr:pos_ref/alt` format) of the reference
+     *  variant, and 2) the marker ID as it appears in the original dataset that we are joining to, so that the exact
+     *  refvar can be marked when plotting the data..
      */
     getRefvar(state, chain, fields) {
         let findExtremeValue = function(records, pval_field) {
@@ -517,17 +649,31 @@ class LDServer extends BaseApiAdapter {
             }
             refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
         }
-        return refVar;
+        // Some datasets, notably the Portal, use a different marker format.
+        //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
+        const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
+        const match = refVar && refVar.match(REGEX_MARKER);
+
+        if (!match) {
+            throw new Error('Could not request LD for a missing or incomplete marker format');
+        }
+        const [original, chrom, pos, ref, alt] = match;
+        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
+        //  a partial match at most leaves room for potential future features.
+        let refVar_formatted = `${chrom}:${pos}`;
+        if (ref && alt) {
+            refVar_formatted += `_${ref}/${alt}`;
+        }
+
+        return [refVar_formatted, original];
     }
 
+    /**
+     * Identify (or guess) the LD reference variant, then add query parameters to the URL to construct a query for the specified region
+     */
     getURL(state, chain, fields) {
-        // Accept the following params in this.params:
-        // - method (r, rsquare, cov)
-        // - source (aka panel)
-        // - population (ALL, AFR, EUR, etc)
-        // - build
         // The LD source/pop can be overridden from plot.state for dynamic layouts
-        const build = state.genome_build || this.params.build || 'GRCh37';
+        const build = state.genome_build || this.params.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
         let source = state.ld_source || this.params.source || '1000G';
         const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
         const method = this.params.method || 'rsquare';
@@ -539,28 +685,40 @@ class LDServer extends BaseApiAdapter {
 
         validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
 
-        let refVar = this.getRefvar(state, chain, fields);
-        // Some datasets, notably the Portal, use a different marker format.
-        //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
-        const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
-        const match = refVar && refVar.match(REGEX_MARKER);
+        const [refVar_formatted, refVar_raw] = this.getRefvar(state, chain, fields);
 
-        if (!match) {
-            throw new Error('Could not request LD for a missing or incomplete marker format');
-        }
-        refVar = [match[1], ':', match[2], '_', match[3], '/', match[4]].join('');
-        chain.header.ldrefvar = refVar;
+        // Preserve the user-provided variant spec for use when matching to assoc data
+        chain.header.ldrefvar = refVar_raw;
 
         return  [
             this.url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
             '?correlation=', method,
-            '&variant=', encodeURIComponent(refVar),
+            '&variant=', encodeURIComponent(refVar_formatted),
             '&chrom=', encodeURIComponent(state.chr),
             '&start=', encodeURIComponent(state.start),
             '&stop=', encodeURIComponent(state.end),
         ].join('');
     }
 
+    /**
+     * The LD adapter caches based on region, reference panel, and population name
+     * @param state
+     * @param chain
+     * @param fields
+     * @return {string}
+     */
+    getCacheKey(state, chain, fields) {
+        const base = super.getCacheKey(state, chain, fields);
+        let source = state.ld_source || this.params.source || '1000G';
+        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
+        const [refVar, _] = this.getRefvar(state, chain, fields);
+        return `${base}_${refVar}_${source}_${population}`;
+    }
+
+    /**
+     * The LD adapter attempts to intelligently match retrieved LD information to a request for association data earlier in the data chain.
+     * Since each layer only asks for the data needed for that layer, one LD call is sufficient to annotate many separate association tracks.
+     */
     combineChainBody(data, chain, fields, outnames, trans) {
         let keys = this.findMergeFields(chain);
         let reqFields = this.findRequestedFields(fields, outnames);
@@ -601,8 +759,10 @@ class LDServer extends BaseApiAdapter {
         return chain.body;
     }
 
+    /**
+     * The LDServer API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
+     */
     fetchRequest(state, chain, fields) {
-        // The API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
         let url = this.getURL(state, chain, fields);
         let combined = { data: {} };
         let chainRequests = function (url) {
@@ -627,34 +787,46 @@ class LDServer extends BaseApiAdapter {
 }
 
 /**
- * Data source for GWAS catalogs of known variants
+ * Fetch GWAS catalog data for a list of known variants, and align the data with previously fetched association data.
+ * There can be more than one claim per variant; this adapter is written to support a visualization in which each
+ * association variant is labeled with the single most significant hit in the GWAS catalog. (and enough information to link to the external catalog for more information)
+ *
+ * Sometimes the GWAS catalog uses rsIDs that could refer to more than one variant (eg multiple alt alleles are
+ *  possible for the same rsID). To avoid missing possible hits due to ambiguous meaning, we connect the assoc
+ *  and catalog data via the position field, not the full variant specifier. This source will auto-detect the matching
+ *  field in association data by looking for the field name `position` or `pos`.
+ *
  * @public
- * @class
- * @param {Object|String} init Configuration (URL or object)
- * @param {Object} [init.params] Optional configuration parameters
- * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
- * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
  */
 class GwasCatalogLZ extends BaseApiAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data.
+     * @param {Object} config.params
+     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     * @param {Number} [config.params.source] The ID of the chosen catalog. Most usages should omit this parameter and
+     *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
+     */
     constructor(config) {
         super(config);
         this.__dependentSource = true;
     }
 
+    /**
+     * Add query parameters to the URL to construct a query for the specified region
+     */
     getURL(state, chain, fields) {
         // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
         //  (regardless of the actual match field)
-        const build_option = state.genome_build || this.params.build;
-        validateBuildSource(this.constructor.name, build_option, null); // Source can override build- not mutually exclusive
+        const build = state.genome_build || this.params.build;
+        const source = this.params.source;
+        validateBuildSource(this.constructor.name, build, source);
 
-        // Most of our annotations will respect genome build before any other option.
-        //   But there can be more than one GWAS catalog version available in the same API, for the same build- an
-        //   explicit config option will always take
-        //   precedence.
-        // See: http://portaldev.sph.umich.edu/api/v1/annotation/gwascatalog/?format=objects
-        const default_source = (build_option === 'GRCh38') ? 5 : 6;  // EBI GWAS catalog
-        const source = this.params.source || default_source;
-        return `${this.url  }?format=objects&sort=pos&filter=id eq ${source} and chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and id eq ${source}`;
+        return `${this.url  }?format=objects&sort=pos&filter=chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}${source_query}`;
     }
 
     findMergeFields(records) {
@@ -676,12 +848,16 @@ class GwasCatalogLZ extends BaseApiAdapter {
         return data;
     }
 
+    /**
+     * Intelligently combine the LD data with the association data used for this data layer. See class description
+     *  for a summary of how this works.
+     */
     combineChainBody(data, chain, fields, outnames, trans) {
         if (!data.length) {
             return chain.body;
         }
 
-        //  TODO: Better reuse options in the future. This source is very specifically tied to the PortalDev API, where
+        //  TODO: Better reuse options in the future. This source is very specifically tied to the UM PortalDev API, where
         //   the field name is always "log_pvalue". Relatively few sites will write their own gwas-catalog endpoint.
         const decider = 'log_pvalue';
         const decider_out = outnames[fields.indexOf(decider)];
@@ -731,59 +907,84 @@ class GwasCatalogLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
+ * Retrieve Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @param {string} config.url The base URL for the remote data
+ * @param {Object} config.params
+ * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+ *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+ * @param {Number} [config.params.source] The ID of the chosen gene dataset. Most usages should omit this parameter and
+ *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent GENCODE data, GRCh37.
  */
 class GeneLZ extends BaseApiAdapter {
+    /**
+     * Add query parameters to the URL to construct a query for the specified region
+     */
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
         validateBuildSource(this.constructor.name, build, source);
 
-        if (build) {
-            // If build specified, we auto-select the best current portaldev API dataset for that build
-            // If build is not specified, we use the exact source ID provided by the user.
-            // See: https://portaldev.sph.umich.edu/api/v1/annotation/genes/sources/?format=objects
-            source = (build === 'GRCh38') ? 4 : 5;
-        }
-        return `${this.url}?filter=source in ${source} and chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and source in ${source}`;
+        return `${this.url}?filter=chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}${source_query}`;
     }
 
+    /**
+     * The UM genes API has a very complex internal data format. Bypass any record parsing, and provide the data layer with
+     *  the exact information returned by the API. (ignoring the fields array in the layout)
+     * @param data
+     * @return {Object[]|Object}
+     */
     normalizeResponse(data) {
-        // Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with
-        // the exact information returned by the API. (ignoring the fields array in the layout)
         return data;
     }
 
+    /**
+     * Does not attempt to namespace or modify the fields from the API payload; the payload format is very complex and
+     *  quite coupled with the data rendering implementation.
+     * Typically, requests to this adapter specify a single dummy field sufficient to trigger the request: `fields:[ 'gene:all' ]`
+     */
     extractFields(data, fields, outnames, trans) {
         return data;
     }
 }
 
 /**
- * Data Source for Gene Constraint Data, as fetched from the gnomAD server (or compatible)
+ * Retrieve Gene Constraint Data, as fetched from the gnomAD server (or compatible graphQL api endpoint)
  *
  * This is intended to be the second request in a chain, with special logic that connects it to Genes data
- *  already fetched.
+ *  already fetched. It assumes that the genes data is returned from the UM API, and thus the logic involves
+ *  matching on specific assumptions about `gene_name` format.
  *
  * @public
-*/
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
+ */
 class GeneConstraintLZ extends BaseApiAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data
+     * @param {Object} config.params
+     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+     *   May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     */
     constructor(config) {
         super(config);
         this.__dependentSource = true;
     }
+
+    /**
+     * GraphQL API: request details are encoded in the body, not the URL
+     */
     getURL() {
-        // GraphQL API: request details are encoded in the body, not the URL
         return this.url;
     }
-    getCacheKey(state, chain, fields) {
-        const build = state.genome_build || this.params.build;
-        // GraphQL API: request not defined solely by the URL
-        // Gather the state params that govern constraint query for a given region.
-        return `${this.url} ${state.chr} ${state.start} ${state.end} ${build}`;
-    }
 
+    /**
+     * The gnomAD API has a very complex internal data format. Bypass any record parsing, and provide the data layer with
+     *  the exact information returned by the API.
+     */
     normalizeResponse(data) {
         return data;
     }
@@ -791,7 +992,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
     fetchRequest(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         if (!build) {
-            throw new Error(`Data source ${this.constructor.name} must specify a 'genome_build' option`);
+            throw new Error(`Adapter ${this.constructor.name} must specify a 'genome_build' option`);
         }
 
         const unique_gene_names = chain.body.reduce(
@@ -810,8 +1011,11 @@ class GeneConstraintLZ extends BaseApiAdapter {
             return `${alias}: gene(gene_symbol: "${gene_name}", reference_genome: ${build}) { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } `;
         });
 
-        if (!query.length) {
-            // If there are no genes, skip the network request
+        if (!query.length || query.length > 25 || build === 'GRCh38') {
+            // Skip the API request when it would make no sense:
+            // - Build 38 (gnomAD supports build GRCh37 only; don't hit server when invalid. This isn't future proof, but we try to be good neighbors.)
+            // - Too many genes (gnomAD appears max cost ~25 genes)
+            // - No genes in region (hence no constraint info)
             return Promise.resolve({ data: null });
         }
 
@@ -821,7 +1025,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
         const body = JSON.stringify({ query: query });
         const headers = { 'Content-Type': 'application/json' };
 
-        // FIXME: The gnomAD API sometimes has temporary CORS changes that temporarily break the genes track
+        // Note: The gnomAD API sometimes fails randomly.
         // If request blocked, return  a fake "no data" signal so the genes track can still render w/o constraint info
         return fetch(url, { method: 'POST', body, headers }).then((response) => {
             if (!response.ok) {
@@ -831,6 +1035,10 @@ class GeneConstraintLZ extends BaseApiAdapter {
         }).catch((err) => []);
     }
 
+    /**
+     * Annotate GENCODE data (from a previous request to the genes adapter) with additional gene constraint data from
+     *   the gnomAD API. See class description for a summary of how this works.
+     */
     combineChainBody(data, chain, fields, outnames, trans) {
         if (!data) {
             return chain;
@@ -858,53 +1066,72 @@ class GeneConstraintLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
+ * Retrieve Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @param {string} config.url The base URL for the remote data
+ * @param {Object} config.params
+ * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+ *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+ * @param {Number} [config.params.source] The ID of the chosen dataset. Most usages should omit this parameter and
+ *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseApiAdapter {
+    /**
+     * Add query parameters to the URL to construct a query for the specified region
+     */
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
         validateBuildSource(this.constructor.SOURCE_NAME, build, source);
 
-        if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
-            source = (build === 'GRCh38') ? 16 : 15;
-        }
-        return `${this.url}?filter=id in ${source} and chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and id in ${source}`;
+        return `${this.url}?filter=chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}${source_query}`;
     }
 }
 
 /**
- * Data Source for static blobs of data as raw JS objects. This does not perform additional parsing, and it bypasses
- * namespaces. Therefore it is the responsibility of the user to pass information in a format that can be read and
- * understood by the chosen plot- a StaticJSON source is rarely a drop-in replacement.
+ * Retrieve static blobs of data as raw JS objects. This does not perform additional parsing, which is required
+ *  for some sources (eg it does not know how to join together LD and association data).
+ *
+ * Therefore it is the responsibility of the user to pass information in a format that can be read and
+ * understood by the chosen plot- a StaticJSON source is rarely a drop-in replacement for existing layouts.
  *
  * This source is largely here for legacy reasons. More often, a convenient way to serve static data is as separate
  *  JSON files to an existing source (with the JSON url in place of an API).
+ *
+ *  Note: The name is a bit misleading. It receives JS objects, not strings serialized as "json".
  * @public
+ * @see module:LocusZoom_Adapters~BaseAdapter
+ * @param {object} data The data to be returned by this source (subject to namespacing rules)
  */
 class StaticSource extends BaseAdapter {
     parseInit(data) {
         // Does not receive any config; the only argument is the raw data, embedded when source is created
         this._data = data;
     }
+
     getRequest(state, chain, fields) {
         return Promise.resolve(this._data);
     }
 }
 
-
 /**
- * Data source for PheWAS data retrieved from a LocusZoom/PortalDev compatible API
+ * Retrieve PheWAS data retrieved from a LocusZoom/PortalDev compatible API
  * @public
- * @param {String[]} init.params.build This datasource expects to be provided the name of the genome build that will
+ * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @param {string} config.url The base URL for the remote data
+ * @param {Object} config.params
+ * @param {String[]} config.params.build This datasource expects to be provided the name of the genome build that will
  *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
 class PheWASLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
         if (!build || !Array.isArray(build) || !build.length) {
-            throw new Error(['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
+            throw new Error(['Adapter', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
         }
         const url = [
             this.url,
@@ -915,31 +1142,38 @@ class PheWASLZ extends BaseApiAdapter {
         ];
         return url.join('');
     }
+
+    getCacheKey(state, chain, fields) {
+        // This is not a region-based source; it doesn't make sense to cache by a region
+        return this.getURL(state, chain, fields);
+    }
 }
 
-
 /**
- * Base class for "connectors"- this is meant to be subclassed, rather than used directly.
+ * Base class for "connectors"- this is a highly specialized kind of adapter that is rarely used in most LocusZoom
+ *  deployments. This is meant to be subclassed, rather than used directly.
  *
- * A connector is a source that makes no server requests and caches no data of its own. Instead, it decides how to
+ * A connector is a data adapter that makes no server requests and caches no data of its own. Instead, it decides how to
  *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
  *  useful piece of information once, but apply it to many different kinds of record types.
  *
  * Typically, a subclass will implement the field merging logic in `combineChainBody`.
  *
  * @public
- * @param {Object} init Configuration for this source
- * @param {Object} init.sources Specify how the hard-coded logic should find the data it relies on in the chain,
- *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
- *  assumptions about what namespaces a source is using.
- * @type {*|Function}
+ * @see module:LocusZoom_Adapters~BaseAdapter
  */
 class ConnectorSource extends BaseAdapter {
+    /**
+     * @param {Object} config.params Additional parameters
+     * @param {Object} config.params.sources Specify how the hard-coded logic should find the data it relies on in the chain,
+     *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
+     *  assumptions about what namespaces a source is using.     *
+     */
     constructor(config) {
         super(config);
 
         if (!config || !config.sources) {
-            throw new Error('Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs');
+            throw new Error('Connectors must specify the data they require as config.sources = {internal_name: chain_source_id}} pairs');
         }
 
         /**
@@ -949,6 +1183,7 @@ class ConnectorSource extends BaseAdapter {
          *  {gene_ns: "gene", aggregation_ns: "aggregation"}
          *
          * @member {Object}
+         * @private
          */
         this._source_name_mapping = config.sources;
 

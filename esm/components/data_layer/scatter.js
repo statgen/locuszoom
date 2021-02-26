@@ -1,27 +1,76 @@
-/** @module */
 import * as d3 from 'd3';
 import BaseDataLayer from './base';
 import {applyStyles} from '../../helpers/common';
 import {parseFields} from '../../helpers/display';
 import {merge, nameToSymbol} from '../../helpers/layouts';
+import {coalesce_scatter_points} from '../../helpers/render';
 
-
+/**
+ * @memberof module:LocusZoom_DataLayers~scatter
+ */
 const default_layout = {
     point_size: 40,
     point_shape: 'circle',
     tooltip_positioning: 'horizontal',
     color: '#888888',
+    coalesce: {
+        active: false,
+        max_points: 800, // Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width
+        // Define the "region of interest", like "bottom half of plot"; any points outside this region are taken as is
+        //   Values are expressed in terms of data value and will be converted to pixels internally.
+        x_min: '-Infinity',  // JSON doesn't handle some valid JS numbers. Kids, don't get a career in computers.
+        x_max: 'Infinity',
+        y_min: 0,
+        y_max: 3.0,
+        x_gap: 7,
+        y_gap: 7,
+    },
     fill_opacity: 1,
     y_axis: {
         axis: 1,
     },
     id_field: 'id',
 };
+
+/**
+ * Options that control point-coalescing in scatter plots
+ * @typedef {object} module:LocusZoom_DataLayers~scatter~coalesce_options
+ * @property {boolean} [active=false] Whether to use this feature. Typically used for GWAS plots, but
+ *   not other scatter plots such as PheWAS.
+ * @property {number} [max_points=800] Only attempt to reduce DOM size if there are at least this many
+ *  points. Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width. For more
+ *  sparse datasets, all points will be faithfully rendered even if coalesce.active=true.
+ * @property {number} [x_min='-Infinity'] Min x coordinate of the region where points will be coalesced
+ * @property {number} [x_max='Infinity'] Max x coordinate of the region where points will be coalesced
+ * @property {number} [y_min=0] Min y coordinate of the region where points will be coalesced.
+ * @property {number} [y_max=3.0] Max y coordinate of the region where points will be coalesced
+ * @property {number} [x_gap=7] Max number of pixels between the center of two points that can be
+ *   coalesced. For circles, area 40 = radius ~3.5; aim for ~1 diameter distance.
+ * @property {number} [y_gap=7]
+ */
+
 /**
  * Scatter Data Layer
  * Implements a standard scatter plot
+ * @alias module:LocusZoom_DataLayers~scatter
  */
 class Scatter extends BaseDataLayer {
+    /**
+     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size=40] The size (area) of the point for each datum
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='circle'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown".
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#888888'] The color of the point for each datum
+     * @param {module:LocusZoom_DataLayers~scatter~coalesce_options} [layout.coalesce] Options to control whether and how to combine adjacent insignificant ("within region of interest") points
+     *   to improve rendering performance. These options are primarily aimed at GWAS region plots. Within a specified
+     *   rectangle area (eg "insignificant point cutoff"), we choose only points far enough part to be seen.
+     *   The defaults are specifically tuned for GWAS plots with -log(p) on the y-axis.
+     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1] Opacity (0..1) for each datum point
+     * @param {string} [layout.label.text] Similar to tooltips: a template string that can reference datum fields for label text.
+     * @param {number} [layout.label.spacing] Distance (in px) between the label and the center of the datum.
+     * @param {object} [layout.label.lines.style] CSS style options for how the line is rendered
+     * @param {number} [layout.label.filters] Filters that describe which points to label. For performance reasons,
+     *   we recommend labeling only a small subset of most interesting points.
+     * @param {object} [layout.label.style] CSS style options for label text
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
 
@@ -57,7 +106,7 @@ class Scatter extends BaseDataLayer {
         const spacing = data_layer.layout.label.spacing;
         const handle_lines = Boolean(data_layer.layout.label.lines);
         const min_x = 2 * spacing;
-        const max_x = this.parent.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
+        const max_x = this.parent_plot.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
 
         const flip = (dn, dnl) => {
             const dnx = +dn.attr('x');
@@ -219,11 +268,39 @@ class Scatter extends BaseDataLayer {
     // Implement the main render function
     render() {
         const data_layer = this;
-        const x_scale = 'x_scale';
-        const y_scale = `y${this.layout.y_axis.axis}_scale`;
+        const x_scale = this.parent['x_scale'];
+        const y_scale = this.parent[`y${this.layout.y_axis.axis}_scale`];
+
+        const xcs = Symbol.for('lzX');
+        const ycs = Symbol.for('lzY');
 
         // Apply filters to only render a specified set of points
-        const track_data = this._applyFilters();
+        let track_data = this._applyFilters();
+
+        // Add coordinates before rendering, so we can coalesce
+        track_data.forEach((item) => {
+            let x = x_scale(item[this.layout.x_axis.field]);
+            let y = y_scale(item[this.layout.y_axis.field]);
+            if (isNaN(x)) {
+                x = -1000;
+            }
+            if (isNaN(y)) {
+                y = -1000;
+            }
+            item[xcs] = x;
+            item[ycs] = y;
+        });
+
+        if (this.layout.coalesce.active && track_data.length > this.layout.coalesce.max_points) {
+            let { x_min, x_max, y_min, y_max, x_gap, y_gap } = this.layout.coalesce;
+            // Convert x and y "significant region" range from data values to pixels
+            const x_min_px = isFinite(x_min) ? x_scale(+x_min) : -Infinity;
+            const x_max_px = isFinite(x_max) ? x_scale(+x_max) : Infinity;
+            // For y px, we flip the data min/max b/c in SVG coord system +y is down: smaller data y = larger px y
+            const y_min_px = isFinite(y_max) ? y_scale(+y_max) : -Infinity;
+            const y_max_px = isFinite(y_min) ? y_scale(+y_min) : Infinity;
+            track_data = coalesce_scatter_points(track_data, x_min_px, x_max_px, x_gap, y_min_px, y_max_px, y_gap);
+        }
 
         if (this.layout.label) {
             let label_data;
@@ -240,34 +317,24 @@ class Scatter extends BaseDataLayer {
                 .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
                 .data(label_data, (d) => `${d[this.layout.id_field]}_label`);
 
+            const style_class = `lz-data_layer-${this.layout.type}-label`;
             const groups_enter = this.label_groups.enter()
                 .append('g')
-                .attr('class', `lz-data_layer-${this.layout.type}-label`);
+                .attr('class', style_class);
 
-            // Render label texts
             if (this.label_texts) {
                 this.label_texts.remove();
             }
+
             this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
-                .attr('class', `lz-data_layer-${this.layout.type}-label`)
-                .text((d) => parseFields(d, data_layer.layout.label.text || ''))
+                .text((d) => parseFields(data_layer.layout.label.text || '', d, this.getElementAnnotation(d)))
                 .attr('x', (d) => {
-                    let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                    return d[xcs]
                         + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                         + data_layer.layout.label.spacing;
-                    if (isNaN(x)) {
-                        x = -1000;
-                    }
-                    return x;
                 })
-                .attr('y', (d) => {
-                    let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                    if (isNaN(y)) {
-                        y = -1000;
-                    }
-                    return y;
-                })
+                .attr('y', (d) => d[ycs])
                 .attr('text-anchor', 'start')
                 .call(applyStyles, data_layer.layout.label.style || {});
 
@@ -278,37 +345,14 @@ class Scatter extends BaseDataLayer {
                 }
                 this.label_lines = this.label_groups.merge(groups_enter)
                     .append('line')
-                    .attr('class', `lz-data_layer-${this.layout.type}-label`)
-                    .attr('x1', (d) => {
-                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                        if (isNaN(x)) {
-                            x = -1000;
-                        }
-                        return x;
-                    })
-                    .attr('y1', (d) => {
-                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) {
-                            y = -1000;
-                        }
-                        return y;
-                    })
+                    .attr('x1', (d) => d[xcs])
+                    .attr('y1', (d) => d[ycs])
                     .attr('x2', (d) => {
-                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                        return d[xcs]
                             + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                             + (data_layer.layout.label.spacing / 2);
-                        if (isNaN(x)) {
-                            x = -1000;
-                        }
-                        return x;
                     })
-                    .attr('y2', (d) => {
-                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) {
-                            y = -1000;
-                        }
-                        return y;
-                    })
+                    .attr('y2', (d) => d[ycs])
                     .call(applyStyles, data_layer.layout.label.lines.style || {});
             }
             // Remove labels when they're no longer in the filtered data set
@@ -316,11 +360,14 @@ class Scatter extends BaseDataLayer {
                 .remove();
         } else {
             // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
-            if (this.label_groups) {
-                this.label_groups.remove();
+            if (this.label_texts) {
+                this.label_texts.remove();
             }
             if (this.label_lines) {
                 this.label_lines.remove();
+            }
+            if (this.label_groups) {
+                this.label_groups.remove();
             }
         }
 
@@ -330,38 +377,23 @@ class Scatter extends BaseDataLayer {
             .data(track_data, (d) => d[this.layout.id_field]);
 
         // Create elements, apply class, ID, and initial position
-        const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
-
         // Generate new values (or functions for them) for position, color, size, and shape
-        const transform = (d) => {
-            let x = this.parent[x_scale](d[this.layout.x_axis.field]);
-            let y = this.parent[y_scale](d[this.layout.y_axis.field]);
-            if (isNaN(x)) {
-                x = -1000;
-            }
-            if (isNaN(y)) {
-                y = -1000;
-            }
-            return `translate(${x}, ${y})`;
-        };
+        const transform = (d) => `translate(${d[xcs]}, ${d[ycs]})`;
 
         const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
+        const style_class = `lz-data_layer-${this.layout.type}`;
         selection.enter()
             .append('path')
-            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .attr('class', style_class)
             .attr('id', (d) => this.getElementId(d))
-            .attr('transform', `translate(0, ${initial_y})`)
             .merge(selection)
             .attr('transform', transform)
             .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
             .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i))
-            .attr('d', shape)
-            // Apply default event emitters & mouse behaviors to selection
-            .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
-            .call(this.applyBehaviors.bind(this));
+            .attr('d', shape);
 
         // Remove old elements as needed
         selection.exit()
@@ -372,14 +404,36 @@ class Scatter extends BaseDataLayer {
             this.flip_labels();
             this.seperate_iterations = 0;
             this.separate_labels();
-            // Apply default event emitters to selection, and extend mouse behaviors to labels
-            this.label_texts
-                .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
-                .call(this.applyBehaviors.bind(this));
         }
+
+        // Apply default event emitters & mouse behaviors. Apply to the container, not per element,
+        // to reduce number of event listeners. These events will apply to both scatter points and labels.
+        this.svg.group
+            .on('click.event_emitter', () => {
+                // D3 doesn't natively support bubbling very well; we need to find the data for the bubbled event
+                const item_data = d3.select(d3.event.target).datum();
+                this.parent.emit('element_clicked', item_data, true);
+            })
+            .call(this.applyBehaviors.bind(this));
     }
 
-    // Method to set a passed element as the LD reference in the plot-level state
+    /**
+     * A new LD reference variant has been selected (usually by clicking within a GWAS scatter plot)
+     *   This event only fires for manually selected variants. It does not fire if the LD reference variant is
+     *   automatically selected (eg by choosing the most significant hit in the region)
+     * @event set_ldrefvar
+     * @property {object} data { ldrefvar } The variant identifier of the LD reference variant
+     * @see event:any_lz_event
+     */
+
+    /**
+     * Method to set a passed element as the LD reference variant in the plot-level state. Triggers a re-render
+     *   so that the plot will update with the new LD information.
+     * This is useful in tooltips, eg the "make LD reference" action link for GWAS scatter plots.
+     * @param {object} element The data associated with a particular plot element
+     * @fires event:set_ldrefvar
+     * @return {Promise}
+      */
     makeLDReference(element) {
         let ref = null;
         if (typeof element == 'undefined') {
@@ -395,22 +449,28 @@ class Scatter extends BaseDataLayer {
         } else {
             ref = element.toString();
         }
-        this.parent_plot.applyState({ ldrefvar: ref });
+        this.parent.emit('set_ldrefvar', { ldrefvar: ref }, true);
+        return this.parent_plot.applyState({ ldrefvar: ref });
     }
 }
 
 /**
  * A scatter plot in which the x-axis represents categories, rather than individual positions.
- * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories to be
+ * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories and color options to be
  *   determined dynamically when data is first loaded.
- *
+ * @alias module:LocusZoom_DataLayers~category_scatter
  */
 class CategoryScatter extends Scatter {
+    /**
+     * @param {string} layout.x_axis.category_field The datum field to use in auto-generating tick marks, color scheme, and point ordering.
+     */
     constructor(layout) {
         super(...arguments);
         /**
          * Define category names and extents (boundaries) for plotting.
-         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         * In the form {category_name: [min_x, max_x]}
+         * @private
+         * @member {Object.<String, Number[]>}
          */
         this._categories = {};
     }

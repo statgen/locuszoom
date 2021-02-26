@@ -64,10 +64,10 @@ function generateCurtain() {
             this.curtain.selector
                 .style('top', `${page_origin.y}px`)
                 .style('left', `${page_origin.x}px`)
-                .style('width', `${this.layout.width}px`)
+                .style('width', `${this.parent_plot.layout.width}px`)
                 .style('height', `${this.layout.height}px`);
             this.curtain.content_selector
-                .style('max-width', `${this.layout.width - 40}px`)
+                .style('max-width', `${this.parent_plot.layout.width - 40}px`)
                 .style('max-height', `${this.layout.height - 40}px`);
             // Apply content if provided
             if (typeof content == 'string') {
@@ -165,12 +165,7 @@ function generateLoader() {
             this.loader.selector
                 .style('top', `${page_origin.y + this.layout.height - loader_boundrect.height - padding}px`)
                 .style('left', `${page_origin.x + padding  }px`);
-            /* Uncomment this code when a functional cancel button can be shown
-            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
-            this.loader.content_selector.style({
-                "padding-right": (cancel_boundrect.width + padding) + "px"
-            });
-            */
+
             // Apply percent if provided
             if (typeof percent == 'number') {
                 this.loader.progress_selector
@@ -253,6 +248,5 @@ function debounce(func, delay = 500) {
         );
     };
 }
-
 
 export { applyStyles, debounce, generateCurtain, generateLoader };

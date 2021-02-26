@@ -1,16 +1,12 @@
-/**
- * Arc Data Layer
- * Implements a data layer that will render chromatin accessibility tracks.
- * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
- *  with a height determined by y.field.
- * @module
- */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 import {applyStyles} from '../../helpers/common';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~arcs
+ */
 const default_layout = {
     color: 'seagreen',
     hitarea_width: '10px',
@@ -22,7 +18,27 @@ const default_layout = {
     tooltip_positioning: 'top',
 };
 
+/**
+ * Arc Data Layer
+ * Implements a data layer that will render chromatin accessibility tracks.
+ * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
+ *  with a height determined by y.field.
+ * @alias module:LocusZoom_DataLayers~arcs
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
 class Arcs extends BaseDataLayer {
+    /**
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='seagreen'] Specify how to choose the stroke color for each arc
+     * @param {number} [layout.hitarea_width='10px'] The width (in pixels) of hitareas. Arcs are only as wide as the stroke,
+     *   so a hit area of 5px on each side can make it much easier to select an item for a tooltip.
+     * @param {string} [layout.style.fill='none'] The fill color under the area of the arc
+     * @param {string} [layout.style.stroke-width='1px']
+     * @param {string} [layout.style.stroke_opacity='100%']
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
+     * @param {string} [layout.x_axis.field1] The field to use for one end of the arc; creates a point at (x1, 0)
+     * @param {string} [layout.x_axis.field2] The field to use for the other end of the arc; creates a point at (x2, 0)
+     * @param {string} [layout.y_axis.field] The height at the midpoint of the arc, (xmid, y)
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
         super(...arguments);
@@ -57,38 +73,38 @@ class Arcs extends BaseDataLayer {
         }
 
         // Draw real lines, and also invisible hitareas for easier mouse events
-        const selection = this.svg.group
-            .selectAll('path.lz-data_layer-arcs')
-            .data(track_data, (d) => this.getElementId(d));
-
         const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
             .data(track_data, (d) => this.getElementId(d));
 
-        // Add new points as necessary
-        selection
-            .enter()
-            .append('path')
-            .attr('class', 'lz-data_layer-arcs')
-            .attr('id', (d) => this.getElementId(d))
-            .merge(selection)
-            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
-            .attr('d', (d, i) => _make_line(d))
+        const selection = this.svg.group
+            .selectAll('path.lz-data_layer-arcs')
+            .data(track_data, (d) => this.getElementId(d));
+
+        this.svg.group
             .call(applyStyles, layout.style);
 
         hitareas
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs-hitarea')
-            .attr('id', (d) => this.getElementId(d))
             .merge(hitareas)
+            .attr('id', (d) => this.getElementId(d))
             .style('fill', 'none')
             .style('stroke-width', layout.hitarea_width)
             .style('stroke-opacity', 0)
             .style('stroke', 'transparent')
-            .attr('d', (d) => _make_line(d))
-            // Apply mouse behaviors to hitareas
-            .call(this.applyBehaviors.bind(this));
+            .attr('d', (d) => _make_line(d));
+
+        // Add new points as necessary
+        selection
+            .enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-arcs')
+            .merge(selection)
+            .attr('id', (d) => this.getElementId(d))
+            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('d', (d, i) => _make_line(d));
 
         // Remove old elements as needed
         selection.exit()
@@ -96,6 +112,11 @@ class Arcs extends BaseDataLayer {
 
         hitareas.exit()
             .remove();
+
+        // Apply mouse behaviors to arcs
+        this.svg.group
+            .call(this.applyBehaviors.bind(this));
+
         return this;
     }
 

@@ -2,38 +2,10 @@ import DataSources from '../../../esm/data';
 import * as d3 from 'd3';
 import {populate} from '../../../esm/helpers/display';
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 
 describe('Toolbar widgets', function () {
-    describe('Dimensions Widget', function() {
-        beforeEach(function() {
-            var datasources = new DataSources();
-            var layout = {
-                toolbar: {
-                    widgets: [
-                        { type: 'dimensions' },
-                    ],
-                },
-                panels: [
-                    { id: 'test', width: 100, height: 100 },
-                ],
-            };
-            d3.select('body').append('div').attr('id', 'plot');
-            this.plot = populate('#plot', datasources, layout);
-        });
-        afterEach(function() {
-            d3.select('#plot').remove();
-            this.plot = null;
-        });
-        it('Should show initial plot dimensions', function() {
-            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '100px × 100px');
-        });
-        it('Should show updated plot dimensions automatically as dimensions change', function() {
-            this.plot.setDimensions(220, 330);
-            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '220px × 330px');
-        });
-    });
-
     describe('Region Scale Widget', function() {
         beforeEach(function() {
             var datasources = new DataSources();
@@ -120,6 +92,23 @@ describe('Toolbar widgets', function () {
             const target = this.widget._getTarget();
             assert.equal(this.data_layer.layout.filters.length, 1, 'No second filter created');
             assert.deepEqual(target, {field: 'd:a', operator: '!=', value: 5}, 'Updates filter with new value');
+        });
+
+        it('sends an event when the widget is updated', function () {
+            const widget_spy = sinon.spy();
+            this.plot.on('widget_filter_field_action', widget_spy);
+            this.plot.on('custom_name', widget_spy);
+
+            this.widget._setFilter(12);
+
+            const expected = {field: 'd:a', operator: '!=', value: 12, filter_id: null};
+            assert.ok(widget_spy.calledOnce, 'Widget event was fired');
+            assert.deepEqual(widget_spy.firstCall.args[0].data, expected, 'Filter widget fired an event');
+
+            this.widget._event_name = 'custom_name';
+            this.widget._setFilter(12);
+            assert.ok(widget_spy.calledTwice, 'Widget event was fired again, under the custom event name');
+            assert.deepEqual(widget_spy.secondCall.args[0].data, expected, 'Filter widget fired an event under a custom name');
         });
 
         it('finds a specific filter (by id field) when more than one with same operation is used', function() {

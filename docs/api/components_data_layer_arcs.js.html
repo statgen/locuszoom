@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/data_layer/arcs.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/data_layer/arcs.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import * as d3 from 'd3';
+
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+import {applyStyles} from '../../helpers/common';
+
+/**
+ * @memberof module:LocusZoom_DataLayers~arcs
+ */
+const default_layout = {
+    color: 'seagreen',
+    hitarea_width: '10px',
+    style: {
+        fill: 'none',
+        'stroke-width': '1px',
+        'stroke-opacity': '100%',
+    },
+    tooltip_positioning: 'top',
+};
+
+/**
+ * Arc Data Layer
+ * Implements a data layer that will render chromatin accessibility tracks.
+ * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
+ *  with a height determined by y.field.
+ * @alias module:LocusZoom_DataLayers~arcs
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
+class Arcs extends BaseDataLayer {
+    /**
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='seagreen'] Specify how to choose the stroke color for each arc
+     * @param {number} [layout.hitarea_width='10px'] The width (in pixels) of hitareas. Arcs are only as wide as the stroke,
+     *   so a hit area of 5px on each side can make it much easier to select an item for a tooltip.
+     * @param {string} [layout.style.fill='none'] The fill color under the area of the arc
+     * @param {string} [layout.style.stroke-width='1px']
+     * @param {string} [layout.style.stroke_opacity='100%']
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
+     * @param {string} [layout.x_axis.field1] The field to use for one end of the arc; creates a point at (x1, 0)
+     * @param {string} [layout.x_axis.field2] The field to use for the other end of the arc; creates a point at (x2, 0)
+     * @param {string} [layout.y_axis.field] The height at the midpoint of the arc, (xmid, y)
+     */
+    constructor(layout) {
+        layout = merge(layout, default_layout);
+        super(...arguments);
+    }
+
+    // Implement the main render function
+    render() {
+        const self = this;
+        const layout = self.layout;
+        const x_scale = self.parent['x_scale'];
+        const y_scale = self.parent[`y${layout.y_axis.axis}_scale`];
+
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
+
+        // Helper: Each individual data point describes a path composed of 3 points, with a spline to smooth the line
+        function _make_line(d) {
+            const x1 = d[layout.x_axis.field1];
+            const x2 = d[layout.x_axis.field2];
+            const xmid = (x1 + x2) / 2;
+            const coords = [
+                [x_scale(x1), y_scale(0)],
+                [x_scale(xmid), y_scale(d[layout.y_axis.field])],
+                [x_scale(x2), y_scale(0)],
+            ];
+            // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
+            const line = d3.line()
+                .x((d) => d[0])
+                .y((d) => d[1])
+                .curve(d3.curveNatural);
+            return line(coords);
+        }
+
+        // Draw real lines, and also invisible hitareas for easier mouse events
+        const hitareas = this.svg.group
+            .selectAll('path.lz-data_layer-arcs-hitarea')
+            .data(track_data, (d) => this.getElementId(d));
+
+        const selection = this.svg.group
+            .selectAll('path.lz-data_layer-arcs')
+            .data(track_data, (d) => this.getElementId(d));
+
+        this.svg.group
+            .call(applyStyles, layout.style);
+
+        hitareas
+            .enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-arcs-hitarea')
+            .merge(hitareas)
+            .attr('id', (d) => this.getElementId(d))
+            .style('fill', 'none')
+            .style('stroke-width', layout.hitarea_width)
+            .style('stroke-opacity', 0)
+            .style('stroke', 'transparent')
+            .attr('d', (d) => _make_line(d));
+
+        // Add new points as necessary
+        selection
+            .enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-arcs')
+            .merge(selection)
+            .attr('id', (d) => this.getElementId(d))
+            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('d', (d, i) => _make_line(d));
+
+        // Remove old elements as needed
+        selection.exit()
+            .remove();
+
+        hitareas.exit()
+            .remove();
+
+        // Apply mouse behaviors to arcs
+        this.svg.group
+            .call(this.applyBehaviors.bind(this));
+
+        return this;
+    }
+
+    _getTooltipPosition(tooltip) {
+        // Center the tooltip arrow at the apex of the arc. Sometimes, only part of an arc shows on the screen, so we
+        //  clean up these values to ensure that the tooltip will appear within the window.
+        const panel = this.parent;
+        const layout = this.layout;
+
+        const x1 = tooltip.data[layout.x_axis.field1];
+        const x2 = tooltip.data[layout.x_axis.field2];
+
+        const y_scale = panel[`y${layout.y_axis.axis}_scale`];
+
+        return {
+            x_min: panel.x_scale(Math.min(x1, x2)),
+            x_max: panel.x_scale(Math.max(x1, x2)),
+            y_min: y_scale(tooltip.data[layout.y_axis.field]),
+            y_max: y_scale(0),
+        };
+    }
+
+}
+
+export {Arcs as default};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

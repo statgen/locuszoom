@@ -1,14 +1,17 @@
 /**
- * Define functions used by Scalable Layout Directives.
+ * Plugin registry of available functions that can be used in scalable layout directives.
  *
- * These "scaling functions" are used during rendering to return output (eg color) based on input value
- * @module
+ * These "scale functions" are used during rendering to return output (eg color) based on input value
+ *
+ * @module LocusZoom_ScaleFunctions
+ * @see {@link module:LocusZoom_DataLayers~ScalableParameter} for details on how scale functions are used by datalayers
  */
 
 import * as d3 from 'd3';
 
 /**
  * Basic conditional function to evaluate the value of the input field and return based on equality.
+ * @alias module:LocusZoom_ScaleFunctions~if
  * @param {Object} parameters
  * @param {*} parameters.field_value The value against which to test the input value.
  * @param {*} parameters.then The value to return if the input value matches the field value
@@ -80,17 +83,75 @@ const categorical_bin = (parameters, value) => {
         return parameters.values[parameters.categories.indexOf(value)];
     }
 };
+
 /**
  * Cycle through a set of options, so that the each element in a set of data receives a value different than the
  *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+ * This is useful when ADJACENT items must be guaranteed to yield a different result, but it leads to unstable color
+ *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
+ *
+ *  See also: stable_choice.
  *  @param {Object} parameters
  *  @param {Array} parameters.values A list of option values
  * @return {*}
  */
 const ordinal_cycle = (parameters, value, index) => {
-    var options = parameters.values;
+    const options = parameters.values;
     return options[index % options.length];
 };
+
+/**
+ * A scale function that auto-chooses something (like color) from a preset scheme, and makes the same choice every
+ * time given the same value, regardless of ordering or what other data is in the region
+ *
+ * This is useful when categories must be stable (same color, every time). But sometimes it will assign adjacent values
+ *  the same color due to hash collisions.
+ *
+ * For performance reasons, this is memoized once per instance. Eg, each scalable color parameter has its own cache.
+ *  This function is therefore slightly less amenable to layout mutations like "changing the options after scaling
+ *  function is used", but this is not expected to be a common use case.
+ *
+ *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
+ *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
+ *    like a category or gene name.
+ * @param parameters
+ * @param {Array} [parameters.values] A list of options to choose from
+ * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
+ *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
+ *  discrete categories.
+ * @param value
+ * @param index
+ */
+let stable_choice = (parameters, value, index) => {
+    // Each place the function gets used has its own parameters object. This function thus memoizes per usage
+    //  ("association - point color - directive 1") rather than globally ("all properties/panels")
+    const cache = parameters._cache = parameters._cache || new Map();
+    const max_cache_size = parameters.max_cache_size || 500;
+
+    if (cache.size >= max_cache_size) {
+        // Prevent cache from growing out of control (eg as user moves between regions a lot)
+        cache.clear();
+    }
+    if (cache.has(value)) {
+        return cache.get(value);
+    }
+
+    // Simple JS hashcode implementation, from:
+    //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+    let hash = 0;
+    value = String(value);
+    for (let i = 0; i < value.length; i++) {
+        let chr = value.charCodeAt(i);
+        hash  = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    // Convert signed 32 bit integer to be within the range of options allowed
+    const options = parameters.values;
+    const result = options[Math.abs(hash) % options.length];
+    cache.set(value, result);
+    return result;
+};
+
 /**
  * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.
  * @function interpolate
@@ -142,4 +203,4 @@ const interpolate = (parameters, input) => {
 };
 
 
-export { categorical_bin, if_value, interpolate, numerical_bin, ordinal_cycle };
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
