@@ -845,7 +845,7 @@ class FilterField extends BaseWidget {
  * The user has asked to download the plot as an SVG image
  *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
  *
- * @event widget_download_svg
+ * @event widget_save_svg
  * @property {Object} data { filename }
  * @see event:baseLZEvent
  */
@@ -854,7 +854,7 @@ class FilterField extends BaseWidget {
  * The user has asked to download the plot as a PNG image
  *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
  *
- * @event widget_download_png
+ * @event widget_save_png
  * @property {Object} data { filename }
  * @see event:baseLZEvent
  */
@@ -869,14 +869,14 @@ class DownloadSVG extends BaseWidget {
      * @param {string} [layout.button_html="Download SVG"]
      * @param {string} [layout.button_title="Download hi-res image"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
-     * @param {string} [layout.custom_event_name='widget_download_svg'] The name of the event that will be emitted when the button is clicked
+     * @param {string} [layout.custom_event_name='widget_save_svg'] The name of the event that will be emitted when the button is clicked
      */
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
         this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
-        this._event_name = layout.custom_event_name || 'widget_download_svg';
+        this._event_name = layout.custom_event_name || 'widget_save_svg';
     }
 
     update() {
@@ -1036,7 +1036,7 @@ class DownloadPNG extends DownloadSVG {
      * @param {string} [layout.button_html="Download PNG"]
      * @param {string} [layout.button_title="Download image"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
-     * @param {string} [layout.custom_event_name='widget_download_png'] The name of the event that will be emitted when the button is clicked
+     * @param {string} [layout.custom_event_name='widget_save_png'] The name of the event that will be emitted when the button is clicked
      * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
      */
     constructor(layout, parent) {
@@ -1044,7 +1044,7 @@ class DownloadPNG extends DownloadSVG {
         this._filename = this.layout.filename || 'locuszoom.png';
         this._button_html = this.layout.button_html || 'Save PNG';
         this._button_title = this.layout.button_title || 'Download image';
-        this._event_name = layout.custom_event_name || 'widget_download_png';
+        this._event_name = layout.custom_event_name || 'widget_save_png';
     }
 
     /**
