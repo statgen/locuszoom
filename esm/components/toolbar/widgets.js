@@ -702,7 +702,7 @@ class RegionScale extends BaseWidget {
  *
  * @event widget_filter_field_action
  * @property {Object} data { field, operator, value, filter_id }
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -847,7 +847,7 @@ class FilterField extends BaseWidget {
  *
  * @event widget_save_svg
  * @property {Object} data { filename }
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -856,7 +856,7 @@ class FilterField extends BaseWidget {
  *
  * @event widget_save_png
  * @property {Object} data { filename }
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -1368,7 +1368,7 @@ class ToggleLegend extends BaseWidget {
  *
  * @event widget_display_options_choice
  * @property {Object} data {choice} The display_name of the item chosen from the list
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -1511,7 +1511,7 @@ class DisplayOptions extends BaseWidget {
  *
  * @event widget_set_state_choice
  * @property {Object} data { choice_name, choice_value, state_field }
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**

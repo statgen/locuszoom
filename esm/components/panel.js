@@ -275,7 +275,7 @@ class Panel {
 
         /**
          * Known event hooks that the panel can respond to
-         * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+         * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
@@ -297,7 +297,7 @@ class Panel {
      *   were registered.
      *
      * @public
-     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {String} event The name of the event. Consult documentation for the names of built-in events.
      * @param {function} hook
      * @returns {function} The registered event listener
@@ -352,7 +352,7 @@ class Panel {
      *   argument can be a boolean to control bubbling
      *
      * @public
-     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} [eventData] Data or event description that will be passed to the event listener
      * @param {boolean} [bubble=false] Whether to bubble the event to the parent

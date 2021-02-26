@@ -31,8 +31,16 @@ const default_layout = {
 
 
 /**
- * Fields common to every event emitted by LocusZoom. This is not an actual event; see list below.
- * @event baseLZEvent
+ * Fields common to every event emitted by LocusZoom. This is not an actual event that should ever be used directly;
+ *  see list below.
+ *
+ * Note: plot-level listeners *can* be defined for this event, but you should almost never do this.
+ *  Use the most specific event name to describe the thing you are interested in.
+ *
+ * Listening to 'any_lz_event' is only for advanced usages, such as proxying (repeating) LZ behavior to a piece of
+ *  wrapper code. One example is converting all LocusZoom events to vue.js events.
+ *
+ * @event any_lz_event
  * @type {object}
  * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
  * @property {Plot|Panel} target A reference to the plot or panel instance that originated the event.
@@ -43,19 +51,19 @@ const default_layout = {
  * A panel was removed from the plot. Commonly initiated by the "remove panel" toolbar widget.
  * @event panel_removed
  * @property {string} data The id of the panel that was removed (eg 'genes')
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
  * A request for new or cached data was initiated. This can be used for, eg, showing data loading indicators.
  * @event data_requested
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
  * A request for new data has completed, and all data has been rendered in the plot.
  * @event data_rendered
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -65,7 +73,7 @@ const default_layout = {
  * Caution: Direct layout mutations might not be captured by this event. It is deprecated due to its limited utility.
  * @event layout_changed
  * @deprecated
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -73,7 +81,7 @@ const default_layout = {
  *  if they are overridden by plot logic. Only triggered when a state change causes a re-render.
  * @event state_changed
  * @property {object} data The set of all state changes requested
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  * @see {@link event:region_changed} for a related event that provides more accurate information in some cases
  */
 
@@ -83,7 +91,7 @@ const default_layout = {
  *  The actual coordinates are subject to region min/max, etc.
  * @event region_changed
  * @property {object} data The {chr, start, end} coordinates of the requested region.
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -92,14 +100,14 @@ const default_layout = {
  * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
  *   selection status (boolean)
  * @see {@link event:element_clicked} if you are interested in tracking clicks that result in other behaviors, like links
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
  * Indicates whether an element was clicked. (regardless of the behavior associated with clicking)
  * @event element_clicked
  * @see {@link event:element_selection} for a more specific and more frequently useful event
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -107,7 +115,7 @@ const default_layout = {
  * @event match_requested
  * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
  *   being initiated or canceled
- * @see event:baseLZEvent
+ * @see event:any_lz_event
  */
 
 /**
@@ -304,7 +312,7 @@ class Plot {
 
         /**
          * Known event hooks that the panel can respond to
-         * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+         * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
@@ -344,7 +352,7 @@ class Plot {
      *   were registered.
      *
      * @public
-     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {String} event The name of an event. Consult documentation for the names of built-in events.
      * @param {eventCallback} hook
      * @returns {function} The registered event listener
@@ -367,7 +375,7 @@ class Plot {
     /**
      * Remove one or more previously defined event listeners
      * @public
-     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} [hook] The callback to deregister
      * @returns {Plot}
@@ -395,7 +403,7 @@ class Plot {
     /**
      * Handle running of event hooks when an event is emitted
      * @public
-     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {Plot}
@@ -410,20 +418,29 @@ class Plot {
             return this;
         }
         const sourceID = this.getBaseId();
+        let eventContext;
+        if (eventData && eventData.sourceID) {
+            // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
+            //  when re-emitting the event to plot-level listeners
+            eventContext = eventData;
+        } else {
+            eventContext = {sourceID: sourceID, target: this, data: eventData || null};
+        }
         this.event_hooks[event].forEach((hookToRun) => {
-            let eventContext;
-            if (eventData && eventData.sourceID) {
-                // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
-                //  when re-emitting the event to plot-level listeners
-                eventContext = eventData;
-            } else {
-                eventContext = {sourceID: sourceID, target: this, data: eventData || null};
-            }
             // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
             //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
             //  override anything provided to `call` below.
             hookToRun.call(this, eventContext);
         });
+
+        // At the plot level (only), all events will be re-emitted under the special name "any_lz_event"- a single place to
+        //  globally listen to every possible event.
+        // This is not intended for direct use. It is for UI frameworks like Vue.js, which may need to wrap LZ
+        //   instances and proxy all events to their own declarative event system
+        if (event !== 'any_lz_event') {
+            const anyEventData = Object.assign({ event_name: event }, eventContext);
+            this.emit('any_lz_event', anyEventData);
+        }
         return this;
     }
 

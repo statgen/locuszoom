@@ -423,7 +423,7 @@ class Scatter extends BaseDataLayer {
      *   automatically selected (eg by choosing the most significant hit in the region)
      * @event set_ldrefvar
      * @property {object} data { ldrefvar } The variant identifier of the LD reference variant
-     * @see event:baseLZEvent
+     * @see event:any_lz_event
      */
 
     /**
