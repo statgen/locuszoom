@@ -370,6 +370,9 @@ const gene_selector_widget = {
   // Below: special config specific to this widget
   button_html: 'Filter...',
   button_title: 'Choose which genes to show',
+  // If you are tracking website analytics, this widget can announce when it performs an action. Since this generic widget might be used in several different ways in the same plot, you can give each widget a custom event name to help tell the buttons apart.
+  // This is totally optional- most sites will be fine just ignoring the event altogether!	
+  custom_event_name: 'widget_gene_filter_choice',
   // Must specify the data layer id (within this panel) that will be controlled by the button
   layer_name: 'genes',
   default_config_display_name: 'Coding genes & rRNA',

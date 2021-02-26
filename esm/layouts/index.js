@@ -489,6 +489,7 @@ const ldlz2_pop_selector_menu = {
     button_html: 'LD Population: ',
     show_selected: true,
     button_title: 'Select LD Population: ',
+    custom_event_name: 'widget_set_ldpop',
     state_field: 'ld_pop',
     // This list below is hardcoded to work with the UMich LDServer, default 1000G populations
     //  It can be customized to work with other LD servers that specify population differently
@@ -510,6 +511,7 @@ const ldlz2_pop_selector_menu = {
  */
 const gene_selector_menu = {
     type: 'display_options',
+    custom_event_name: 'widget_gene_filter_choice',
     position: 'right',
     color: 'blue',
     // Below: special config specific to this widget
