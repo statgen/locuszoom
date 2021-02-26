@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {htmlescape, neglog10, scinotation} from '../../esm/helpers/transforms';
+import {htmlescape, is_numeric, neglog10, scinotation} from '../../esm/helpers/transforms';
 
 describe('Transformation Functions', function() {
 
@@ -44,6 +44,24 @@ describe('Transformation Functions', function() {
                 htmlescape("<script type=\"application/javascript\">alert('yo & ' + `I`)</script>"),
                 '&lt;script type=&quot;application/javascript&quot;&gt;alert(&#039;yo &amp; &#039; + &#x60;I&#x60;)&lt;/script&gt;'
             );
+        });
+    });
+
+    describe('is_numeric', function () {
+        it('should return true for numbers and false for strings that look like numbers', function () {
+            const scenarios = [
+                [12, true],
+                [0, true],
+                [1.23, true],
+                [Infinity, true],
+                [NaN, true], // On the fence about this one, but it *is* a float value...
+                ['12', false],
+                ['aaa', false],
+            ];
+
+            for ( let [value, expected] of scenarios) {
+                assert.equal(is_numeric(value), expected, `${value} should yield ${expected}`);
+            }
         });
     });
 });

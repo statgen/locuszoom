@@ -1,13 +1,15 @@
-/** @module */
 import {RegistryBase} from '../registry/base';
 import { ADAPTERS } from '../registry';
 
 /**
- * Create and coordinate an ensemble of (namespaced) data source instances
- * This is the mechanism by which users create data sources for a specific plot, and should be considered part of the
- *  public interface for LocusZoom.
+ * Create and coordinate an ensemble of (namespaced) data adapter instances.
+ * This is the mechanism by which users tell a plot how to retrieve data for a specific plot: adapters are created
+ *  through this object rather than instantiating directly.
  *
  * @public
+ * @alias module:LocusZoom~DataSources
+ * @extends module:registry/base~RegistryBase
+ * @inheritDoc
  */
 class DataSources extends RegistryBase {
     /**

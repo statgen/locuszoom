@@ -1,4 +1,3 @@
-/** @module */
 import * as d3 from 'd3';
 
 import {STATUSES} from './constants';
@@ -12,14 +11,16 @@ import data_layers from '../registry/data_layers';
 
 /**
  * Default panel layout
+ * @memberof Panel
  * @static
  * @type {Object}
  */
 const default_layout = {
+    id: '',
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
-    min_height: 1,  // When resizing, do not allow height to go below this value
-    height: 1, // The actual height allocated to the panel (>= min_height)
+    min_height: 1,
+    height: 1,
     origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
@@ -47,7 +48,7 @@ const default_layout = {
         y1_linked: false,
         y2_linked: false,
     },
-    show_loading_indicator: true, // On by default as of LZ 0.13
+    show_loading_indicator: true,
     data_layers: [],
 };
 
@@ -57,9 +58,63 @@ const default_layout = {
  */
 class Panel {
     /**
-     * @param {Object} layout
+     * @param {string} [layout.id=''] An identifier string that must be unique across all panels in the plot
+     * @param {boolean} [layout.show_loading_indicator=true] Whether to show a "loading indicator" while data is being fetched
+     * @param {module:LocusZoom_DataLayers[]} [layout.data_layers] Data layer layout objects
+     * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each toolbar widget; {@link module:LocusZoom_Widgets}
+     * @param {number} [layout.title.text] Text to show in panel title
+     * @param {number} [layout.title.style] CSS options to apply to the title
+     * @param {number} [layout.title.x=10] x-offset for title position
+     * @param {number} [layout.title.y=22] y-offset for title position
+     * @param {'vertical'|'horizontal'} [layout.legend.orientation='vertical']  Orientation with which elements in the legend should be arranged.
+     *   Presently only "vertical" and "horizontal" are supported values. When using the horizontal orientation
+     *   elements will automatically drop to a new line if the width of the legend would exceed the right edge of the
+     *   containing panel. Defaults to "vertical".
+     * @param {number} [layout.legend.origin.x=0]  X-offset, in pixels, for the top-left corner of the legend (relative to the top left corner of the panel).
+     * @param {number} [layout.legend.origin.y=0] Y-offset, in pixels, for the top-left corner of the legend (relative to the top left corner of the panel).
+     *   NOTE: SVG y values go from the top down, so the SVG origin of (0,0) is in the top left corner.
+     * @param {number} [layout.legend.padding=5]  Value in pixels to pad between the legend's outer border and the
+     *   elements within the legend. This value is also used for spacing between elements in the legend on different
+     *   lines (e.g. in a vertical orientation) and spacing between element shapes and labels, as well as between
+     *   elements in a horizontal orientation, are defined as a function of this value. Defaults to 5.
+     * @param {number} [layout.legend.label_size=12]  Font size for element labels in the legend (loosely analogous to the height of full-height letters, in pixels). Defaults to 12.
+     * @param {boolean} [layout.legend.hidden=false] Whether to hide the legend by default
+     * @param {number} [layout.y_index] The position of the panel (above or below other panels). This is usually set
+     *  automatically when the panel is added, and rarely controlled directly.
+     * @param {number} [layout.min_height=1] When resizing, do not allow height to go below this value
+     * @param {number} [layout.height=1] The actual height allocated to the panel (>= min_height)
+     * @param {number} [layout.margin.top=0] The margin (space between top of panel and edge of viewing area)
+     * @param {number} [layout.margin.right=0] The margin (space between right side of panel and edge of viewing area)
+     * @param {number} [layout.margin.bottom=0] The margin (space between bottom of panel and edge of viewing area)
+     * @param {number} [layout.margin.left=0] The margin (space between left side of panel and edge of viewing area)
+     * @param {'clear_selections'|null} [layout.background_click='clear_selections'] What happens when the background of the panel is clicked
+     * @param {'state'|null} [layout.axes.x.extent] If 'state', the x extent will be determined from plot.state (a
+     *   shared region). Otherwise it will be determined based on data later ranges.
+     * @param {string} [layout.axes.x.label] Label text for the provided axis
+     * @param {number} [layout.axes.x.label_offset]
+     * @param {boolean} [layout.axes.x.render] Whether to render this axis
+     * @param {'region'|null} [layout.axes.x.tick_format] If 'region', format ticks in a concise way suitable for
+     *   genomic coordinates, eg 23423456 => 23.42 (Mb)
+     * @param {Array} [layout.axes.x.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {string} [layout.axes.y1.label] Label text for the provided axis
+     * @param {number} [layout.axes.y1.label_offset]
+     * @param {boolean} [layout.axes.y1.render=false] Whether to render this axis
+     * @param {Array} [layout.axes.y1.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {string} [layout.axes.y2.label] Label text for the provided axis
+     * @param {number} [layout.axes.y2.label_offset]
+     * @param {boolean} [layout.axes.y2.render=false] Whether to render this axis
+     * @param {Array} [layout.axes.y2.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {boolean} [layout.interaction.drag_background_to_pan=false] Allow the user to drag the panel background to pan
+     *   the plot to another genomic region.
+     * @param {boolean} [layout.interaction.drag_x_ticks_to_scale=false] Allow the user to rescale the x axis by dragging x ticks
+     * @param {boolean}  [layout.interaction.drag_y1_ticks_to_scale=false] Allow the user to rescale the y1 axis by dragging y1 ticks
+     * @param {boolean} [layout.interaction.drag_y2_ticks_to_scale=false] Allow the user to rescale the y2 axis by dragging y2 ticks
+     * @param {boolean} [layout.interaction.scroll_to_zoom=false] Allow the user to rescale the plot by mousewheel-scrolling
+     * @param {boolean} [layout.interaction.x_linked=false] Whether this panel should change regions to match all other linked panels
+     * @param {boolean} [layout.interaction.y1_linked=false] Whether this panel should rescale to match all other linked panels
+     * @param {boolean} [layout.interaction.y2_linked=false] Whether this panel should rescale to match all other linked panels
      * @param {Plot|null} parent
-    */
+     */
     constructor(layout, parent) {
         if (typeof layout !== 'object') {
             throw new Error('Unable to create panel, invalid layout');
@@ -145,8 +200,9 @@ class Panel {
         }
 
         /**
-         * @protected
-         * @member {Object}
+         * Direct access to data layer instances, keyed by data layer ID. Used primarily for introspection/ development.
+         * @public
+         * @member {Object.<String, BaseDataLayer>}
          */
         this.data_layers = {};
         /**
@@ -219,17 +275,11 @@ class Panel {
 
         /**
          * Known event hooks that the panel can respond to
+         * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
-        this.event_hooks = {
-            'layout_changed': [],
-            'data_requested': [],
-            'data_rendered': [],
-            'element_clicked': [],
-            'element_selection': [],
-            'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
-        };
+        this.event_hooks = {};
 
         // Initialize the layout
         this.initializeLayout();
@@ -241,34 +291,28 @@ class Panel {
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
      *
-     * The following panel-level events are currently supported:
-     *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
-     *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
-     *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
-     *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
-     *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
-     *        whether the element is being selected or deselected.
-     *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *
      * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
-     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
-     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
-     *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
-     *   that was clicked.
+     *   were registered.
      *
      * @public
-     * @param {String} event The name of the event (as defined in `event_hooks`)
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
+     * @param {String} event The name of the event. Consult documentation for the names of built-in events.
      * @param {function} hook
      * @returns {function} The registered event listener
      */
     on(event, hook) {
         // TODO: Dry plot and panel event code into a shared mixin
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
+        if (typeof event !== 'string') {
+            throw new Error(`Unable to register event hook. Event name must be a string: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
+        }
+        if (!this.event_hooks[event]) {
+            // We do not validate on known event names, because LZ is allowed to track and emit custom events like "widget button clicked".
+            this.event_hooks[event] = [];
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -283,7 +327,7 @@ class Panel {
      */
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
-        if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+        if (typeof event != 'string' || !Array.isArray(theseHooks)) {
             throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
@@ -308,6 +352,7 @@ class Panel {
      *   argument can be a boolean to control bubbling
      *
      * @public
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} [eventData] Data or event description that will be passed to the event listener
      * @param {boolean} [bubble=false] Whether to bubble the event to the parent
@@ -318,7 +363,7 @@ class Panel {
 
         // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
         // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+        if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
         }
         if (typeof eventData === 'boolean' && arguments.length === 2) {
@@ -328,12 +373,18 @@ class Panel {
         }
         const sourceID = this.getBaseId();
         const eventContext = { sourceID: sourceID, target: this, data: eventData || null };
-        this.event_hooks[event].forEach((hookToRun) => {
-            // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
-            // registered as a handler, the previously bound `this` will override anything provided to `call` below.
-            hookToRun.call(this, eventContext);
-        });
+
+        if (this.event_hooks[event]) {
+            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
+            this.event_hooks[event].forEach((hookToRun) => {
+                // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+                // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+                hookToRun.call(this, eventContext);
+            });
+        }
+
         if (bubble && this.parent) {
+            // Even if this event has no listeners locally, it might still have listeners on the parent
             this.parent.emit(event, eventContext);
         }
         return this;
@@ -381,9 +432,11 @@ class Panel {
      * Create a new data layer from a provided layout object. Should have the keys specified in `DefaultLayout`
      * Will automatically add at the top (depth/z-index) of the panel unless explicitly directed differently
      *   in the layout provided.
+     *
+     * **NOTE**: It is very rare that new data layers are added after a panel is rendered.
      * @public
      * @param {object} layout
-     * @returns {*}
+     * @returns {BaseDataLayer}
      */
     addDataLayer(layout) {
 
@@ -711,12 +764,16 @@ class Panel {
     }
 
     /**
-     * Add a "basic" loader to a panel
+     * Add a "basic" loader to a panel. This is rarely used directly: the `show_loading_indicator` panel layout
+     *   directive is the preferred way to trigger this function. The imperative form is useful if for some reason a
+     *   loading indicator needs to be added only after first render.
      * This method is just a shortcut for adding the most commonly used type of loading indicator, which appears when
      *   data is requested, animates (e.g. shows an infinitely cycling progress bar as opposed to one that loads from
      *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
      *
-     * @public
+     * @protected
+     * @listens event:data_requested
+     * @listens event:data_rendered
      * @param {Boolean} show_immediately
      * @returns {Panel}
      */
@@ -943,9 +1000,15 @@ class Panel {
             .attr('clip-path', `url(#${base_id}.clip)`);
 
         // Add curtain and loader to the panel
-        /** @member {Object} */
+        /**
+         * @protected
+         * @member {Object}
+         */
         this.curtain = generateCurtain.call(this);
-        /** @member {Object} */
+        /**
+         * @protected
+         * @member {Object}
+         */
         this.loader = generateLoader.call(this);
 
         if (this.layout.show_loading_indicator) {
@@ -955,6 +1018,7 @@ class Panel {
 
         /**
          * Create the toolbar object and hang widgets on it as defined by panel layout
+         * @protected
          * @member {Toolbar}
          */
         this.toolbar = new Toolbar(this);
@@ -969,7 +1033,10 @@ class Panel {
             });
 
         // Add the title
-        /** @member {Element} */
+        /**
+         * @private
+         * @member {Element}
+         */
         this.title = this.svg.group.append('text').attr('class', 'lz-panel-title');
         if (typeof this.layout.title != 'undefined') {
             this.setTitle();
@@ -1007,6 +1074,7 @@ class Panel {
 
         /**
          * Legend object, as defined by panel layout and child data layer layouts
+         * @protected
          * @member {Legend}
          * */
         this.legend = null;
@@ -1099,6 +1167,9 @@ class Panel {
      * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
      *   from the API as the viewing region changes
      * @private
+     * @fires event:data_requested
+     * @fires event:layout_changed
+     * @fires event:data_rendered
      * @returns {Promise}
      */
     reMap() {
@@ -1164,9 +1235,7 @@ class Panel {
         if (this.layout.axes.x && this.layout.axes.x.extent === 'state') {
             this.x_extent = [ this.state.start, this.state.end ];
         }
-
         return this;
-
     }
 
     /**
@@ -1355,7 +1424,7 @@ class Panel {
             this.svg[`${axis}_axis_label`]
                 .attr('x', axis_params[axis].label_x)
                 .attr('y', axis_params[axis].label_y)
-                .text(parseFields(this.state, label))
+                .text(parseFields(label, this.state))
                 .attr('fill', 'currentColor');
             if (axis_params[axis].label_rotate !== null) {
                 this.svg[`${axis}_axis_label`]

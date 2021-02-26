@@ -1,4 +1,3 @@
-/** @module */
 import widgets from '../../registry/widgets';
 import * as d3 from 'd3';
 

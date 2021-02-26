@@ -1,27 +1,33 @@
-/** @module */
+/**
+ * Interactive toolbar widgets that allow users to control the plot. These can be used to modify element display:
+ *  adding contextual information, rearranging/removing panels, or toggling between sets of rendering options like
+ *  different LD populations.
+ * @module LocusZoom_Widgets
+ */
 import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
 import {applyStyles, debounce} from '../../helpers/common';
 import {deepCopy} from '../../helpers/layouts';
 
-// FIXME: Button creation should occur in the constructors, not in update functions
 
 /**
  *
  * A widget is an empty div rendered on a toolbar that can display custom
  * html of user interface elements.
- * @param {Object} layout A JSON-serializable object of layout configuration parameters
- * @param {('left'|'right')} [layout.position='left']  Whether to float the widget left or right.
- * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
- *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
- *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
- *  For example, the region_nav_plot toolbar is a defined as a group.
- * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} [layout.color='gray']  Color scheme for the
- *   widget. Applies to buttons and menus.
- * @param {Toolbar} parent The toolbar that contains this widget
  */
 class BaseWidget {
+    /**
+     * @param {('left'|'right')} [layout.position='left']  Whether to float the widget left or right.
+     * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
+     *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
+     *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
+     *  For example, the region_nav_plot toolbar is a defined as a group.
+     * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} [layout.color='gray']  Color scheme for the
+     *   widget. Applies to buttons and menus.
+     * @param [layout.style] CSS styles that will be applied to the widget
+     * @param {Toolbar} parent The toolbar that contains this widget
+     */
     constructor(layout, parent) {
         /** @member {Object} */
         this.layout = layout || {};
@@ -173,7 +179,9 @@ class BaseWidget {
 /**
  * Plots and panels may have a "toolbar" element suited for showing HTML widgets that may be interactive.
  *   When widgets need to incorporate a generic button, or additionally a button that generates a menu, this
- *   class provides much of the necessary framework.
+ *   class provides much of the necessary framework. This widget is rarely used directly; it is usually used as
+ *   part of the code for other widgets.
+ * @alias module:LocusZoom_Widgets~_Button
  * @param {BaseWidget} parent
  */
 class Button {
@@ -321,7 +329,7 @@ class Button {
                 const container_max_width = base_max_width;
                 const content_max_width = (base_max_width - (4 * padding));
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
-                const height = Math.min(total_content_height, base_max_height);
+                const height = Math.min(total_content_height + menu_height_padding, base_max_height);
                 this.menu.outer_selector
                     .style('top', `${top}px`)
                     .style('left', `${left}px`)
@@ -634,9 +642,11 @@ class Button {
 }
 
 /**
- * Renders arbitrary text with title formatting
- * @param {object} layout
- * @param {string} layout.title Text to render
+ * Renders arbitrary text with large title formatting
+ * @alias module:LocusZoom_Widgets~title
+ * @param {string} layout.title Text or HTML to render
+ * @param {string} [layout.subtitle] Small text to render next to the title
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class Title extends BaseWidget {
     show() {
@@ -660,7 +670,12 @@ class Title extends BaseWidget {
 
 /**
  * Display the current scale of the genome region displayed in the plot, as defined by the difference between
- *  `state.end` and `state.start`.
+ *  `state.end` and `state.start`. Few users are interested in seeing coordinates with this level of precision, but
+ *  it can be useful for debugging.
+ *  TODO: It would be nice to move this to an extension, but helper functions drag in large dependencies as a side effect.
+ *    (we'd need to reorganize internals a bit before moving this widget)
+ * @alias module:LocusZoom_Widgets~region_scale
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class RegionScale extends BaseWidget {
     update() {
@@ -681,6 +696,18 @@ class RegionScale extends BaseWidget {
     }
 }
 
+/**
+ * The filter field widget has triggered an update to the plot filtering rules
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_filter_field_action
+ * @property {Object} data { field, operator, value, filter_id }
+ * @see event:any_lz_event
+ */
+
+/**
+ * @alias module:LocusZoom_Widgets~filter_field
+ */
 class FilterField extends BaseWidget {
     /**
      * @param {string} layout.layer_name The data layer to control with filtering
@@ -689,9 +716,10 @@ class FilterField extends BaseWidget {
      * @param {string} layout.field The field to be filtered (eg `assoc:log_pvalue`)
      * @param {string} layout.field_display_html Human-readable label for the field to be filtered (`-log<sub>10</sub>p`)
      * @param {string} layout.operator The operator to use when filtering. This must be one of the options allowed by data_layer.filter.
-     * @param {number} [layout.input_size=4] The number of characters to allow in the text field
+     * @param {number} [layout.input_size=4] How wide to make the input textbox (number characters shown at a time)
      * @param {('number'|'string')} [layout.data_type='number'] Convert the text box input to the specified type, and warn the
      *  user if the value would be invalid (eg, not numeric)
+     * @param {string} [layout.custom_event_name='widget_filter_field_action'] The name of the event that will be emitted when this filter is updated
      */
     constructor(layout, parent) {
         super(layout, parent);
@@ -705,6 +733,7 @@ class FilterField extends BaseWidget {
             throw new Error(`Filter widget could not locate the specified layer_name: '${layout.layer_name}'`);
         }
 
+        this._event_name = layout.custom_event_name || 'widget_filter_field_action';
         this._field = layout.field;
         this._field_display_html = layout.field_display_html;
         this._operator = layout.operator;
@@ -743,7 +772,10 @@ class FilterField extends BaseWidget {
         }
     }
 
-    /** Set the filter based on a provided value */
+    /**
+     * Set the filter based on a provided value
+     * @fires event:widget_filter_field_action
+     */
     _setFilter(value) {
         if (value === null) {
             // On blank or invalid value, remove the filter & warn
@@ -755,6 +787,7 @@ class FilterField extends BaseWidget {
             const filter = this._getTarget();
             filter.value = value;
         }
+        this.parent_svg.emit(this._event_name, { field: this._field, operator: this._operator, value, filter_id: this._filter_id }, true);
     }
 
     /** Get the user-entered value, coercing type if necessary. Returns null for invalid or missing values.
@@ -809,19 +842,41 @@ class FilterField extends BaseWidget {
 }
 
 /**
+ * The user has asked to download the plot as an SVG image
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_save_svg
+ * @property {Object} data { filename }
+ * @see event:any_lz_event
+ */
+
+/**
+ * The user has asked to download the plot as a PNG image
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_save_png
+ * @property {Object} data { filename }
+ * @see event:any_lz_event
+ */
+
+/**
  * Button to export current plot to an SVG image
+ * @alias module:LocusZoom_Widgets~download_svg
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class DownloadSVG extends BaseWidget {
     /**
      * @param {string} [layout.button_html="Download SVG"]
-     * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
+     * @param {string} [layout.button_title="Download hi-res image"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
-    */
+     * @param {string} [layout.custom_event_name='widget_save_svg'] The name of the event that will be emitted when the button is clicked
+     */
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
         this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
+        this._event_name = layout.custom_event_name || 'widget_save_svg';
     }
 
     update() {
@@ -855,7 +910,8 @@ class DownloadSVG extends BaseWidget {
         this.button.show();
         this.button.selector
             .attr('href-lang', 'image/svg+xml')
-            .attr('download', this._filename);
+            .attr('download', this._filename)
+            .on('click', () => this.parent_svg.emit(this._event_name, { filename: this._filename }, true));
         return this;
     }
 
@@ -971,15 +1027,29 @@ class DownloadSVG extends BaseWidget {
 
 /**
  * Button to export current plot to a PNG image
+ * @alias module:LocusZoom_Widgets~download_png
+ * @extends module:LocusZoom_Widgets~download_svg
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class DownloadPNG extends DownloadSVG {
+    /**
+     * @param {string} [layout.button_html="Download PNG"]
+     * @param {string} [layout.button_title="Download image"]
+     * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
+     * @param {string} [layout.custom_event_name='widget_save_png'] The name of the event that will be emitted when the button is clicked
+     * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
+     */
     constructor(layout, parent) {
         super(...arguments);
         this._filename = this.layout.filename || 'locuszoom.png';
         this._button_html = this.layout.button_html || 'Save PNG';
         this._button_title = this.layout.button_title || 'Download image';
+        this._event_name = layout.custom_event_name || 'widget_save_png';
     }
 
+    /**
+     * @private
+     */
     _getBlobUrl() {
         return super._getBlobUrl().then((svg_url) => {
             const canvas = document.createElement('canvas');
@@ -1009,7 +1079,9 @@ class DownloadPNG extends DownloadSVG {
 /**
  * Button to remove panel from plot.
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~remove_panel
  * @param {Boolean} [layout.suppress_confirm=false] If true, removes the panel without prompting user for confirmation
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class RemovePanel extends BaseWidget {
     update() {
@@ -1038,6 +1110,8 @@ class RemovePanel extends BaseWidget {
 /**
  * Button to move panel up relative to other panels (in terms of y-index on the page)
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~move_panel_up
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class MovePanelUp extends BaseWidget {
     update () {
@@ -1062,6 +1136,8 @@ class MovePanelUp extends BaseWidget {
 /**
  * Button to move panel down relative to other panels (in terms of y-index on the page)
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~move_panel_down
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class MovePanelDown extends BaseWidget {
     update () {
@@ -1085,12 +1161,15 @@ class MovePanelDown extends BaseWidget {
 
 /**
  * Button to shift plot region forwards or back by a `step` increment provided in the layout
- * @param {object} layout
- * @param {number} [layout.step=50000] The stepsize to change the region by
- * @param {string} [layout.button_html]
- * @param {string} [layout.button_title]
+ * @alias module:LocusZoom_Widgets~shift_region
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class ShiftRegion extends BaseWidget {
+    /**
+     * @param {number} [layout.step=50000] The stepsize to change the region by
+     * @param {string} [layout.button_html] Label
+     * @param {string} [layout.button_title] Mouseover text
+     */
     constructor(layout, parent) {
         if (isNaN(layout.step) || layout.step === 0) {
             layout.step = 50000;
@@ -1131,10 +1210,15 @@ class ShiftRegion extends BaseWidget {
 
 /**
  * Zoom in or out on the plot, centered on the middle of the plot region, by the specified amount
- * @param {object} layout
- * @param {number} [layout.step=0.2] The amount to zoom in by (where 1 indicates 100%)
+ * @alias module:LocusZoom_Widgets~zoom_region
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class ZoomRegion extends BaseWidget {
+    /**
+     * @param {number} [layout.step=0.2] The fraction to zoom in by (where 1 indicates 100%)
+     * @param {string} [layout.button_html] Label
+     * @param {string} [layout.button_title] Mouseover text
+     */
     constructor(layout, parent) {
         if (isNaN(layout.step) || layout.step === 0) {
             layout.step = 0.2;
@@ -1191,9 +1275,10 @@ class ZoomRegion extends BaseWidget {
 }
 
 /**
- * Renders button with arbitrary text that, when clicked, shows a dropdown containing arbitrary HTML
- *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
- * @param {object} layout
+ * Renders button with arbitrary text that, when clicked, shows a dropdown containing arbitrary HTML. This is usually
+ *   used as part of coding a custom button, rather than as a standalone widget.
+ * NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
+ * @alias module:LocusZoom_Widgets~menu
  * @param {string} layout.button_html The HTML to render inside the button
  * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
  * @param {string} layout.menu_html The HTML content of the dropdown menu
@@ -1217,10 +1302,16 @@ class Menu extends BaseWidget {
 
 /**
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
- * @param {string} [layout.button_html="Resize to Data"]
- * @param {string} [layout.button_title]
+ * @alias module:LocusZoom_Widgets~resize_to_data
  */
 class ResizeToData extends BaseWidget {
+    /**
+     * @param {string} [layout.button_html="Resize to Data"]
+     * @param {string} [layout.button_title]
+     */
+    constructor(layout) {
+        super(...arguments);
+    }
     update() {
         if (this.button) {
             return this;
@@ -1240,6 +1331,8 @@ class ResizeToData extends BaseWidget {
 
 /**
  * Button to toggle legend
+ * @alias module:LocusZoom_Widgets~toggle_legend
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class ToggleLegend extends BaseWidget {
     update() {
@@ -1261,6 +1354,23 @@ class ToggleLegend extends BaseWidget {
     }
 }
 
+
+/**
+ * @typedef {object} DisplayOptionsButtonConfigField
+ * @property {string} display_name The human-readable label for this set of options
+ * @property {object} display An object with layout directives that will be merged into the target layer.
+ *   The directives should be among those listed in `fields_whitelist` for this widget.
+ */
+
+/**
+ * The user has chosen a specific display option to show information on the plot
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_display_options_choice
+ * @property {Object} data {choice} The display_name of the item chosen from the list
+ * @see event:any_lz_event
+ */
+
 /**
  * Dropdown menu allowing the user to choose between different display options for a single specific data layer
  *  within a panel.
@@ -1271,20 +1381,24 @@ class ToggleLegend extends BaseWidget {
  * This button intentionally limits display options it can control to those available on common plot types.
  *   Although the list of options it sets can be overridden (to control very special custom plot types), this
  *   capability should be used sparingly if at all.
- *
- * @param {object} layout
- * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
- * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
- * @param {string} layout.layer_name Specify the datalayer that this button should affect
- * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
- *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
- * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
- *  This can be overridden if this button needs to be used on a custom layer type with special options.
- * @typedef {{display_name: string, display: Object}} DisplayOptionsButtonConfigField
- * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
- *  with this `display` option. Display field should include all changes to datalayer presentation options.
+ * @alias module:LocusZoom_Widgets~display_options
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class DisplayOptions extends BaseWidget {
+    /**
+     * @param {string} layout.layer_name Specify the datalayer that this button should affect
+     * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
+     * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
+     * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
+     *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
+     * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
+     *   This can be overridden if this button needs to be used on a custom layer type with special options.
+     *   The whitelist is chosen to be things that are known to be easily modified with few side effects.
+     *   When the button is first created, all fields in the whitelist will have their default values saved, so the user can revert to the default view easily.
+     * @param {module:LocusZoom_Widgets~DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
+     *  with this `display` option. Display field should include all changes that will be merged to datalayer layout options.
+     * @param {string} [layout.custom_event_name='widget_display_options_choice'] The name of the event that will be emitted when an option is selected
+     */
     constructor(layout, parent) {
         if (typeof layout.button_html != 'string') {
             layout.button_html = 'Display options...';
@@ -1293,6 +1407,7 @@ class DisplayOptions extends BaseWidget {
             layout.button_title = 'Control how plot items are displayed';
         }
         super(...arguments);
+        this._event_name = layout.custom_event_name || 'widget_display_options_choice';
 
         // List of layout fields that this button is allowed to control. This ensures that we don't override any other
         //  information (like plot height etc) while changing point rendering
@@ -1357,6 +1472,7 @@ class DisplayOptions extends BaseWidget {
                             dataLayer.layout[field_name] = has_option ? display_options[field_name] : defaultConfig[field_name];
                         });
 
+                        this.parent_svg.emit(this._event_name, { choice: display_name }, true);
                         this._selected_item = row_id;
                         this.parent_panel.render();
                         const legend = this.parent_panel.legend;
@@ -1384,18 +1500,33 @@ class DisplayOptions extends BaseWidget {
 }
 
 /**
+ * @typedef {object} SetStateOptionsConfigField
+ * @property {string} display_name Human readable name for option label (eg "European")
+ * @property value Value to set in plot.state (eg "EUR")
+ */
+
+/**
+ * An option has been chosen from the set_state dropdown menu
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_set_state_choice
+ * @property {Object} data { choice_name, choice_value, state_field }
+ * @see event:any_lz_event
+ */
+
+/**
  * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
  * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
  *
- * For example, the LDServer data source can use it to change LD reference population (for all panels) after render
+ * For example, the LDServer data adapter can use it to change LD reference population (for all panels) after render
  *
- * @param {object} layout
+ * @alias module:LocusZoom_Widgets~set_state
  * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
  * @param {String} [layout.button_title="Choose an option to customize the plot"] Hover text for the toolbar button
- * @param {bool} [layout.show_selected=false] Whether to append the selected value to the button label
+ * @param {bool} [layout.show_selected=false] Whether to append the selected value to the button label ("LD Population: ALL")
  * @param {string} [layout.state_field] The name of the field in plot.state that will be set by this button
- * @typedef {{display_name: string, value: *}} SetStateOptionsConfigField
- * @param {SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
+ * @param {module:LocusZoom_Widgets~SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
+ * @param {string} [layout.custom_event_name='widget_set_state_choice'] The name of the event that will be emitted when an option is selected
  */
 class SetState extends BaseWidget {
     constructor(layout, parent) {
@@ -1414,6 +1545,8 @@ class SetState extends BaseWidget {
         if (!layout.state_field) {
             throw new Error('Must specify the `state_field` that this widget controls');
         }
+
+        this._event_name = layout.custom_event_name || 'widget_set_state_choice';
 
         /**
          * Which item in the menu is currently selected. (track for rerendering menu)
@@ -1461,6 +1594,8 @@ class SetState extends BaseWidget {
                         this._selected_item = value;
                         this.parent_plot.applyState(new_state);
                         this.button.setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''));
+
+                        this.parent_svg.emit(this._event_name, { choice_name: display_name, choice_value: value, state_field: layout.state_field }, true);
                     });
                 row.append('td').append('label')
                     .style('font-weight', 'normal')

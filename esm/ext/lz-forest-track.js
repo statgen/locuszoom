@@ -2,9 +2,28 @@
  * Forest plot track, designed for use with PheWAS style datasets.
  *   This is not part of the core LocusZoom library, but can be included as a standalone file.
  *
+ * ### Features provided
+ * * {@link module:LocusZoom_DataLayers~forest}
+ * * {@link module:LocusZoom_DataLayers~category_forest}
+ *
+ * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
- * - Vendor assets
  * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-forest-track.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import ForestTrack from 'locuszoom/esm/ext/lz-forest-track';
+ * LocusZoom.use(ForestTrack);
+ * ```
+ *
+ * Then use the layouts made available by this extension. (see demos and documentation for guidance)
+ *
  * @module
  */
 import * as d3 from 'd3';
@@ -25,18 +44,30 @@ function install (LocusZoom) {
             start_field: 'ci_start',
             end_field: 'ci_end',
         },
-        show_no_significance_line: true,
     };
 
     /**
-     * Forest Data Layer
+     * (**extension**) Forest Data Layer
      * Implements a standard forest plot. In order to space out points, any layout using this must specify axis ticks
      *  and extent in advance.
      *
      * If you are using dynamically fetched data, consider using `category_forest` instead.
-     *
+     * @alias module:LocusZoom_DataLayers~forest
+     * @see module:LocusZoom_DataLayers~BaseDataLayer
+     * @see {@link module:ext/lz-forest-track} for required extension and installation instructions
      */
     class Forest extends BaseDataLayer {
+        /**
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size=40] The size (area) of the point for each datum
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='square'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown".
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#888888'] The color of each point
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1] Opacity (0..1) for each datum point
+         * @param {string} layout.x_axis.field A field specifying the x-coordinate of the mark (eg square)
+         * @param {string} layout.y_axis.field A field specifying the y-coordinate. Use `category_forest` if you just want to
+         *  lay out a series of forest markings in order without worrying about this.
+         * @param [layout.confidence_intervals.start_field='ci_start'] The field that specifies the start of confidence interval
+         * @param [layout.confidence_intervals.end_field='ci_end'] The field that specifies the start of confidence interval
+         */
         constructor(layout) {
             layout = LocusZoom.Layouts.merge(layout, default_layout);
             super(...arguments);
@@ -57,7 +88,9 @@ function install (LocusZoom) {
             };
         }
 
-        // Implement the main render function
+        /**
+         * @fires event:element_clicked
+         */
         render() {
             // Apply filters to only render a specified set of points
             const track_data = this._applyFilters();
@@ -167,10 +200,12 @@ function install (LocusZoom) {
     }
 
     /**
-     * A y-aligned forest plot in which the y-axis represents item labels, which are dynamically chosen when data is loaded.
-     *   Each item is assumed to include both data and confidence intervals.
+     * (**extension**) A y-aligned forest plot in which the y-axis represents item labels, which are dynamically
+     *   chosen when data is loaded. Each item is assumed to include both data and confidence intervals.
      *   This allows generating forest plots without defining the layout in advance.
-     *
+     * @alias module:LocusZoom_DataLayers~category_forest
+     * @see module:LocusZoom_DataLayers~BaseDataLayer
+     * @see {@link module:ext/lz-forest-track} for required extension and installation instructions
      */
     class CategoryForest extends Forest {
         _getDataExtent(data, axis_config) {

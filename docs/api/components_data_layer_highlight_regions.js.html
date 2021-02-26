@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/data_layer/highlight_regions.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/data_layer/highlight_regions.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import * as d3 from 'd3';
+
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+
+/**
+ * @memberof module:LocusZoom_DataLayers~highlight_regions
+ */
+const default_layout = {
+    color: '#CCCCCC',
+    fill_opacity: 0.5,
+    // By default, it will draw the regions shown.
+    filters: null,
+    // Most use cases will show a preset list of regions defined in the layout
+    //  (if empty, AND layout.fields is not, it could fetch from a data source instead)
+    regions: [],
+    id_field: 'id',
+    start_field: 'start',
+    end_field: 'end',
+    merge_field: null,
+};
+
+/**
+ * "Highlight regions with rectangle" data layer.
+ * Creates one (or more) continuous 2D rectangles that mark an entire interval, to the full height of the panel.
+ *
+ * Each individual rectangle can be shown in full, or overlapping ones can be merged (eg, based on same category).
+ * The rectangles are generally drawn with partial transparency, and do not respond to mouse events: they are a
+ *   useful highlight tool to draw attention to intervals that contain interesting variants.
+ *
+ * This layer has several useful modes:
+ * 1. Draw one or more specified rectangles as provided from:
+ *      A. Hard-coded layout (layout.regions)
+ *      B. Data fetched from a source (like intervals with start and end coordinates)- as specified in layout.fields
+ * 2. Fetch data from an external source, and only render the intervals that match criteria
+ *
+ * @alias module:LocusZoom_DataLayers~highlight_regions
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
+class HighlightRegions extends BaseDataLayer {
+    /**
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#CCCCCC'] The fill color for each rectangle
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=0.5] The opacity (0-1). We recommend partial transparency so that
+     *   rectangles do not hide or interfere with adjacent elements.
+     * @param {Object[]} [layout.filters] An array of filter entries specifying which intervals to draw annotations for.
+     * @param {Object[]} [layout.regions] A hard-coded list of regions. If provided, takes precedence over data fetched from an external source.
+     * @param {String} [layout.start_field='start'] The field to use for rectangle start x coordinate
+     * @param {String} [layout.end_field='end'] The field to use for rectangle end x coordinate
+     * @param {String} [layout.merge_field] If two intervals overlap, they can be "merged" based on a field that
+     *  identifies the category (eg, only rectangles of the same category will be merged).
+     *  This field must be present in order to trigger merge behavior. This is applied after filters.
+     */
+    constructor(layout) {
+        merge(layout, default_layout);
+        if (layout.interaction || layout.behaviors) {
+            throw new Error('highlight_regions layer does not support mouse events');
+        }
+
+        if (layout.regions &amp;&amp; layout.regions.length &amp;&amp; layout.fields &amp;&amp; layout.fields.length) {
+            throw new Error('highlight_regions layer can specify "regions" in layout, OR external data "fields", but not both');
+        }
+        super(...arguments);
+    }
+
+    /**
+     * Helper method that combines two rectangles if they are the same type of data (category) and occupy the same
+     *  area of the plot (will automatically sort the data prior to rendering)
+     *
+     * When two fields conflict, it will fill in the fields for the last of the items that overlap in that range.
+     *   Thus, it is not recommended to use tooltips with this feature, because the tooltip won't reflect real data.
+     * @param {Object[]} data
+     * @return {Object[]}
+     * @private
+     */
+    _mergeNodes(data) {
+        const { end_field, merge_field, start_field } = this.layout;
+        if (!merge_field) {
+            return data;
+        }
+
+        // Ensure data is sorted by start field, with category as a tie breaker
+        data.sort((a, b) => {
+            // Ensure that data is sorted by category, then start field (ensures overlapping intervals are adjacent)
+            return d3.ascending(a[merge_field], b[merge_field]) || d3.ascending(a[start_field], b[start_field]);
+        });
+
+        let track_data = [];
+        data.forEach(function (cur_item, index) {
+            const prev_item = track_data[track_data.length - 1] || cur_item;
+            if (cur_item[merge_field] === prev_item[merge_field] &amp;&amp; cur_item[start_field] &lt;= prev_item[end_field]) {
+                // If intervals overlap, merge the current item with the previous, and append only the merged interval
+                const new_start = Math.min(prev_item[start_field], cur_item[start_field]);
+                const new_end = Math.max(prev_item[end_field], cur_item[end_field]);
+                cur_item = Object.assign({}, prev_item, cur_item, { [start_field]: new_start, [end_field]: new_end });
+                track_data.pop();
+            }
+            track_data.push(cur_item);
+        });
+        return track_data;
+    }
+
+    render() {
+        const { x_scale } = this.parent;
+        // Apply filters to only render a specified set of points
+        let track_data = this.layout.regions.length ? this.layout.regions : this.data;
+
+        // Pseudo identifier for internal use only (regions have no semantic or transition meaning)
+        track_data.forEach((d, i) => d.id || (d.id = i));
+        track_data = this._applyFilters(track_data);
+        track_data = this._mergeNodes(track_data);
+
+        const selection = this.svg.group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
+            .data(track_data);
+
+        // Draw rectangles
+        selection.enter()
+            .append('rect')
+            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .merge(selection)
+            .attr('id', (d) => this.getElementId(d))
+            .attr('x', (d) => x_scale(d[this.layout.start_field]))
+            .attr('width', (d) => x_scale(d[this.layout.end_field]) - x_scale(d[this.layout.start_field]))
+            .attr('height', this.parent.layout.height)
+            .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i));
+
+        // Remove unused elements
+        selection.exit()
+            .remove();
+
+        // Note: This layer intentionally does not allow tooltips or mouse behaviors, and doesn't affect pan/zoom
+        this.svg.group.style('pointer-events', 'none');
+    }
+
+    _getTooltipPosition(tooltip) {
+        // This layer is for visual highlighting only; it does not allow mouse interaction, drag, or tooltips
+        throw new Error('This layer does not support tooltips');
+    }
+}
+
+export {HighlightRegions as default};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

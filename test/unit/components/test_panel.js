@@ -658,6 +658,19 @@ describe('Panel', function() {
             assert.ok(panel_spy.calledWith(expectedEvent), 'Panel called with expected event');
         });
 
+        it('should bubble events to plot if a plot-level listener is defined (even if there is no listener on the panel', function () {
+            const plot_spy = sinon.spy();
+
+            this.plot.on('element_clicked', plot_spy);
+            this.panel.emit('element_clicked', {something: 1}, true);
+
+            assert.isUndefined(this.panel.event_hooks['element_clicked'], 'Panel listener is not defined');
+            assert.isDefined(this.plot.event_hooks['element_clicked'], 'Plot listener is defined');
+            assert.equal(this.plot.event_hooks['element_clicked'].length, 1, 'Plot listener is defined and attached');
+
+            assert.ok(plot_spy.calledOnce, 'Plot event was bubbled up even though there is no listener on the panel');
+        });
+
         it('should bubble events to plot (overloaded no-data call signature)', function() {
             const panel_spy = sinon.spy();
             const plot_spy = sinon.spy();

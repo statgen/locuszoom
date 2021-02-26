@@ -200,7 +200,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
             .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
             .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
         } else {
-          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "../staticdata/";
+          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "data/";
           dataSources
             .add("phewas", ["PheWASLZ", {
                 url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",

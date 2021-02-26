@@ -76,7 +76,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.4/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.4/dist/locuszoom.css</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0/dist/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -96,7 +96,7 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.4/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.4</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0/dist/locuszoom.app.min.js</a></tt>
           <br>
         </div>
       </div>
@@ -104,7 +104,7 @@
 
       <br>
 
-      <p>To download or link to past builds of LocusZoom.js use the URL structure above and the version number of your choice. See <a href="https://github.com/statgen/locuszoom/releases">list of past releases </a>.</p>
+      <p>To download or link to past builds of LocusZoom.js use the URL structure above and the version number of your choice. See also: <a href="https://github.com/statgen/locuszoom/releases">list of past releases </a>.</p>
 
       <a class="button lz-toolbar-button-green" href="https://github.com/statgen/locuszoom" id="view-on-github">View source on GitHub</a>
 
@@ -113,7 +113,7 @@
       <a name="docs_and_support"></a>
       <h3>Documentation and Support</h3>
 
-      <a class="button lz-toolbar-button-blue" href="https://github.com/statgen/locuszoom/wiki">Complete LocusZoom.js API Documentation</a>
+      <a class="button lz-toolbar-button-blue" href="https://statgen.github.io/locuszoom/docs/">Complete LocusZoom.js Documentation</a>
       <br>
       <a class="button lz-toolbar-button-purple" href="https://groups.google.com/forum/#!forum/locuszoom">LocusZoom Message Board</a>
 
@@ -208,10 +208,10 @@
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
         .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
     } else {
-      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
+      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "examples/data/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" }])
+        .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" , params: { build: 'GRCh37' }}])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);

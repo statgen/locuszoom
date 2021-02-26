@@ -1,4 +1,3 @@
-/** @module */
 import * as d3 from 'd3';
 
 import {deepCopy, merge} from '../helpers/layouts';
@@ -10,6 +9,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
 /**
  * Default/ expected configuration parameters for basic plotting; most plots will override
  *
+ * @memberof Plot
  * @protected
  * @static
  * @type {Object}
@@ -18,7 +18,9 @@ const default_layout = {
     state: {},
     width: 800,
     min_width: 400,
-    responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
+    min_region_scale: null,
+    max_region_scale: null,
+    responsive_resize: false,
     panels: [],
     toolbar: {
         widgets: [],
@@ -27,11 +29,101 @@ const default_layout = {
     mouse_guide: true,
 };
 
+
+/**
+ * Fields common to every event emitted by LocusZoom. This is not an actual event that should ever be used directly;
+ *  see list below.
+ *
+ * Note: plot-level listeners *can* be defined for this event, but you should almost never do this.
+ *  Use the most specific event name to describe the thing you are interested in.
+ *
+ * Listening to 'any_lz_event' is only for advanced usages, such as proxying (repeating) LZ behavior to a piece of
+ *  wrapper code. One example is converting all LocusZoom events to vue.js events.
+ *
+ * @event any_lz_event
+ * @type {object}
+ * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
+ * @property {Plot|Panel} target A reference to the plot or panel instance that originated the event.
+ * @property {object|null} data Additional data provided. (see event-specific documentation)
+ */
+
+/**
+ * A panel was removed from the plot. Commonly initiated by the "remove panel" toolbar widget.
+ * @event panel_removed
+ * @property {string} data The id of the panel that was removed (eg 'genes')
+ * @see event:any_lz_event
+ */
+
+/**
+ * A request for new or cached data was initiated. This can be used for, eg, showing data loading indicators.
+ * @event data_requested
+ * @see event:any_lz_event
+ */
+
+/**
+ * A request for new data has completed, and all data has been rendered in the plot.
+ * @event data_rendered
+ * @see event:any_lz_event
+ */
+
+/**
+ * An action occurred that changed, or could change, the layout.
+ *   Many rerendering operations can fire this event and it is somewhat generic: it includes resize, highlight,
+ *   and rerender on new data.
+ * Caution: Direct layout mutations might not be captured by this event. It is deprecated due to its limited utility.
+ * @event layout_changed
+ * @deprecated
+ * @see event:any_lz_event
+ */
+
+/**
+ * The user has requested any state changes, eg via `plot.applyState`. This reports the original requested values even
+ *  if they are overridden by plot logic. Only triggered when a state change causes a re-render.
+ * @event state_changed
+ * @property {object} data The set of all state changes requested
+ * @see event:any_lz_event
+ * @see {@link event:region_changed} for a related event that provides more accurate information in some cases
+ */
+
+/**
+ * The plot region has changed. Reports the actual coordinates of the plot after the zoom event. If plot.applyState is
+ *  called with an invalid region (eg zooming in or out too far), this reports the actual final coordinates, not what was requested.
+ *  The actual coordinates are subject to region min/max, etc.
+ * @event region_changed
+ * @property {object} data The {chr, start, end} coordinates of the requested region.
+ * @see event:any_lz_event
+ */
+
+/**
+ * Indicate whether the element was selected (or unselected)
+ * @event element_selection
+ * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
+ *   selection status (boolean)
+ * @see {@link event:element_clicked} if you are interested in tracking clicks that result in other behaviors, like links
+ * @see event:any_lz_event
+ */
+
+/**
+ * Indicates whether an element was clicked. (regardless of the behavior associated with clicking)
+ * @event element_clicked
+ * @see {@link event:element_selection} for a more specific and more frequently useful event
+ * @see event:any_lz_event
+ */
+
+/**
+ * Indicate whether a match was requested from within a data layer.
+ * @event match_requested
+ * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
+ *   being initiated or canceled
+ * @see event:any_lz_event
+ */
+
 /**
  * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within
  *  any constraints specified by the layout
  *
  * This function has side effects; it mutates the proposed state in order to meet certain bounds checks etc.
+ * @private
  * @param {Object} new_state
  * @param {Number} new_state.chr
  * @param {Number} new_state.start
@@ -82,13 +174,13 @@ function _updateStatePosition(new_state, layout) {
     }
 
     // Constrain w/r/t layout-defined minimum region scale
-    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale) {
+    if (layout.min_region_scale && validated_region && attempted_scale < layout.min_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;
     }
 
     // Constrain w/r/t layout-defined maximum region scale
-    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale) {
+    if (layout.max_region_scale && validated_region && attempted_scale > layout.max_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
         new_state.end = new_state.start + layout.max_region_scale;
     }
@@ -108,8 +200,20 @@ class Plot {
      * @param {String} id The ID of the plot. Often corresponds to the ID of the container element on the page
      *   where the plot is rendered..
      * @param {DataSources} datasource Ensemble of data providers used by the plot
-     * @param {Object} layout A JSON-serializable object of layout configuration parameters
-    */
+     * @param {object} [layout.state] Initial state parameters; the most common options are 'chr', 'start', and 'end'
+     *   to specify initial region view
+     * @param {number} [layout.width=800] The width of the plot and all child panels
+     * @param {number} [layout.min_width=400] Do not allow the panel to be resized below this width
+     * @param {number} [layout.min_region_scale] The minimum region width (do not allow the user to zoom smaller than this region size)
+     * @param {number} [layout.max_region_scale] The maximum region width (do not allow the user to zoom wider than this region size)
+     * @param {boolean} [layout.responsive_resize=false] Whether to resize plot width as the screen is resized
+     * @param {Object[]} [layout.panels] Configuration options for each panel to be added
+     * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each widget to place on the
+     *   plot-level toolbar
+     * @param {boolean} [layout.panel_boundaries=true] Whether to show interactive resize handles to change panel dimensions
+     * @param {boolean} [layout.mouse_guide=true] Whether to always show horizontal and vertical dotted lines that intersect at the current location of the mouse pointer.
+     *   This line spans the entire plot area and is especially useful for plots with multiple panels.
+     */
     constructor(id, datasource, layout) {
         /**
          * @private
@@ -144,7 +248,7 @@ class Plot {
         /**
          * Direct access to panel instances, keyed by panel ID. Used primarily for introspection/ development.
          *  @public
-         *  @member {Object.<String, Number>}
+         *  @member {Object.<String, Panel>}
          */
         this.panels = {};
         /**
@@ -157,6 +261,7 @@ class Plot {
         /**
          * Track update operations (reMap) performed on all child panels, and notify the parent plot when complete
          * TODO: Reconsider whether we need to be tracking this as global state outside of context of specific operations
+         * @ignore
          * @protected
          * @member {Promise[]}
          */
@@ -176,6 +281,7 @@ class Plot {
          * Values in the layout object may change during rendering etc. Retain a copy of the original plot options.
          * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
          * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -206,20 +312,11 @@ class Plot {
 
         /**
          * Known event hooks that the panel can respond to
+         * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
-        this.event_hooks = {
-            'layout_changed': [],  // Many rerendering operations, including dimensions changed, element highlighted, or rerender on chanegd data. Caution: Direct layout mutations might not be captured by this event.
-            'data_requested': [], // A request has been made for new data from any data source used in the plot
-            'data_rendered': [],  // Data from a request has been received and rendered in the plot
-            'element_clicked': [], // Select or unselect
-            'element_selection': [], // Element becomes active (only)
-            'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
-            'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
-            'region_changed': [], // The viewing region (chr/start/end) has been changed
-            'state_changed': [],  // Only triggered when a state change causes rerender
-        };
+        this.event_hooks = {};
 
         /**
          * @callback eventCallback
@@ -249,33 +346,27 @@ class Plot {
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
      *
-     * The following plot-level events are currently supported:
-     *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
-     *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
-     *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
-     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
-     *        whether the element is being selected or deselected.
-     *
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
      * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
-     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
-     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
-     *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
-     *   that was clicked.
+     *   were registered.
      *
      * @public
-     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
+     * @param {String} event The name of an event. Consult documentation for the names of built-in events.
      * @param {eventCallback} hook
      * @returns {function} The registered event listener
      */
     on(event, hook) {
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
+        if (typeof event !== 'string') {
+            throw new Error(`Unable to register event hook. Event name must be a string: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
+        }
+        if (!this.event_hooks[event]) {
+            // We do not validate on known event names, because LZ is allowed to track and emit custom events like "widget button clicked".
+            this.event_hooks[event] = [];
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -284,13 +375,14 @@ class Plot {
     /**
      * Remove one or more previously defined event listeners
      * @public
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} [hook] The callback to deregister
      * @returns {Plot}
      */
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
-        if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+        if (typeof event != 'string' || !Array.isArray(theseHooks)) {
             throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
@@ -311,6 +403,7 @@ class Plot {
     /**
      * Handle running of event hooks when an event is emitted
      * @public
+     * @see {@link event:any_lz_event} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {Plot}
@@ -318,24 +411,40 @@ class Plot {
     emit(event, eventData) {
         // TODO: there are small differences between the emit implementation between plots and panels. In the future,
         //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+        const these_hooks = this.event_hooks[event];
+        if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
+        } else if (!these_hooks && !this.event_hooks['any_lz_event']) {
+            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
+            return this;
         }
         const sourceID = this.getBaseId();
-        this.event_hooks[event].forEach((hookToRun) => {
-            let eventContext;
-            if (eventData && eventData.sourceID) {
-                // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
-                //  when re-emitting the event to plot-level listeners
-                eventContext = eventData;
-            } else {
-                eventContext = {sourceID: sourceID, target: this, data: eventData || null};
-            }
-            // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
-            //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
-            //  override anything provided to `call` below.
-            hookToRun.call(this, eventContext);
-        });
+        let eventContext;
+        if (eventData && eventData.sourceID) {
+            // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
+            //  when re-emitting the event to plot-level listeners
+            eventContext = eventData;
+        } else {
+            eventContext = {sourceID: sourceID, target: this, data: eventData || null};
+        }
+        if (these_hooks) {
+            // This event may have no hooks, but we could be passing by on our way to any_lz_event (below)
+            these_hooks.forEach((hookToRun) => {
+                // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+                //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+                //  override anything provided to `call` below.
+                hookToRun.call(this, eventContext);
+            });
+        }
+
+        // At the plot level (only), all events will be re-emitted under the special name "any_lz_event"- a single place to
+        //  globally listen to every possible event.
+        // This is not intended for direct use. It is for UI frameworks like Vue.js, which may need to wrap LZ
+        //   instances and proxy all events to their own declarative event system
+        if (event !== 'any_lz_event') {
+            const anyEventData = Object.assign({ event_name: event }, eventContext);
+            this.emit('any_lz_event', anyEventData);
+        }
         return this;
     }
 
@@ -402,10 +511,12 @@ class Plot {
      *
      * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
      *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
-     *   @public
-     *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
-     *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
-     *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+     * TODO: Is this method still necessary in modern usage? Hide from docs for now.
+     * @public
+     * @ignore
+     * @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+     * @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+     *   and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
      * @returns {Plot}
      */
     clearPanelData(panelId, mode) {
@@ -437,6 +548,7 @@ class Plot {
     /**
      * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
      * @public
+     * @fires event:panel_removed
      * @param {String} id
      * @returns {Plot}
      */
@@ -518,8 +630,9 @@ class Plot {
      *  using the same fields syntax and underlying methods as data layers.
      *
      * @public
+     * @listens event:data_rendered
      * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
-     *  Different data sources should be prefixed by the source name.
+     *  Different data sources should be prefixed by the namespace name.
      * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
      *  new data is received by the plot. Receives two arguments: (data, plot).
      * @param {Object} [opts] Options
@@ -555,8 +668,14 @@ class Plot {
     /**
      * Update state values and trigger a pull for fresh data on all data sources for all data layers
      * @public
-     * @param state_changes
+     * @param {Object} state_changes
      * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+     * @listens event:match_requested
+     * @fires event:data_requested
+     * @fires event:layout_changed
+     * @fires event:data_rendered
+     * @fires event:state_changed
+     * @fires event:region_changed
      */
     applyState(state_changes) {
         state_changes = state_changes || {};
@@ -621,14 +740,13 @@ class Plot {
                 }
 
                 this.loading_data = false;
-
             });
     }
 
     /**
      * Keep a record of event listeners that are defined outside of the LocusZoom boundary (and therefore would not
      *  get cleaned up when the plot was removed from the DOM). For example, window resize or mouse events.
-     * This allows safe cleanup of the plot on removal from the page
+     * This allows safe cleanup of the plot on removal from the page. This method is useful for authors of LocusZoom plugins.
      * @param {Node} target The node on which the listener has been defined
      * @param {String} event_name
      * @param {function} listener The handle for the event listener to be cleaned up
@@ -818,6 +936,7 @@ class Plot {
      * @param {Number} [width] If provided and larger than minimum allowed size, set plot to this width
      * @param {Number} [height] If provided and larger than minimum allowed size, set plot to this height
      * @returns {Plot}
+     * @fires event:layout_changed
      */
     setDimensions(width, height) {
         // If width and height arguments were passed, then adjust plot dimensions to fit all panels
@@ -1162,6 +1281,17 @@ class Plot {
             //  to look for that value. Whenever a point is de-selected, it clears the match.
             const data = eventData.data;
             const to_send = (data.active ? data.value : null);
+            const emitted_by = eventData.target.id;
+            // When a match is initiated, hide all tooltips from other panels (prevents zombie tooltips from reopening)
+            // TODO: This is a bit hacky. Right now, selection and matching are tightly coupled, and hence tooltips
+            //   reappear somewhat aggressively. A better solution depends on designing alternative behavior, and
+            //   applying tooltips post (instead of pre) render.
+            Object.values(this.panels).forEach((panel) => {
+                if (panel.id !== emitted_by) {
+                    Object.values(panel.data_layers).forEach((layer) => layer.destroyAllTooltips(false));
+                }
+            });
+
             this.applyState({ lz_match_value: to_send });
         });
 

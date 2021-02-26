@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ext/lz-dynamic-urls.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ext/lz-dynamic-urls.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
+ *
+ * This plugin exports helper functions, but does not modify the global registry. It does not require `LocusZoom.use`.
+ *
+ * Demonstrates a mechanism by which the plot can be loaded to a specific initial state based on the URL query string
+ *  (and, optionally, to update the URL bar when the plot state changes, with back button support)
+ *
+ * This makes it possible to create "direct links" to a particular plot of interest (and go back to a previous state
+ *  as the user interacts with the page). Optionally, there is support for custom callbacks to connect the URL to
+ *  arbitrarily complex plot behaviors.
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * &lt;script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-dynamic-urls.min.js" type="application/javascript">&lt;/script>
+ * ```
+ *
+ * To use with ES6 modules, import the helper functions and use them with your layout:
+ *
+ * ```
+ * import LzDynamicUrls from 'locuszoom/esm/ext/lz-dynamic-urls';
+ * ```
+ *
+ * After loading, bind the plot and URL as follows:
+ * ```
+ * // Declares which fields in plot.state will be mapped to and from the URL, eg `plot.state.chr` -> `example.com?chrom=X`
+ * const stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+ * // Fetch initial position from the URL, or use some defaults
+ * let initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
+ * if (!Object.keys(initialState).length) {
+ *     initialState = {chr: 10, start: 114550452, end: 115067678};
+ * }
+ * layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+ * const plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+ * // Once the plot has been created, we can bind it to the URL as follows. This will cause the URL to change whenever
+ * //  the plot region changes, or, clicking the back button in your browser will reload the last region viewed
+ * LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+ * LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+ *
+ * // NOTE: If you are building a page that adds/removes plots on the fly, event listeners will be cleaned up when
+ * //   the destructor `plot.destroy()` is called
+ * ```
+ *
+ *  @module
+ */
+
+function _serializeQueryParams(paramsObj) {
+    // Serialize an object of parameter values into a query string
+    // TODO: Improve support for array values v[]=1&amp;v[]=2
+    return `?${
+        Object.keys(paramsObj).map(function(key) {
+            return `${encodeURIComponent(key)}=${encodeURIComponent(paramsObj[key])}`;
+        }).join('&amp;')}`;
+}
+
+function _parseQueryParams(queryString) {
+    // Parse a query string into an object of parameter values.
+    //   Does not attempt any type coercion; all values are, therefore, strings.
+    // TODO future: Support arrays / params that specify more than one value
+    const query = {};
+    if (queryString) {
+        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&amp;');
+        for (let i = 0; i &lt; pairs.length; i++) {
+            const pair = pairs[i].split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+    }
+    return query;
+}
+
+// A useful helper function for serializing values from a provided object
+function _extractValues(data, mapping, reverse) {
+    // Use the mapping to convert between {stateField: urlParam} (or the reverse). Any fields not referenced in
+    //  the "key" side of the mapping will be omitted from the return value.
+    // Likewise, will omit any requested keys that the source side of the mapping has no information for
+    reverse = reverse || false;
+
+    const ret = {};
+    let newMapping = mapping;
+    if (reverse) {
+        newMapping = {};
+        Object.keys(mapping).forEach(function(k) {
+            newMapping[mapping[k]] = k;
+        });
+    }
+
+    Object.keys(newMapping).forEach(function(k) {
+        const asName = newMapping[k];
+        if (Object.prototype.hasOwnProperty.call(data, k)) {
+            ret[asName] = data[k];
+        }
+
+    });
+    return ret;
+}
+
+function _setStateFromUrlHandler(plot, stateData) {
+    // A default way to deal with URL changes: push all the params as state into plot and rerender
+    // More complex handlers are possible- example, URL parameters could be used to add or remove data layers
+    plot.applyState(stateData);
+}
+
+function _setUrlFromStateHandler(plot, mapping) {
+    // Serialize and return basic query params based solely on information from plot.state
+    // More complex handlers are possible- the serializer can extract any information desired because it is given
+    //  a direct reference to the plot object
+
+    // This default method does not use the eventContext data, because so many things change plot.state without
+    //  officially triggering an event.
+    return _extractValues(plot.state, mapping);
+}
+
+/**
+ * Extract plot parameters from the URL query string. Very useful for setting up the plot on initial page load.
+ * @param {object} mapping How to map elements of plot state to URL param fields. Hash of
+ *      {plotFieldName: urlParamName} entries (both values should be unique)
+ * @param {string} [queryString='window.location.search'] The query string to parse
+ * @returns {object} Plot parameter values
+ */
+function paramsFromUrl(mapping, queryString) {
+    // Internal helper function: second argument only used for unit testing
+    queryString = queryString || window.location.search;
+    const queryParams = _parseQueryParams(queryString);
+    return _extractValues(queryParams, mapping, true);
+}
+
+/**
+ * Allows the plot to monitor changes in the URL and take action when the URL changes.
+ *
+ * For example, this enables using the browser back button to jump to a previous plot after user interaction.
+ *
+ * @param {Plot} plot A reference to the LZ plot
+ * @param {object} mapping How to map elements of plot state to URL param fields. Hash of
+ *      {plotFieldName: urlParamName} entries (both values should be unique)
+ * @param {function} [callback] Specify how the plot acts on information read in from query params.
+ *   The default behavior is to push the data into `plot.state`
+ *   Signature is function(plot, plotDataFromQueryString)
+ * @returns {function} The function handle for the new listener (allows cleanup if plot is removed later)
+ */
+function plotWatchesUrl(plot, mapping, callback) {
+    callback = callback || _setStateFromUrlHandler;
+
+    const listener = function (event) {
+        const urlData = paramsFromUrl(mapping);
+        // Tell the plot what to do with the params extracted from the URL
+        callback(plot, urlData);
+    };
+    window.addEventListener('popstate', listener);
+    plot.trackExternalListener(window, 'popstate', listener);
+    return listener;
+}
+
+/**
+ * Update the URL whenever the plot state changes
+ * @param {Plot} plot A reference to the LZ plot
+ * @param {object} mapping How to map elements of plot state to URL param fields. Hash of
+ *      {plotFieldName: urlParamName} entries (both values should be unique)
+ * @param {function} [callback] Specify how plot data will be serialized into query params
+ *   The default behavior is to extract all the URL params from plot.state as the only source.
+ *   Signature is function(plot, mapping, eventContext)
+ * @returns {function} The function handle for the new listener (allows cleanup if plot is removed later)
+ * @listens event:state_changed
+ */
+function plotUpdatesUrl(plot, mapping, callback) {
+    callback = callback || _setUrlFromStateHandler;
+    // Note: this event only fires when applyState receives *new* information that would trigger a rerender.
+    // Plot state is sometimes changed without the event being fired.
+    const listener = function (eventContext) {
+        const oldParams = _parseQueryParams(window.location.search);
+        // Apply custom serialization to convert plot data to URL params
+        const serializedPlotData = callback(plot, mapping, eventContext);
+        const newParams = Object.assign({}, oldParams, serializedPlotData);
+
+        const update = Object.keys(newParams).some(function (k) {
+            // Not every state change would affect the URL. Allow type coercion since query is a string.
+            // eslint-disable-next-line eqeqeq
+            return (oldParams[k] != newParams[k]);
+        });
+        if (update) {
+            const queryString = _serializeQueryParams(newParams);
+
+            if (Object.keys(oldParams).length) {
+                history.pushState({}, document.title, queryString);
+            } else {
+                // Prevent broken back behavior on first page load: the first time query params are set,
+                //  we don't generate a separate history entry
+                history.replaceState({}, document.title, queryString);
+            }
+
+        }
+    };
+    plot.on('state_changed', listener);
+    return listener;
+}
+
+// Slight build quirk: we use a single webpack file for all modules, but `libraryTarget` expects the entire
+//  module to be exported as `default` in &lt;script> tag mode.
+const all = {
+    paramsFromUrl,
+    extractValues: _extractValues,
+    plotUpdatesUrl,
+    plotWatchesUrl,
+};
+
+export default all;
+export { paramsFromUrl, _extractValues as extractValues, plotUpdatesUrl, plotWatchesUrl };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -2,10 +2,10 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import { LAYOUTS } from '../../../esm/registry';
-import {populate} from '../../../esm/helpers/display';
+import Plot, {_updateStatePosition} from '../../../esm/components/plot';
 import DataSources from '../../../esm/data';
-import {_updateStatePosition} from '../../../esm/components/plot';
+import {populate} from '../../../esm/helpers/display';
+import { LAYOUTS } from '../../../esm/registry';
 
 describe('LocusZoom.Plot', function() {
     // Tests
@@ -520,6 +520,32 @@ describe('LocusZoom.Plot', function() {
                 assert.ok(region_spy.calledWith({sourceID: 'plot', target: plot, data: expected_state}));
             });
         });
+
+        it('allows listening to all plot events via a special event name', function () {
+            const fixture = new Plot('hi', {}, {});
+            const spy = sinon.spy();
+
+            fixture.on('custom_event', spy);
+            fixture.on('any_lz_event', spy);
+            fixture.emit('custom_event', { thing1: 'redfish', thing2: 'bluefish'});
+
+            const baseExpected = {sourceID: 'hi', data: { thing1: 'redfish', thing2: 'bluefish'}};
+
+            assert.ok(spy.calledTwice, 'Event listener was called twice');
+            sinon.assert.calledWithMatch(spy.firstCall, baseExpected);
+            sinon.assert.calledWithMatch(spy.secondCall, Object.assign(baseExpected, {event_name: 'custom_event'}));
+        });
+
+        it('allows catch-all events even without a more specific listener', function () {
+            const fixture = new Plot('hi', {}, {});
+            const spy = sinon.spy();
+
+            fixture.on('any_lz_event', spy);
+            fixture.emit('custom_event', { thing1: 'redfish', thing2: 'bluefish'});
+            assert.ok(spy.calledOnce, 'Event listener was called only as a catchall');
+            sinon.assert.calledWithMatch(spy.firstCall, {event_name: 'custom_event'});
+        });
+
 
         describe('allows communication between layers via match events', function () {
             beforeEach(function() {
