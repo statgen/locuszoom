@@ -887,6 +887,11 @@ const annotation_catalog_panel = {
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
+    axes: {
+        x: {
+            extent: 'state',
+        },
+    },
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
