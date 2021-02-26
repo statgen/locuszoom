@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ext/lz-widget-addons.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ext/lz-widget-addons.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
+ *
+ * This contains (reusable) code to power some (rarely used) demo features:
+ *  - The "covariates model" demo, in which an LZ toolbar widget is populated
+ *    with information by selecting points on the plot (see "covariates model" demo)
+ *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
+ *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
+ *    space makes data hard to see. (see "multiple phenotypes layered" demo)
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ *
+ * ```javascript
+ * &lt;script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-widget-addons.min.js" type="application/javascript">&lt;/script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```javascript
+ * import LocusZoom from 'locuszoom';
+ * import WidgetAddons from 'locuszoom/esm/ext/lz-widget-addons';
+ * LocusZoom.use(WidgetAddons);
+ * ```
+ *
+ * Then use the features made available by this extension. (see demos and documentation for guidance)
+ *
+ * @module
+ */
+import {deepCopy} from '../helpers/layouts';
+
+// In order to work in a UMD context, this module imports the top-level LocusZoom symbol
+
+const STATUS_VERBS = ['highlight', 'select', 'fade', 'hide'];
+const STATUS_ADJECTIVES = ['highlighted', 'selected', 'faded', 'hidden'];
+const STATUS_ANTIVERBS = ['unhighlight', 'deselect', 'unfade', 'show'];
+
+
+// LocusZoom plugins work by exporting a function that receives the `LocusZoom` object
+// This allows them to work in many contexts (including script tags and ES6 imports)
+function install(LocusZoom) {
+    const _Button = LocusZoom.Widgets.get('_Button');
+    const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
+
+
+    /**
+     * Special button/menu to allow model building by tracking individual covariants. Will track a list of covariate
+     *   objects and store them in the special `model.covariates` field of plot `state`.
+     *
+     * This is a prototype widget for building a conditional analysis model, but it performs no calculation
+     *  functionality beyond building a list of items.
+     * @alias module:ext/lz-widget-addons~covariates_model
+     * @see module:LocusZoom_Widgets~BaseWidget
+     * @param {object} layout
+     * @param {string} layout.button_html The HTML to render inside the button
+     * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
+     */
+    class CovariatesModel extends _BaseWidget {
+        initialize() {
+            // Initialize state.model.covariates
+            this.parent_plot.state.model = this.parent_plot.state.model || {};
+            this.parent_plot.state.model.covariates = this.parent_plot.state.model.covariates || [];
+            // Create an object at the plot level for easy access to interface methods in custom client-side JS
+            /**
+             * When a covariates model toolbar element is present, create (one) object at the plot level that exposes
+             *   widget data and state for custom interactions with other plot elements.
+             */
+            this.parent_plot.CovariatesModel = {
+                /** @member {Button} */
+                button: this,
+                /**
+                 * Add an element to the model and show a representation of it in the toolbar widget menu. If the
+                 *   element is already part of the model, do nothing (to avoid adding duplicates).
+                 * When plot state is changed, this will automatically trigger requests for new data accordingly.
+                 * @param {string|object} element_reference Can be any value that can be put through JSON.stringify()
+                 *   to create a serialized representation of itself.
+                 */
+                add: (element_reference) => {
+                    const plot = this.parent_plot;
+                    const element = deepCopy(element_reference);
+                    if (typeof element_reference == 'object' &amp;&amp; typeof element.html != 'string') {
+                        element.html = ( (typeof element_reference.toHTML == 'function') ? element_reference.toHTML() : element_reference.toString());
+                    }
+                    // Check if the element is already in the model covariates array and return if it is.
+                    for (let i = 0; i &lt; plot.state.model.covariates.length; i++) {
+                        if (JSON.stringify(plot.state.model.covariates[i]) === JSON.stringify(element)) {
+                            return plot;
+                        }
+                    }
+                    plot.state.model.covariates.push(element);
+                    plot.applyState();
+                    plot.CovariatesModel.updateWidget();
+                    return plot;
+                },
+                /**
+                 * Remove an element from `state.model.covariates` (and from the toolbar widget menu's
+                 *  representation of the state model). When plot state is changed, this will automatically trigger
+                 *  requests for new data accordingly.
+                 * @param {number} idx Array index of the element, in the `state.model.covariates array`.
+                 */
+                removeByIdx: (idx) => {
+                    const plot = this.parent_plot;
+                    if (typeof plot.state.model.covariates[idx] == 'undefined') {
+                        throw new Error(`Unable to remove model covariate, invalid index: ${idx.toString()}`);
+                    }
+                    plot.state.model.covariates.splice(idx, 1);
+                    plot.applyState();
+                    plot.CovariatesModel.updateWidget();
+                    return plot;
+                },
+                /**
+                 * Empty the `state.model.covariates` array (and toolbar widget menu representation thereof) of all
+                 *  elements. When plot state is changed, this will automatically trigger requests for new data accordingly
+                 */
+                removeAll: () => {
+                    const plot = this.parent_plot;
+                    plot.state.model.covariates = [];
+                    plot.applyState();
+                    plot.CovariatesModel.updateWidget();
+                    return plot;
+                },
+                /**
+                 * Manually trigger the update methods on the toolbar widget's button and menu elements to force
+                 *   display of most up-to-date content. Can be used to force the toolbar to reflect changes made, eg if
+                 *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
+                 */
+                updateWidget: () => {
+                    this.button.update();
+                    this.button.menu.update();
+                },
+            };
+        }
+
+        update() {
+
+            if (this.button) {
+                return this;
+            }
+
+            this.button = new _Button(this)
+                .setColor(this.layout.color)
+                .setHtml(this.layout.button_html)
+                .setTitle(this.layout.button_title)
+                .setOnclick(() => {
+                    this.button.menu.populate();
+                });
+
+            this.button.menu.setPopulate(() => {
+                const selector = this.button.menu.inner_selector;
+                selector.html('');
+                // General model HTML representation
+                if (typeof this.parent_plot.state.model.html != 'undefined') {
+                    selector.append('div').html(this.parent_plot.state.model.html);
+                }
+                // Model covariates table
+                if (!this.parent_plot.state.model.covariates.length) {
+                    selector.append('i').html('no covariates in model');
+                } else {
+                    selector.append('h5').html(`Model Covariates (${this.parent_plot.state.model.covariates.length})`);
+                    const table = selector.append('table');
+                    this.parent_plot.state.model.covariates.forEach((covariate, idx) => {
+                        const html = ((typeof covariate == 'object' &amp;&amp; typeof covariate.html == 'string') ? covariate.html : covariate.toString());
+                        const row = table.append('tr');
+                        row.append('td').append('button')
+                            .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
+                            .style('margin-left', '0em')
+                            .on('click', () => this.parent_plot.CovariatesModel.removeByIdx(idx))
+                            .html('×');
+                        row.append('td')
+                            .html(html);
+                    });
+                    selector.append('button')
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
+                        .style('margin-left', '4px')
+                        .html('× Remove All Covariates')
+                        .on('click', () => this.parent_plot.CovariatesModel.removeAll());
+                }
+            });
+
+            this.button.preUpdate = () => {
+                let html = 'Model';
+                const count = this.parent_plot.state.model.covariates.length;
+                if (count) {
+                    const noun = count > 1 ? 'covariates' : 'covariate';
+                    html += ` (${count} ${noun})`;
+                }
+                this.button.setHtml(html).disable(false);
+            };
+
+            this.button.show();
+
+            return this;
+        }
+    }
+
+
+    /**
+     * Menu for manipulating multiple data layers in a single panel: show/hide, change order, etc.
+     * @alias module:ext/lz-widget-addons~data_layers
+     * @see module:LocusZoom_Widgets~BaseWidget
+     */
+    class DataLayersWidget extends _BaseWidget {
+        update() {
+
+            if (typeof this.layout.button_html != 'string') {
+                this.layout.button_html = 'Data Layers';
+            }
+            if (typeof this.layout.button_title != 'string') {
+                this.layout.button_title = 'Manipulate Data Layers (sort, dim, show/hide, etc.)';
+            }
+
+            if (this.button) {
+                return this;
+            }
+
+            this.button = new _Button(this)
+                .setColor(this.layout.color)
+                .setHtml(this.layout.button_html)
+                .setTitle(this.layout.button_title)
+                .setOnclick(() => {
+                    this.button.menu.populate();
+                });
+
+            this.button.menu.setPopulate(() => {
+                this.button.menu.inner_selector.html('');
+                const table = this.button.menu.inner_selector.append('table');
+                this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach((id, idx) => {
+                    const data_layer = this.parent_panel.data_layers[id];
+                    const name = (typeof data_layer.layout.name != 'string') ? data_layer.id : data_layer.layout.name;
+                    const row = table.append('tr');
+                    // Layer name
+                    row.append('td').html(name);
+                    // Status toggle buttons
+                    this.layout.statuses.forEach((status_adj) => {
+                        const status_idx = STATUS_ADJECTIVES.indexOf(status_adj);
+                        const status_verb = STATUS_VERBS[status_idx];
+                        let html, onclick, highlight;
+                        if (data_layer.global_statuses[status_adj]) {
+                            html = STATUS_ANTIVERBS[status_idx];
+                            onclick = `un${status_verb}AllElements`;
+                            highlight = '-highlighted';
+                        } else {
+                            html = STATUS_VERBS[status_idx];
+                            onclick = `${status_verb}AllElements`;
+                            highlight = '';
+                        }
+                        row.append('td').append('a')
+                            .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}${highlight}`)
+                            .style('margin-left', '0em')
+                            .on('click', () => {
+                                data_layer[onclick]();
+                                this.button.menu.populate();
+                            })
+                            .html(html);
+                    });
+                    // Sort layer buttons
+                    const at_top = (idx === 0);
+                    const at_bottom = (idx === (this.parent_panel.data_layer_ids_by_z_index.length - 1));
+                    const td = row.append('td');
+                    td.append('a')
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-${this.layout.color}${at_bottom ? '-disabled' : ''}`)
+                        .style('margin-left', '0em')
+                        .on('click', () => {
+                            data_layer.moveBack(); this.button.menu.populate();
+                        })
+                        .html('▾')
+                        .attr('title', 'Move layer down (further back)');
+                    td.append('a')
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-${this.layout.color}${at_top ? '-disabled' : ''}`)
+                        .style('margin-left', '0em')
+                        .on('click', () => {
+                            data_layer.moveForward(); this.button.menu.populate();
+                        })
+                        .html('▴')
+                        .attr('title', 'Move layer up (further front)');
+                    td.append('a')
+                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-end lz-toolbar-button-red')
+                        .style('margin-left', '0em')
+                        .on('click', () => {
+                            if (confirm(`Are you sure you want to remove the ${name} layer? This cannot be undone.`)) {
+                                data_layer.parent.removeDataLayer(id);
+                            }
+                            return this.button.menu.populate();
+                        })
+                        .html('×')
+                        .attr('title', 'Remove layer');
+                });
+                return this;
+            });
+
+            this.button.show();
+
+            return this;
+        }
+    }
+
+    const covariates_model_tooltip = function () {
+        const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        covariates_model_association.html += '&lt;a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant&lt;/a>&lt;br>';
+        return covariates_model_association;
+    }();
+
+    const covariates_model_plot = function () {
+        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true });
+        covariates_model_plot_toolbar.widgets.push({
+            type: 'covariates_model',
+            button_html: 'Model',
+            button_title: 'Show and edit covariates currently in model',
+            position: 'left',
+        });
+        return covariates_model_plot_toolbar;
+    }();
+
+    LocusZoom.Widgets.add('covariates_model', CovariatesModel);
+    LocusZoom.Widgets.add('data_layers', DataLayersWidget);
+
+    LocusZoom.Layouts.add('tooltip', 'covariates_model_association', covariates_model_tooltip);
+    LocusZoom.Layouts.add('toolbar', 'covariates_model_plot', covariates_model_plot);
+}
+
+if (typeof LocusZoom !== 'undefined') {
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
+    // eslint-disable-next-line no-undef
+    LocusZoom.use(install);
+}
+
+
+export default install;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

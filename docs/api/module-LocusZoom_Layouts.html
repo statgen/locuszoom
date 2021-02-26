@@ -1,0 +1,3175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: LocusZoom_Layouts</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: LocusZoom_Layouts</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description"><p>Predefined layouts that describe how to draw common types of data, as well as what interactive features to use.
+Each plot contains multiple panels (rows), and each row can stack several kinds of data in layers
+(eg scatter plot and line of significance). Layouts provide the building blocks to provide interactive experiences
+and user-friendly tooltips for common kinds of genetic data.</p>
+<p>Many of these layouts (like the standard association plot) assume that field names are the same as those provided
+in the UMich <a href="https://portaldev.sph.umich.edu/docs/api/v1/">portaldev API</a>. Although layouts can be used on many
+kinds of data, it is often less work to write an adapter that uses the same field names, rather than to modify
+every single reference to a field anywhere in the layout.</p>
+<p>See the Layouts Tutorial for details on how to customize nested layouts.</p></div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="~annotation_catalog"><span class="type-signature">(inner) </span>annotation_catalog<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A panel that shows a simple annotation track connecting GWAS results</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line878">line 878</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~annotation_catalog_layer"><span class="type-signature">(inner, constant) </span>annotation_catalog_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>An annotation / rug track that shows tick marks for each position in which a variant is present in the provided
+association data, <em>and</em> has a significant claim in the EBI GWAS catalog.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line439">line 439</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~annotation_credible_set"><span class="type-signature">(inner, constant) </span>annotation_credible_set<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A panel layout that shows a vertical mark whenever a SNP is a member of the credible set</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line268">line 268</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~annotation_credible_set_layer"><span class="type-signature">(inner, constant) </span>annotation_credible_set_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A data layer layout that shows a vertical mark whenever a SNP is a member of the credible set</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line218">line 218</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~annotation_credible_set_tooltip"><span class="type-signature">(inner, constant) </span>annotation_credible_set_tooltip<span class="type-signature"> :tooltip</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A tooltip layout for annotation (rug) tracks that provides information about credible set members</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">tooltip</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line165">line 165</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association"><span class="type-signature">(inner) </span>association<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A panel that describes the most common kind of LocusZoom plot, with line of GWAS significance, recombination rate,
+and a scatter plot superimposed.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line659">line 659</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_catalog"><span class="type-signature">(inner) </span>association_catalog<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>A modified version of the standard LocusZoom plot, which adds a track that shows which SNPs in the plot also have claims in the EBI GWAS catalog.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line927">line 927</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_catalog_panel"><span class="type-signature">(inner, constant) </span>association_catalog_panel<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A panel showing GWAS summary statistics, plus annotations for connecting it to the EBI GWAS catalog</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line755">line 755</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_credible_set"><span class="type-signature">(inner, constant) </span>association_credible_set<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A panel layout that shows GWAS summary statistics in a standard LocusZoom view, overlaid with credible set membership information</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line298">line 298</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_credible_set_layer"><span class="type-signature">(inner, constant) </span>association_credible_set_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A data layer layout that shows GWAS summary statistics overlaid with credible set membership information</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line183">line 183</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_credible_set_plot"><span class="type-signature">(inner, constant) </span>association_credible_set_plot<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A standard LocusZoom plot layout, with additional credible set information.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line417">line 417</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_credible_set_tooltip"><span class="type-signature">(inner, constant) </span>association_credible_set_tooltip<span class="type-signature"> :tooltip</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) Tooltip layout that appends credible set posterior probability to the default association tooltip (for SNPs in the credible set)</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">tooltip</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-credible-sets.js.html">ext/lz-credible-sets.js</a>, <a href="ext_lz-credible-sets.js.html#line150">line 150</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-credible-sets.html">module:ext/lz-credible-sets</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_pvalues"><span class="type-signature">(inner) </span>association_pvalues<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A scatter plot of GWAS association summary statistics, with preset field names matching the UM portaldev api</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line137">line 137</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~association_pvalues_catalog"><span class="type-signature">(inner) </span>association_pvalues_catalog<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A scatter plot of GWAS summary statistics, with additional tooltip fields showing GWAS catalog annotations</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line286">line 286</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~coaccessibility"><span class="type-signature">(inner) </span>coaccessibility<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>An arc track that shows arcs representing chromatic coaccessibility</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line223">line 223</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~coaccessibility"><span class="type-signature">(inner) </span>coaccessibility<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>Show chromatin coaccessibility arcs, with additional features that connect these arcs to nearby genes to show regulatory interactions.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line973">line 973</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~coaccessibility_panel"><span class="type-signature">(inner, constant) </span>coaccessibility_panel<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A panel showing chromatin coaccessibility arcs with some common display options</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line719">line 719</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~gene_selector_menu"><span class="type-signature">(inner, constant) </span>gene_selector_menu<span class="type-signature"> :toolbar_widgets</span></h4>
+
+
+
+
+<div class="description">
+    <p>A dropdown menu that selects which types of genes to show in the plot. The provided options are curated sets of
+interesting gene types based on the GENCODE dataset.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar_widgets</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line512">line 512</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~genes_filtered"><span class="type-signature">(inner) </span>genes_filtered<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A genes data layer that uses filters to limit what information is shown by default. This layer hides a curated
+list of  GENCODE gene_types that are of less interest to most analysts.
+Often used in tandem with a panel-level toolbar &quot;show all&quot; button so that the user can toggle to a full view.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line407">line 407</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~genes_layer"><span class="type-signature">(inner, constant) </span>genes_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>Shows genes in the specified region, with names and formats drawn from the UM Portaldev API and GENCODE datasource</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line387">line 387</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~genes_panel"><span class="type-signature">(inner, constant) </span>genes_panel<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A panel showing genes in the specified region. This panel lets the user choose which genes are shown.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line817">line 817</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~interval_association"><span class="type-signature">(inner, constant) </span>interval_association<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A plot layout that shows association summary statistics, genes, and interval data. This example assumes
+chromHMM data. (see panel layout)</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-track.js.html">ext/lz-intervals-track.js</a>, <a href="ext_lz-intervals-track.js.html#line708">line 708</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-track.html">module:ext/lz-intervals-track</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals"><span class="type-signature">(inner, constant) </span>intervals<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A panel containing an intervals data layer, eg for BED tracks</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-track.js.html">ext/lz-intervals-track.js</a>, <a href="ext_lz-intervals-track.js.html#line672">line 672</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-track.html">module:ext/lz-intervals-track</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals_association_enrichment"><span class="type-signature">(inner, constant) </span>intervals_association_enrichment<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A plot layout that shows association summary statistics, genes, and intervals-by-enrichment data.
+This layout provides interactive matching: clicking an interval marking causes area of the scatter plot to be
+highlighted for any annotations that match the specified category.
+It is intended to work with data in the HuGeAMP format.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-enrichment.js.html">ext/lz-intervals-enrichment.js</a>, <a href="ext_lz-intervals-enrichment.js.html#line293">line 293</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-enrichment.html">module:ext/lz-intervals-enrichment</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals_enrichment_data_layer"><span class="type-signature">(inner, constant) </span>intervals_enrichment_data_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A data layer with some preconfigured options for intervals-by-enrichment display, in
+which intervals are ranked by priority from enrichment analysis.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-enrichment.js.html">ext/lz-intervals-enrichment.js</a>, <a href="ext_lz-intervals-enrichment.js.html#line174">line 174</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-enrichment.html">module:ext/lz-intervals-enrichment</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals_enrichment_panel"><span class="type-signature">(inner, constant) </span>intervals_enrichment_panel<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A panel containing an intervals-by-enrichment data layer</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-enrichment.js.html">ext/lz-intervals-enrichment.js</a>, <a href="ext_lz-intervals-enrichment.js.html#line256">line 256</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-enrichment.html">module:ext/lz-intervals-enrichment</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals_enrichment_tooltip"><span class="type-signature">(inner, constant) </span>intervals_enrichment_tooltip<span class="type-signature"> :tooltip</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A basic tooltip with information to be shown over an intervals-by-enrichment datum</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">tooltip</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-enrichment.js.html">ext/lz-intervals-enrichment.js</a>, <a href="ext_lz-intervals-enrichment.js.html#line155">line 155</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-enrichment.html">module:ext/lz-intervals-enrichment</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~intervals_layer"><span class="type-signature">(inner, constant) </span>intervals_layer<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A data layer with some preconfigured options for intervals display. This example was designed for chromHMM output,
+in which various states are assigned numeric state IDs and (&lt;= as many) text state names</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-track.js.html">ext/lz-intervals-track.js</a>, <a href="ext_lz-intervals-track.js.html#line618">line 618</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-track.html">module:ext/lz-intervals-track</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~ldlz2_pop_selector"><span class="type-signature">(inner) </span>ldlz2_pop_selector<span class="type-signature"> :toolbar_widgets</span></h4>
+
+
+
+
+<div class="description">
+    <p>A dropdown menu that can be used to control the LD population used with the LDServer Adapter. Population
+names are provided for the 1000G dataset that is used by the offical UM LD Server.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar_widgets</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line478">line 478</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~phewas_panel"><span class="type-signature">(inner, constant) </span>phewas_panel<span class="type-signature"> :panel</span></h4>
+
+
+
+
+<div class="description">
+    <p>A pael that displays PheWAS scatter plots and automatically generates a color scheme</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">panel</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line849">line 849</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~phewas_pvalues"><span class="type-signature">(inner) </span>phewas_pvalues<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A scatter plot of PheWAS pvalues, with preset field names matching the UM Portaldev API</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line301">line 301</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~recomb_rate"><span class="type-signature">(inner) </span>recomb_rate<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A simple curve representing the genetic recombination rate, drawn from the UM API</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line111">line 111</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~region_nav_plot"><span class="type-signature">(inner) </span>region_nav_plot<span class="type-signature"> :toolbar</span></h4>
+
+
+
+
+<div class="description">
+    <p>A basic plot toolbar with buttons to scroll sideways or zoom in. Useful for all region-based plots.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line602">line 602</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~significance"><span class="type-signature">(inner) </span>significance<span class="type-signature"> :data_layer</span></h4>
+
+
+
+
+<div class="description">
+    <p>A horizontal line of GWAS significance at the standard threshold of p=5e-8</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">data_layer</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line99">line 99</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_association"><span class="type-signature">(inner) </span>standard_association<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>Describes how to fetch and draw each part of the most common LocusZoom plot (with field names that reference the portaldev API)</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line909">line 909</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_association_toolbar"><span class="type-signature">(inner, constant) </span>standard_association_toolbar<span class="type-signature"> :toolbar</span></h4>
+
+
+
+
+<div class="description">
+    <p>A plot toolbar that adds a button for controlling LD population. This is useful for plots intended to show
+GWAS summary stats, which is one of the most common usages of LocusZoom.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line595">line 595</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_intervals"><span class="type-signature">(inner, constant) </span>standard_intervals<span class="type-signature"> :tooltip</span></h4>
+
+
+
+
+<div class="description">
+    <p>(<strong>extension</strong>) A basic tooltip with information to be shown over an intervals datum</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">tooltip</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ext_lz-intervals-track.js.html">ext/lz-intervals-track.js</a>, <a href="ext_lz-intervals-track.js.html#line603">line 603</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="module-ext_lz-intervals-track.html">module:ext/lz-intervals-track</a> for required extension and installation instructions</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_panel"><span class="type-signature">(inner) </span>standard_panel<span class="type-signature"> :toolbar</span></h4>
+
+
+
+
+<div class="description">
+    <p>Basic options to remove and reorder panels</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line536">line 536</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_phewas"><span class="type-signature">(inner) </span>standard_phewas<span class="type-signature"> :plot</span></h4>
+
+
+
+
+<div class="description">
+    <p>A PheWAS scatter plot with an additional track showing nearby genes, to put the region in biological context.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">plot</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line946">line 946</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~standard_plot"><span class="type-signature">(inner) </span>standard_plot<span class="type-signature"> :toolbar</span></h4>
+
+
+
+
+<div class="description">
+    <p>A simple plot toolbar with buttons to download as image</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">toolbar</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="layouts_index.js.html">layouts/index.js</a>, <a href="layouts_index.js.html#line563">line 563</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

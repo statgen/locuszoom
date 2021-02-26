@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: helpers/scalable.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: helpers/scalable.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Plugin registry of available functions that can be used in scalable layout directives.
+ *
+ * These "scale functions" are used during rendering to return output (eg color) based on input value
+ *
+ * @module LocusZoom_ScaleFunctions
+ * @see {@link module:LocusZoom_DataLayers~ScalableParameter} for details on how scale functions are used by datalayers
+ */
+
+import * as d3 from 'd3';
+
+/**
+ * Basic conditional function to evaluate the value of the input field and return based on equality.
+ * @alias module:LocusZoom_ScaleFunctions~if
+ * @param {Object} parameters
+ * @param {*} parameters.field_value The value against which to test the input value.
+ * @param {*} parameters.then The value to return if the input value matches the field value
+ * @param {*} parameters.else  The value to return if the input value does not match the field value. Optional. If not
+ *   defined this scale function will return null (or value of null_value parameter, if defined) when input value fails
+ *   to match field_value.
+ * @param {*} input value
+ */
+const if_value = (parameters, input) => {
+    if (typeof input == 'undefined' || parameters.field_value !== input) {
+        if (typeof parameters.else != 'undefined') {
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+};
+
+/**
+ * Function to sort numerical values into bins based on numerical break points. Will only operate on numbers and
+ *   return null (or value of null_value parameter, if defined) if provided a non-numeric input value. Parameters:
+ * @function numerical_bin
+ * @param {Object} parameters
+ * @param {Number[]} parameters.breaks  Array of numerical break points against which to evaluate the input value.
+ *   Must be of equal length to values parameter. If the input value is greater than or equal to break n and less than
+ *   or equal to break n+1 (or break n+1 doesn't exist) then returned value is the nth entry in the values parameter.
+ * @param {Array} parameters.values  Array of values to return given evaluations against break points. Must be of
+ *   equal length to breaks parameter. Each entry n represents the value to return if the input value is greater than
+ *   or equal to break n and less than or equal to break n+1 (or break n+1 doesn't exist).
+ * @param {*} parameters.null_value
+ * @param {*} input value
+ * @returns {*}
+ */
+const numerical_bin = (parameters, input) => {
+    const breaks = parameters.breaks || [];
+    const values = parameters.values || [];
+    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+        return (parameters.null_value ? parameters.null_value : null);
+    }
+    const threshold = breaks.reduce(function (prev, curr) {
+        if (+input &lt; prev || (+input >= prev &amp;&amp; +input &lt; curr)) {
+            return prev;
+        } else {
+            return curr;
+        }
+    });
+    return values[breaks.indexOf(threshold)];
+};
+
+/**
+ * Function to sort values of any type into bins based on direct equality testing with a list of categories.
+ *   Will return null if provided an input value that does not match to a listed category.
+ * @function categorical_bin
+ * @param {Object} parameters
+ * @param {Array} parameters.categories  Array of values against which to evaluate the input value. Must be of equal
+ *   length to values parameter. If the input value is equal to category n then returned value is the nth entry in the
+ *   values parameter.
+ * @param {Array} parameters.values  Array of values to return given evaluations against categories. Must be of equal
+ *   length to categories parameter. Each entry n represents the value to return if the input value is equal to the nth
+ *   value in the categories parameter.
+ * @param {*} parameters.null_value  Value to return if the input value fails to match to any categories. Optional.
+ */
+const categorical_bin = (parameters, value) => {
+    if (typeof value == 'undefined' || !parameters.categories.includes(value)) {
+        return (parameters.null_value ? parameters.null_value : null);
+    } else {
+        return parameters.values[parameters.categories.indexOf(value)];
+    }
+};
+
+/**
+ * Cycle through a set of options, so that the each element in a set of data receives a value different than the
+ *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+ * This is useful when ADJACENT items must be guaranteed to yield a different result, but it leads to unstable color
+ *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
+ *
+ *  See also: stable_choice.
+ *  @param {Object} parameters
+ *  @param {Array} parameters.values A list of option values
+ * @return {*}
+ */
+const ordinal_cycle = (parameters, value, index) => {
+    const options = parameters.values;
+    return options[index % options.length];
+};
+
+/**
+ * A scale function that auto-chooses something (like color) from a preset scheme, and makes the same choice every
+ * time given the same value, regardless of ordering or what other data is in the region
+ *
+ * This is useful when categories must be stable (same color, every time). But sometimes it will assign adjacent values
+ *  the same color due to hash collisions.
+ *
+ * For performance reasons, this is memoized once per instance. Eg, each scalable color parameter has its own cache.
+ *  This function is therefore slightly less amenable to layout mutations like "changing the options after scaling
+ *  function is used", but this is not expected to be a common use case.
+ *
+ *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
+ *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
+ *    like a category or gene name.
+ * @param parameters
+ * @param {Array} [parameters.values] A list of options to choose from
+ * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
+ *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
+ *  discrete categories.
+ * @param value
+ * @param index
+ */
+let stable_choice = (parameters, value, index) => {
+    // Each place the function gets used has its own parameters object. This function thus memoizes per usage
+    //  ("association - point color - directive 1") rather than globally ("all properties/panels")
+    const cache = parameters._cache = parameters._cache || new Map();
+    const max_cache_size = parameters.max_cache_size || 500;
+
+    if (cache.size >= max_cache_size) {
+        // Prevent cache from growing out of control (eg as user moves between regions a lot)
+        cache.clear();
+    }
+    if (cache.has(value)) {
+        return cache.get(value);
+    }
+
+    // Simple JS hashcode implementation, from:
+    //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+    let hash = 0;
+    value = String(value);
+    for (let i = 0; i &lt; value.length; i++) {
+        let chr = value.charCodeAt(i);
+        hash  = ((hash &lt;&lt; 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    // Convert signed 32 bit integer to be within the range of options allowed
+    const options = parameters.values;
+    const result = options[Math.abs(hash) % options.length];
+    cache.set(value, result);
+    return result;
+};
+
+/**
+ * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.
+ * @function interpolate
+ * @parameters {Object} parameters
+ * @parameters {Number[]} parameters.breaks  Array of numerical break points against which to evaluate the input value.
+ *   Must be of equal length to values parameter and contain at least two elements. Input value will be evaluated for
+ *   relative position between two break points n and n+1 and the returned value will be interpolated at a relative
+ *   position between values n and n+1.
+ * @parameters {*[]} parameters.values  Array of values to interpolate and return given evaluations against break
+ *   points. Must be of equal length to breaks parameter and contain at least two elements. Each entry n represents
+ *   the value to return if the input value matches the nth entry in breaks exactly. Note that this scale function
+ *   uses d3.interpolate to provide for effective interpolation of many different value types, including numbers,
+ *   colors, shapes, etc.
+ * @parameters {*} parameters.null_value
+ */
+const interpolate = (parameters, input) => {
+    var breaks = parameters.breaks || [];
+    var values = parameters.values || [];
+    var nullval = (parameters.null_value ? parameters.null_value : null);
+    if (breaks.length &lt; 2 || breaks.length !== values.length) {
+        return nullval;
+    }
+    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+        return nullval;
+    }
+    if (+input &lt;= parameters.breaks[0]) {
+        return values[0];
+    } else if (+input >= parameters.breaks[parameters.breaks.length - 1]) {
+        return values[breaks.length - 1];
+    } else {
+        var upper_idx = null;
+        breaks.forEach(function (brk, idx) {
+            if (!idx) {
+                return;
+            }
+            if (breaks[idx - 1] &lt;= +input &amp;&amp; breaks[idx] >= +input) {
+                upper_idx = idx;
+            }
+        });
+        if (upper_idx === null) {
+            return nullval;
+        }
+        const normalized_input = (+input - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
+        if (!isFinite(normalized_input)) {
+            return nullval;
+        }
+        return d3.interpolate(values[upper_idx - 1], values[upper_idx])(normalized_input);
+    }
+};
+
+
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
