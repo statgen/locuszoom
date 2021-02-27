@@ -36,6 +36,7 @@ jobs:
           ${{ runner.OS }}-
     - name: Build and test package
       run: |
+        npm install -g npm@7
         npm ci
         npm run build
         npm run test
