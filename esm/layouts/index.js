@@ -882,9 +882,9 @@ const phewas_panel = {
  */
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
-    min_height: 45,
-    height: 45,
-    margin: { top: 25, right: 50, bottom: 0, left: 50 },
+    min_height: 50,
+    height: 50,
+    margin: { top: 25, right: 50, bottom: 10, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
     axes: {
