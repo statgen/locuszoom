@@ -888,9 +888,7 @@ const annotation_catalog_panel = {
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
     axes: {
-        x: {
-            extent: 'state',
-        },
+        x: { extent: 'state', render: false },
     },
     interaction: {
         drag_background_to_pan: true,

@@ -274,9 +274,7 @@ function install (LocusZoom) {
         inner_border: 'rgb(210, 210, 210)',
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
         axes: {
-            x: {
-                extent: 'state',
-            },
+            x: { extent: 'state', render: false },
         },
         interaction: {
             drag_background_to_pan: true,
