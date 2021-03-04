@@ -18,7 +18,7 @@ Many of our users work on small projects with a single HTML file and no special 
 In the example below, be sure to replace `VERSION_GOES_HERE` with the actual version of the [newest release](https://github.com/statgen/locuszoom/releases). It is possible to omit `@VERSION` entirely, but in order to keep up with a fast changing field, sometimes we need to make breaking changes. Using a real version string allows you to avoid things breaking by surprise later.
 
 ```javascript
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.css" type="text/css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.css" type="text/css" crossorigin="anonymous"/>
 <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="application/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.app.min.js" type="application/javascript"></script>
 ```
