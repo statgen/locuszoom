@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+    <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-dynamic-urls.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-multi-ld.min.js"></script>
+
+    <title>LocusZoom.js ~ Multiple LD Reference Variants</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div>
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Multiple LD Reference Variants</h3>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>Users can choose to calculate LD based on more than one reference variant. This is very
+        useful when there are multiple (independent) signals in the same region.</p>
+      <div id="lz-plot" class="lz-container-responsive"></div>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+
+      <script type="text/javascript">
+        // Determine if we're online, based on browser state or presence of an optional query parameter
+        var online = !(typeof navigator != "undefined" && !navigator.onLine);
+        if (window.location.search.indexOf("offline") != -1){ online = false; }
+
+        // Define LocusZoom Data Sources object differently depending on online status
+        var apiBase, data_sources;
+        if (online) {
+          apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+          data_sources = new LocusZoom.DataSources()
+            .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+            .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+            .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+            .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+            .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+        } else {
+          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "examples/data/";
+          data_sources = new LocusZoom.DataSources()
+            .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
+            .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" , params: { build: 'GRCh37' }}])
+            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
+            .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
+            .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);
+        }
+
+        // Get the standard association plot layout from LocusZoom's built-in layouts
+        var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+        // Fetch initial position from the URL, or use some defaults
+        var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
+        if (!Object.keys(initialState).length) {
+            initialState = {chr: 10, start: 114550452, end: 115067678};
+        }
+        layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+        // Replace the standard association panel with the "multi LD" asociation panel
+        layout.panels[0] = LocusZoom.Layouts.get("panel", "association_multi_ld");
+
+        // Generate the LocusZoom plot, and reflect the initial plot state in url
+        window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+
+        // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+        //   a previously viewed region)
+        LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+        LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+      </script>
+
+    </div>
+
+  </body>
+</html>

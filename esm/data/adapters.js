@@ -530,16 +530,14 @@ class LDServer extends BaseApiAdapter {
 
         // Since LD information may be shared across multiple assoc sources with different namespaces,
         //   we use regex to find columns to join on, rather than requiring exact matches
-        const exactMatch = function (arr) {
+        const exactMatch = function (field_names) {
             return function () {
                 const regexes = arguments;
                 for (let i = 0; i < regexes.length; i++) {
                     const regex = regexes[i];
-                    const m = arr.filter(function (x) {
-                        return x.match(regex);
-                    });
-                    if (m.length) {
-                        return m[0];
+                    const m = field_names.find((x) => x.match(regex));
+                    if (m) {
+                        return m;
                     }
                 }
                 return null;
@@ -549,7 +547,7 @@ class LDServer extends BaseApiAdapter {
             id: this.params.id_field,
             position: this.params.position_field,
             pvalue: this.params.pvalue_field,
-            _names_:null,
+            _names_: null,
         };
         if (chain && chain.body && chain.body.length > 0) {
             const names = Object.keys(chain.body[0]);
@@ -766,7 +764,7 @@ class LDServer extends BaseApiAdapter {
         let url = this.getURL(state, chain, fields);
         let combined = { data: {} };
         let chainRequests = function (url) {
-            return fetch(url).then().then((response) => {
+            return fetch(url).then((response) => {
                 if (!response.ok) {
                     throw new Error(response.statusText);
                 }
@@ -785,6 +783,15 @@ class LDServer extends BaseApiAdapter {
         return chainRequests(url);
     }
 }
+
+//
+// class LDServerMulti extends LDServer {
+//     // getURL is relative to refvar
+//     // One fetchRequest per variant....
+//     //  So essentially fetchRequest needs to return one or more items, and combineChainBody needs to combine one or more items
+//     // Parsing also needs to handle a series of promises, not just one
+// }
+
 
 /**
  * Fetch GWAS catalog data for a list of known variants, and align the data with previously fetched association data.
