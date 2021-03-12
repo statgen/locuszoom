@@ -565,23 +565,8 @@ class LDServer extends BaseApiAdapter {
         return dataFields;
     }
 
-    findRequestedFields (fields, outnames) {
-        // Assumption: all usages of this source will only ever ask for "isrefvar" or "state". This maps to output names.
-        let obj = {};
-        for (let i = 0; i < fields.length; i++) {
-            if (fields[i] === 'isrefvar') {
-                obj.isrefvarin = fields[i];
-                obj.isrefvarout = outnames && outnames[i];
-            } else {
-                obj.ldin = fields[i];
-                obj.ldout = outnames && outnames[i];
-            }
-        }
-        return obj;
-    }
-
     /**
-     * The LD API payload does not obey standard format conventions; do not try to transform it.
+     * The LD API payload is not returned directly- instead the results are combined with the chain by performing a calculation.
      */
     normalizeResponse (data) {
         return data;
@@ -615,7 +600,8 @@ class LDServer extends BaseApiAdapter {
                     return a < b;
                 };
             }
-            let extremeVal = records[0][pval_field], extremeIdx = 0;
+            let extremeVal = records[0][pval_field];
+            let extremeIdx = 0;
             for (let i = 1; i < records.length; i++) {
                 if (cmp(records[i][pval_field], extremeVal)) {
                     extremeVal = records[i][pval_field];
@@ -625,9 +611,8 @@ class LDServer extends BaseApiAdapter {
             return extremeIdx;
         };
 
-        let reqFields = this.findRequestedFields(fields);
-        let refVar = reqFields.ldin;
-        if (refVar === 'state') {
+        let refVar;
+        if (fields.includes('state')) {
             refVar = state.ldrefvar || chain.header.ldrefvar || 'best';
         }
         if (refVar === 'best') {
@@ -718,19 +703,26 @@ class LDServer extends BaseApiAdapter {
      * Since each layer only asks for the data needed for that layer, one LD call is sufficient to annotate many separate association tracks.
      */
     combineChainBody(data, chain, fields, outnames, trans) {
-        let keys = this.findMergeFields(chain);
-        let reqFields = this.findRequestedFields(fields, outnames);
-        if (!keys.position) {
-            throw new Error(`Unable to find position field for merge: ${keys._names_}`);
+        let assoc_field_names = this.findMergeFields(chain);
+        // This will annotate every assoc value (from chain.body) with special fields (where `ld` represents the namespace in use):
+        //  - ld:isrefvar (tag if this is a reference variant)
+        //  - ld:state (the correlation value, like r2. This is a terrible variable name but it's been copied and pasted into a lot of websites, and now we're stuck with it.
+        const namespace = this.source_id || this.constructor.name;
+
+        if (!assoc_field_names.position) {
+            throw new Error(`Unable to find position field for merge: ${assoc_field_names._names_}`);
         }
         const leftJoin = function (left, right, lfield, rfield) {
+            // left = assoc data. Field names may vary (many data sources and no good "contract" for data)
+            // right = LD data. This adapter makes fairly rigid field name assumptions based on the UM LDServer API-
+            //  there aren't a lot of dynamic LD calculators and life is easier when data is predictable
             let i = 0, j = 0;
             while (i < left.length && j < right.position2.length) {
-                if (left[i][keys.position] === right.position2[j]) {
+                if (left[i][assoc_field_names.position] === right.position2[j]) {
                     left[i][lfield] = right[rfield][j];
                     i++;
                     j++;
-                } else if (left[i][keys.position] < right.position2[j]) {
+                } else if (left[i][assoc_field_names.position] < right.position2[j]) {
                     i++;
                 } else {
                     j++;
@@ -748,11 +740,9 @@ class LDServer extends BaseApiAdapter {
             }
         };
 
-        // LD servers vary slightly. Some report corr as "rsquare", others as "correlation"
-        let corrField = data.rsquare ? 'rsquare' : 'correlation';
-        leftJoin(chain.body, data, reqFields.ldout, corrField);
-        if (reqFields.isrefvarin && chain.header.ldrefvar) {
-            tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
+        leftJoin(chain.body, data, `${namespace}:state`, 'correlation');
+        if (chain.header.ldrefvar && chain.header.ldrefvar) {
+            tagRefVariant(chain.body, chain.header.ldrefvar, assoc_field_names.id, `${namespace}:isrefvar`, `${namespace}:state`);
         }
         return chain.body;
     }
