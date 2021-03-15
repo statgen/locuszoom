@@ -571,6 +571,7 @@ class LDServer extends BaseApiAdapter {
      * Normal parsing assumes one response (text -> JSON). This source yields an array of responses that each need parsing.
      */
     parseResponse(resp, ...args) {
+        // Perform all parsing. Returns an array of column-based data objects.
         resp = resp.map((item) =>  (typeof item == 'string' ? JSON.parse(item) : item).data);
         return super.parseResponse(resp, ...args);
     }
@@ -579,6 +580,8 @@ class LDServer extends BaseApiAdapter {
      * The LD API payload is not returned directly- instead the results are combined with the chain by performing a calculation.
      */
     normalizeResponse (data) {
+        // This adapter is unique: instead of an array (one object per record), it returns an array (one object
+        //  per overall LD response). We skip normalizing to avoid triggering logic meant to handle object-per-record code.
         return data;
     }
 
@@ -655,7 +658,7 @@ class LDServer extends BaseApiAdapter {
             // This adapter is allowed to ask for more than one LD reference variant at the same time.
             //  Internally, all refVar actions are thus expressed in terms of an array of items.
             refVar = [refVar];
-        } else if (refVar.length > 4) {
+        } else if (refVar.length === 0 || refVar.length > 4) {
             throw new Error(`No more than 4 LD reference variants can be requested at the same time`);
         }
 
@@ -679,7 +682,10 @@ class LDServer extends BaseApiAdapter {
     }
 
     /**
-     * Identify (or guess) the LD reference variant, then add query parameters to the URL to construct a query for the specified region
+     * Identify (or guess) the LD reference variant(s), then add query parameters to the URL to construct a query for the specified region
+     *
+     * @returns {String[]} This adapter is unique in that it can request data for more than one LD reference variant at the same time.
+     *   Thus, this function generates more than one URL.
      */
     getURL(state, chain, fields) {
         // The LD source/pop can be overridden from plot.state for dynamic layouts
@@ -695,7 +701,6 @@ class LDServer extends BaseApiAdapter {
 
         validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
 
-        // const [refVar_formatted, refVar_raw] = this.getRefvar(state, chain, fields);
         const allRefVars = this.getRefvar(state, chain, fields);
 
         // Preserve the user-provided variant spec for use when matching to assoc data
@@ -713,7 +718,7 @@ class LDServer extends BaseApiAdapter {
     }
 
     /**
-     * The LD adapter caches based on region, reference panel, and population name
+     * The LD adapter caches based on region, reference panel, population name, and the requested reference variant(s)
      * @param state
      * @param chain
      * @param fields
@@ -731,73 +736,86 @@ class LDServer extends BaseApiAdapter {
     /**
      * The LD adapter attempts to intelligently match retrieved LD information to a request for association data earlier in the data chain.
      * Since each layer only asks for the data needed for that layer, one LD call is sufficient to annotate many separate association tracks.
+     *
+     * If more than one LD reference variant is specified, then the association data point is annotated with the highest LD value and the identifier for that variant.
      */
     combineChainBody(data, chain, fields, outnames, trans) {
         let assoc_field_names = this.findMergeFields(chain);
         // This will annotate every assoc value (from chain.body) with special fields (where `ld` represents the namespace in use):
         //  - ld:isrefvar (tag if this is a reference variant)
-        //  - ld:state (the correlation value, like r2. This is a terrible variable name but it's been copied and pasted into a lot of websites, and now we're stuck with it.
+        //  - ld:state (the correlation value, like r2. This is a terrible variable name but it's been copied and pasted
+        //      into a lot of LZ layouts on different websites, and now we're stuck with it.
         const namespace = this.source_id || this.constructor.name;
+        // Names of fields in output, eg ld:state, ld:isrefvar....
+        const out_correl_field = `${namespace}:state`;
+        const out_refvar_tag = `${namespace}:isrefvar`;
+        const out_varname_tag = `${namespace}:refvarname`; // When there are multiple LD refvars in use, which is this relative to?
 
         if (!assoc_field_names.position) {
             throw new Error(`Unable to find position field for merge: ${assoc_field_names._names_}`);
         }
-        const leftJoin = function (left, right, lfield, rfield) {
+        const leftJoin = function (assoc_data, ...ld_responses) {
             // left = assoc data. Field names may vary (many data sources and no good "contract" for data)
-            // right = LD data. This adapter makes fairly rigid field name assumptions based on the UM LDServer API-
-            //  there aren't a lot of dynamic LD calculators and life is easier when data is predictable
-            let i = 0, j = 0;
-            while (i < left.length && j < right.position2.length) {
-                if (left[i][assoc_field_names.position] === right.position2[j]) {
-                    left[i][lfield] = right[rfield][j];
+            // right = array of LD data responses, one per variant. This adapter makes fairly rigid field name
+            //   assumptions based on the UM LDServer API- there aren't a lot of dynamic LD calculators and life
+            //   is easier when data is predictable
+            let i = 0;
+            let j = 0;
+            // The join code assumes that for the same REGION, PANEL, and POPULATION, all LD responses for
+            //  different refvars will contain the same set of variants, including the requested refvar (for which
+            //  LD will be reported as 1 relative to itself)
+            const first_variant_positions = ld_responses[0].position2;
+            const variant_names = ld_responses.map((item) => item.variant1[0]); // for single-reference queries, the entire variant1 column is redundant
+
+            const refvars = new Set(chain.header.ldrefvar);
+
+            while (i < assoc_data.length && j < first_variant_positions.length) {
+                const assoc_row = assoc_data[i];
+                if (assoc_data[i][assoc_field_names.position] === first_variant_positions[j]) {
+                    const this_row_correlations = ld_responses.map((var_data) => var_data.correlation[j]);
+
+                    const best_corr = Math.max(...this_row_correlations);
+                    assoc_row[out_correl_field] = best_corr;
+                    assoc_row[out_varname_tag] = variant_names[this_row_correlations.findIndex((val) => val === best_corr)];
+                    if (refvars.has(assoc_row[assoc_field_names.id])) {
+                        // It's possible to have LD = 1, so we need a separate field to explicitly tag the refvar
+                        assoc_row[out_refvar_tag] = 1;
+                    }
+
                     i++;
                     j++;
-                } else if (left[i][assoc_field_names.position] < right.position2[j]) {
+                } else if (assoc_row[assoc_field_names.position] < first_variant_positions[j]) {
                     i++;
                 } else {
                     j++;
                 }
             }
         };
-        const tagRefVariant = function (data, refvar, idfield, outrefname, outldname) {
-            for (let i = 0; i < data.length; i++) {
-                if (data[i][idfield] && data[i][idfield] === refvar) {
-                    data[i][outrefname] = 1;
-                    data[i][outldname] = 1; // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
-                } else {
-                    data[i][outrefname] = 0;
-                }
-            }
-        };
 
-        // TODO: retrofit here for all responses. Deal with picking best variant and annotating which one is best hit
-        for (let variant_results of data) {
-            leftJoin(chain.body, variant_results, `${namespace}:state`, 'correlation');
-        }
-
-        if (chain.header.ldrefvar) {
-            for (let ref_var of chain.header.ldrefvar) {
-                // FIXME: inefficient- no need to go through loop mult times? Also, only tags one at a time
-                tagRefVariant(chain.body, ref_var, assoc_field_names.id, `${namespace}:isrefvar`, `${namespace}:state`);
-            }
-        }
+        leftJoin(chain.body, ...data);
         return chain.body;
     }
 
     /**
+     * This adapter is very unique, in that it can combine MULTIPLE requests to get the data it needs:
+     * - The user can specify more than one LD reference variant ("color assoc data by thing it is in highest LD with")
      * The LDServer API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
+     * -
+     * @returns {Promise} A promise that resolves to an array of one-depaginated-response-per-variant. Responses are already
+     *  parsed, during the "detect more data and depaginate" phase.
      */
     fetchRequest(state, chain, fields) {
         let urls = this.getURL(state, chain, fields);
-        let combined = { data: {} };
+
         let chainRequests = function (url) {
+            // Depaginate requests for a single API request
+            let combined = { data: {} };
             return fetch(url).then((response) => {
                 if (!response.ok) {
                     throw new Error(response.statusText);
                 }
-                return response.text();
+                return response.json();
             }).then(function(payload) {
-                payload = JSON.parse(payload);
                 Object.keys(payload.data).forEach(function (key) {
                     combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
                 });
