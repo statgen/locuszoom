@@ -27,8 +27,9 @@ import SCALABLE from '../../registry/scalable';
  * Often, the last item in the list is a string, providing a "default" value if all scale functions evaluate to null.
  *
  * @typedef {object[]|string} ScalableParameter
- * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
- *  datum element will be passed to the scale function.
+ * @property {String|String[]} [field] The name of the field to use in the scale function. If omitted, all fields for the given
+ *  datum element will be passed to the scale function. For custom scale functions, an array of field names will be
+ *  resolved into an array of values. (the scale function will receive the array as the "value" argument)
  * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run on each individual datum
  * @property {object} parameters A set of parameters that configure the desired scale function (options vary by function)
  */
@@ -528,15 +529,26 @@ class BaseDataLayer {
                 if (option_layout.scale_function) {
                     const func = SCALABLE.get(option_layout.scale_function);
                     if (option_layout.field) {
-                        const f = new Field(option_layout.field);
                         let extra;
                         try {
                             extra = this.getElementAnnotation(element_data);
                         } catch (e) {
                             extra = null;
                         }
-                        ret = func(option_layout.parameters || {}, f.resolve(element_data, extra), data_index);
+
+                        const target_field = option_layout.field;
+                        if (Array.isArray(target_field)) {
+                            // If given an array of field names, pass the scaling function an array of values as the "data" argument
+                            //   This is primarily useful for custom scaling functions, since most built-ins assume a single scalar value
+                            const somefields = target_field.map((afield) => (new Field(afield).resolve(element_data, extra)));
+                            ret = func(option_layout.parameters || {}, somefields, data_index);
+                        } else {
+                            const f = new Field(target_field);
+                            ret = func(option_layout.parameters || {}, f.resolve(element_data, extra), data_index);
+                        }
                     } else {
+                        // If no field name is provided, pass all (namespaced) data associated with the element
+                        // Namespaced objects are annoying to work with but this can be useful for custom code
                         ret = func(option_layout.parameters || {}, element_data, data_index);
                     }
                 }

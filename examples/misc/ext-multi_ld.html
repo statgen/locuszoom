@@ -82,6 +82,8 @@
         if (!Object.keys(initialState).length) {
             initialState = {chr: 10, start: 114550452, end: 115067678};
         }
+        initialState.ldrefvar = ['10:114734096_A/G', '10:114758349_C/T', '10:114788436_C/T', '10:114861304_A/G'];
+
         layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
         // Replace the standard association panel with the "multi LD" asociation panel
         layout.panels[0] = LocusZoom.Layouts.get("panel", "association_multi_ld");
