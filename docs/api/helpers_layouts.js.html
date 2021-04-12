@@ -165,7 +165,60 @@ function nameToSymbol(shape) {
     return d3[factory_name] || null;
 }
 
-export { applyNamespaces, deepCopy, merge, nameToSymbol };
+/**
+ * A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
+ *  replaces *exact match*
+ *
+ * This method works by comparing whether strings are a match. As a result, the "old" and "new" names must match
+ *  whatever namespacing is used in the input layout.
+ * Note: this utility *can* replace values with filters, but will not do so by default.
+ *
+ * @alias LayoutRegistry.renameField
+ *
+ * @param {object} layout The layout object to be transformed.
+ * @param {string} old_name The old field name that will be replaced
+ * @param {string} new_name The new field name that will be substituted in
+ * @param {boolean} [warn_transforms=true] Sometimes, a field name is used with transforms appended, eg `label|htmlescape`.
+ *   In some cases a rename could change the meaning of the field, and by default this method will print a warning to
+ *   the console, encouraging the developer to check the relevant usages. This warning can be silenced via an optional function argument.
+ */
+function renameField(layout, old_name, new_name, warn_transforms = true) {
+    const this_type = typeof layout;
+    // Handle nested types by recursion (in which case, `layout` may be something other than an object)
+    if (Array.isArray(layout)) {
+        return layout.map((item) => renameField(item, old_name, new_name, warn_transforms));
+    } else if (this_type === 'object' &amp;&amp; layout !== null) {
+        return Object.keys(layout).reduce(
+            (acc, key) => {
+                acc[key] = renameField(layout[key], old_name, new_name, warn_transforms);
+                return acc;
+            }, {}
+        );
+    } else if (this_type !== 'string') {
+        // Field names are always strings. If the value isn't a string, don't even try to change it.
+        return layout;
+    } else {
+        // If we encounter a field we are trying to rename, then do so!
+        // Rules:
+        //  1. Try to avoid renaming part of a field, by checking token boundaries (field1 should not rename field1_displayvalue)
+        //  2. Warn the user if filter functions are being used with the specified field, so they can audit for changes in meaning
+        const escaped = old_name.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&amp;');
+
+        if (warn_transforms) {
+            // Warn the user that they might be renaming, eg, `pvalue|neg_log` to `log_pvalue|neg_log`. Let them decide
+            //   whether the new field name has a meaning that is compatible with the specified transforms.
+            const filter_regex = new RegExp(`${escaped}\\|\\w+`, 'g');
+            const filter_matches = (layout.match(filter_regex) || []);
+            filter_matches.forEach((match_val) => console.warn(`renameFields is renaming a field that uses transform functions: was '${match_val}' . Verify that these transforms are still appropriate.`));
+        }
+
+        // Find and replace any substring, so long as it is at the end of a valid token
+        const regex = new RegExp(`${escaped}(?!\\w+)`, 'g');
+        return layout.replace(regex, new_name);
+    }
+}
+
+export { applyNamespaces, deepCopy, merge, nameToSymbol, renameField };
 </code></pre>
         </article>
     </section>

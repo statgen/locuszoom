@@ -346,6 +346,274 @@ Values from <code>default_layout</code> will be cleanly copied over, ensuring no
     
 
     
+    <h4 class="name" id=".renameField"><span class="type-signature">(static) </span>renameField<span class="signature">(layout, old_name, new_name, warn_transforms<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
+replaces <em>exact match</em></p>
+<p>This method works by comparing whether strings are a match. As a result, the &quot;old&quot; and &quot;new&quot; names must match
+whatever namespacing is used in the input layout.
+Note: this utility <em>can</em> replace values with filters, but will not do so by default.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>layout</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The layout object to be transformed.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>old_name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The old field name that will be replaced</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>new_name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The new field name that will be substituted in</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>warn_transforms</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>Sometimes, a field name is used with transforms appended, eg <code>label|htmlescape</code>.
+In some cases a rename could change the meaning of the field, and by default this method will print a warning to
+the console, encouraging the developer to check the relevant usages. This warning can be silenced via an optional function argument.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="helpers_layouts.js.html">helpers/layouts.js</a>, <a href="helpers_layouts.js.html#line157">line 157</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="add"><span class="type-signature"></span>add<span class="signature">(type, name, item, override)</span><span class="type-signature"> &rarr; {*}</span></h4>
     
 
