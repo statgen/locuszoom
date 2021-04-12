@@ -1,5 +1,5 @@
 import {RegistryBase} from './base';
-import {applyNamespaces, deepCopy, merge} from '../helpers/layouts';
+import {applyNamespaces, deepCopy, merge, renameField} from '../helpers/layouts';
 import * as layouts from '../layouts';
 
 /**
@@ -90,6 +90,15 @@ class LayoutRegistry extends RegistryBase {
      */
     merge(custom_layout, default_layout) {
         return merge(custom_layout, default_layout);
+    }
+
+    /**
+     * Static alias to a helper method. Allows renaming fields
+     * @static
+     * @private
+     */
+    renameField() {
+        return renameField(...arguments);
     }
 }
 

@@ -89,14 +89,17 @@ function generateCurtain() {
             }
             // Update size and position
             const page_origin = this._getPageOrigin();
+
+            // Panel layouts have a height; plot layouts don't
+            const height = this.layout.height || this._total_height;
             this.curtain.selector
                 .style('top', `${page_origin.y}px`)
                 .style('left', `${page_origin.x}px`)
                 .style('width', `${this.parent_plot.layout.width}px`)
-                .style('height', `${this.layout.height}px`);
+                .style('height', `${height}px`);
             this.curtain.content_selector
                 .style('max-width', `${this.parent_plot.layout.width - 40}px`)
-                .style('max-height', `${this.layout.height - 40}px`);
+                .style('max-height', `${height - 40}px`);
             // Apply content if provided
             if (typeof content == 'string') {
                 this.curtain.content_selector.html(content);

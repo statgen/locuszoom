@@ -116,6 +116,25 @@ The other main exception to the `fields` mechanism involves API endpoints that r
   
 Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the `extractFields` method of `BaseAdapter`. (see: [guide to working with data](data_retrieval.html))
 
+### renameFields: resolving tiny differences in naming
+Sometimes, an existing layout is very close to the format of your data, but there are very small cosmetic differences. For example, your API might send a field `variant_name` instead of `variant`.
+
+In this case, a helper function is provided this will recursively rename every usage of a specified field name in a layout:
+
+```javascript
+// For abstract layouts
+layout = LocusZoom.Layouts.renameField(layout, '{{namespace[assoc]}}old_name', '{{namespace[assoc]}}new_name');
+
+// For concrete layouts
+layout = LocusZoom.Layouts.renameField(layout, 'my_assoc:old_name', 'my_assoc:new_name');
+
+// To remove a transformation function that is no longer interesting. (must be done in a separate step; otherwise transforms will be preserved after the rename)
+// The last argument (warn_transforms) suppresses the JS console message that tells you when a rename would affect a field that uses transforms. After all, in this case, that's sort of the point.
+layout = LocusZoom.Layouts.renameField(layout, 'assoc:pvalue|neg_log10', 'assoc:pvalue', false);
+```
+
+> NOTE: Sometimes, the differences in data/field names are more than cosmetic: for example, renaming `pvalue|neg_log10` to `log_pvalue|neg_log10` would not make sense. This helper method will attempt to warn you if template transformation functions are being used on the field you are changing, so that you can ensure that the resulting layouts uses your data in a way that fits the intended meaning.
+
 ## Working with the Registry
 Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a layout converts it from the abstract definition to one that works with a specific dataset.  
 
