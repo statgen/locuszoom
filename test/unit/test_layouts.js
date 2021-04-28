@@ -379,4 +379,42 @@ describe('Layout helpers', function () {
             assert.deepEqual(returned_layout, expected_layout);
         });
     });
+
+    describe('Provides a method to query specific attributes', function () {
+        it('can query a set of values based on a jsonpath selector', function () {
+            const base = registry.get('plot', 'standard_association');
+            base.extra_field = false;
+
+            const scenarios = [
+                ['predicate_filters retrieve only list items where a specific condition is met', '$..color[?(@.scale_function === "if")].field', ['ld:isrefvar']],
+                ['retrieves a list of scale function names', 'panels[?(@.tag === "association")]..scale_function', [ 'if', 'if', 'if', 'numerical_bin' ]],
+                ['fetches dotted field path - one specific axis label', 'panels[?(@.tag === "association")].axes.x.label', [ 'Chromosome {{chr}} (Mb)' ]],
+                ['is able to query and return falsy values', '$.extra_field', [false]],
+                ['returns an empty list if no matches are found', '$.nonexistent', []],
+            ];
+
+            for (let [label, selector, expected] of scenarios) {
+                assert.deepEqual(registry.query_attrs(base, selector), expected, `Scenario '${label}' passed`);
+            }
+        });
+
+        it('can mutate a set of values based on a jsonpath selector', function () {
+            const base = registry.get('plot', 'standard_association');
+            const base_layer = registry.get('data_layer', 'association_pvalues');
+
+            base.fake_field = false;
+
+            const scenarios = [
+                ['set single value to a constant', '$.panels[?(@.tag === "association")].id', 'one', ['one']],
+                ['toggle a boolean false to true', '$.fake_field', true, [true]],
+                ['set many values to a constant', '$..id', 'all', ['all', 'all', 'all', 'all', 'all', 'all']],
+                ['mutate an array in place', '$..data_layers[?(@.tag === "association")].fields', (old_value) => old_value.concat(['field1', 'field2']), [base_layer.fields.concat(['field1', 'field2'])]],
+                ['mutate an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 50, right: 50, top: 35, new_field: 10}]],
+            ];
+
+            for (let [label, selector, mutator, expected] of scenarios) {
+                assert.deepEqual(registry.mutate_attrs(base, selector, mutator), expected, `Scenario '${label}' passed`);
+            }
+        });
+    });
 });

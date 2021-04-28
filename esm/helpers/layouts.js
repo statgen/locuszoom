@@ -5,6 +5,8 @@
  */
 import * as d3 from 'd3';
 
+import {query} from './jsonpath';
+
 const sqrt3 = Math.sqrt(3);
 // D3 v5 does not provide a triangle down symbol shape, but it is very useful for showing direction of effect.
 //  Modified from https://github.com/d3/d3-shape/blob/master/src/symbol/triangle.js
@@ -190,4 +192,43 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
     }
 }
 
-export { applyNamespaces, deepCopy, merge, nameToSymbol, renameField };
+/**
+ * Modify any and all attributes at the specified path in the object
+ * @param {object} layout The layout object to be mutated
+ * @param {string} selector The JSONPath-compliant selector string specifying which field(s) to change.
+ *   The callback will be applied to ALL matching selectors
+ *  (see Layouts guide for syntax and limitations)
+ * @param {*|function} value_or_callable The new value, or a function that receives the old value and returns a new one
+ *
+ * @alias LayoutRegistry.mutate_attrs
+ */
+function mutate_attrs(layout, selector, value_or_callable) {
+    const jsonpath_callback = (parent, key) => { // users provide a function based on old value, and we convert that to a callback that jsonpath can work with
+        if (typeof value_or_callable === 'function') {
+            // Callback determines new value as `(old_value) => new_value`
+            value_or_callable = value_or_callable(parent[key]);
+        }
+        // Overwrite the old value at this key, and return the new value
+        return parent[key] = value_or_callable;
+    };
+
+    return query(
+        layout,
+        selector,
+        jsonpath_callback
+    );
+}
+
+/**
+ * Query any and all attributes at the specified path in the object.
+ *      This is mostly only useful for debugging, to verify that a particular selector matches the intended field.
+ * @param {object} layout The layout object to be mutated
+ * @param {string} selector The JSONPath-compliant selector string specifying which values to return. (see Layouts guide for limits)
+ * {@see mutate_attrs}
+ * @alias LayoutRegistry.query_attrs
+ */
+function query_attrs(layout, selector) {
+    return query(layout, selector);
+}
+
+export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, renameField };

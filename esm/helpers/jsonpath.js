@@ -13,7 +13,7 @@
 const ATTR_REGEX = /^(\*|[\w]+)/; // attribute names can be wildcard or valid variable names
 const EXPR_REGEX = /^\[\?\(@((?:\.[\w]+)+) *===? *([0-9.eE-]+|"[^"]*"|'[^']*')\)\]/;  // Arrays can be indexed using filter expressions like `[?(@.id === value)]` where value is a number or a single-or-double quoted string
 
-function get_selector(q) {
+function get_next_token(q) {
     // This just grabs everything that looks good.
     // The caller should check that the remaining query is valid.
     if (q.substr(0, 2) === '..') {
@@ -82,18 +82,20 @@ function normalize_query(q) {
     return q;
 }
 
-function get_selectors (q) {
+function tokenize (q) {
     q = normalize_query(q);
     let selectors = [];
     while (q.length) {
-        const selector = get_selector(q);
+        const selector = get_next_token(q);
         q = q.substr(selector.text.length);
         selectors.push(selector);
     }
     return selectors;
 }
 
-function get_elements_from_selectors (data, selectors) {
+function get_elements_from_selectors (data, selectors, item_callback) {
+    item_callback = item_callback || ((parent, key) => parent[key]);
+
     // This returns a list of matching elements
     if (!selectors.length) {
         return [data];
@@ -105,15 +107,15 @@ function get_elements_from_selectors (data, selectors) {
     if (sel.attr && sel.depth === '.' && sel.attr !== '*') { // .attr
         const d = data[sel.attr];
         if (selectors.length === 1) {
-            if (d) {
-                ret.push(d);
+            if (d !== undefined) {
+                ret.push(item_callback(data, sel.attr));
             }
         } else {
-            ret.push(...get_elements_from_selectors(d, remaining_selectors));
+            ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
         }
     } else if (sel.attr && sel.depth === '.' && sel.attr === '*') { // .*
         for (let d of Object.values(data)) {
-            ret.push(...get_elements_from_selectors(d, remaining_selectors));
+            ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
         }
     } else if (sel.attr && sel.depth === '..') { // ..
         // If `sel.attr` matches, recurse with that match.
@@ -121,12 +123,17 @@ function get_elements_from_selectors (data, selectors) {
         // I bet `..*..*` duplicates results, so don't do it please.
         if (typeof data === 'object' && data !== null) {
             if (sel.attr !== '*' && sel.attr in data) { // Exact match!
-                ret.push(...get_elements_from_selectors(data[sel.attr], remaining_selectors));
+                // The .. could be in the middle of a selector string, so we may or may not be returning a result immediately
+                if (!remaining_selectors.length) {
+                    // If we are mutating the value, we need access to both parent and field: run the (maybe mutation) callback before we recurse
+                    item_callback(data, sel.attr);
+                }
+                ret.push(...get_elements_from_selectors(data[sel.attr], remaining_selectors, item_callback));
             }
             for (let d of Object.values(data)) {
-                ret.push(...get_elements_from_selectors(d, selectors)); // No match, just recurse
+                ret.push(...get_elements_from_selectors(d, selectors, item_callback)); // No match, just recurse
                 if (sel.attr === '*') { // Wildcard match
-                    ret.push(...get_elements_from_selectors(d, remaining_selectors));
+                    ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
                 }
             }
         }
@@ -137,7 +144,7 @@ function get_elements_from_selectors (data, selectors) {
                 subject = subject[a];
             }
             if (subject === sel.value) {
-                ret.push(...get_elements_from_selectors(d, remaining_selectors));
+                ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
             }
         }
     }
@@ -148,11 +155,14 @@ function get_elements_from_selectors (data, selectors) {
  *
  * @param {object} data The data object to query
  * @param {string} query A JSONPath-compliant query string
- * @returns {[*]|*[]}
+  * @param {function} [item_callback] A function that will be called on every matching leaf node (eg, the last item when resolving the selector): `(parent, key) => item_value`
+ *  This is used internally to implement query (get value) and mutations (change value).
+ *  By default, simply returns the desired value (key from a data object).
+ * @returns {Array}
  */
-function query (data, query) {
-    const selectors = get_selectors(query);
-    return get_elements_from_selectors(data, selectors);
+function query (data, query, item_callback) {
+    const selectors = tokenize(query);
+    return get_elements_from_selectors(data, selectors, item_callback);
 }
 
 export { query };
