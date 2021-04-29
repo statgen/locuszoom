@@ -190,7 +190,7 @@ function _query(data, query) {
 
     const matches = get_items_from_tokens(data, tokens);
     if (!matches.length) {
-        console.warn('No items matched the specified query');
+        console.warn(`No items matched the specified query: '${query}'`);
     }
     return matches;
 }

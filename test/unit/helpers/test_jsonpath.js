@@ -25,26 +25,26 @@ describe('jsonpath query syntax', function () {
 
     it('can query direct child keys by wildcard selector', function () {
         const actual = query(sample_data, '$.*');
-        assert.deepEqual(actual, [...Object.values(sample_data)]);
+        assert.sameDeepMembers(actual, [...Object.values(sample_data)]);
     });
 
     it('can query child keys at any level of recursion', function () {
         const actual = query(sample_data, '$..id');
-        assert.deepEqual(actual, ['sample', 'a', 'a1', 'b', 'b1']);
+        assert.sameDeepMembers(actual, ['sample', 'a', 'a1', 'b', 'b1']);
     });
 
     it('can recursively both objects and array elements', function () {
         const actual = query(sample_data, '$..panels..data_layers..id');
-        assert.deepEqual(actual, ['a1', 'b1']);
+        assert.sameDeepMembers(actual, ['a1', 'b1']);
     });
 
     it('can query array items based on a filter expression', function () {
         let actual = query(sample_data, '$.panels[?(@.id=== "b")]');  // deliberately uneven spacing around operator
-        assert.deepEqual(actual, [sample_data.panels[1]]);
+        assert.sameDeepMembers(actual, [sample_data.panels[1]]);
 
         // Also allows filter expressions to use single or double-quoted strings
         actual = query(sample_data, "$.panels[?(@.id=== 'b')]");  // deliberately uneven spacing around operator
-        assert.deepEqual(actual, [sample_data.panels[1]], 'Works with single quoted strings');
+        assert.sameDeepMembers(actual, [sample_data.panels[1]], 'Works with single quoted strings');
     });
 
     it('does not accept arbitrary JS expressions', function () {
