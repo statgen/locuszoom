@@ -8,6 +8,9 @@
  * - Arrays can only be indexed by filter expression, not by number (can't ask for "array item 1")
  * - Filter expressions support only exact match, `field === value`. There is no support for "and" statements or
  *  arbitrary JS expressions beyond a single exact comparison. (the parser may be improved in the future if use cases emerge)
+ *
+ * @module
+ * @private
  */
 
 const ATTR_REGEX = /^(\*|[\w]+)/; // attribute names can be wildcard or valid variable names

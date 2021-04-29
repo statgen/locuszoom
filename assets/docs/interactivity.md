@@ -72,7 +72,7 @@ After re-defining the layout, be sure to call `plot.applyState()` (also known as
 ### Helper functions for modifying nested layouts
 The "building block" style of layouts makes it easy to reuse pieces, but customizing part of a layout after rendering can be very clunky (example: `layout.panels[0].data_layers[1]`). In particular, if the order of elements in the layout ever changed (like adding a new panel or toolbar button), then code that accessed items by array position would break in ways that are very hard to debug. This is a maintainability headache.
 
-As an alternative, a helper function `LocusZoom.Layouts.mutate_attr` can be used to modify all parts of a layout that match a selector, using a readable syntax based on the [JsonPath](https://goessner.net/articles/JsonPath/) query language. See the developer documentation for further details.
+As an alternative, a helper function `LocusZoom.Layouts.mutate_attrs` can be used to modify all parts of a layout that match a selector, using a readable syntax based on the [JsonPath](https://goessner.net/articles/JsonPath/) query language. See the developer documentation for further details.
 
 Examples:
 ```javascript
@@ -83,8 +83,8 @@ Examples:
 > LocusZoom.Layouts.mutate_attrs(existing_plot.layout, '$..data_layers[?(@.tag === "association")].y_axis.field', 'assoc:pip_cluster');
 > existing_plot.applyState();
 
-// The mutation function is not limited to changing scalar values or lists. If the selector targets a compound object, the function can be used to modify several properties all at once.
-> LocusZoom.Layouts.mutate_attrs(existing_plot.layout, '$..data_layers[?(@.tag === "phewas")].color[?(@.scale_function === "categorical_bin")]', function(options) { options.field = 'newfield'; options.parameters.null_value = 'red' ; return options  });
+// The mutation function is not limited to changing scalar values or lists. If the selector targets a compound object, the function can be used to modify several properties all at once. Make sure to return the resulting config object when done.
+> LocusZoom.Layouts.mutate_attrs(existing_plot.layout, '$..data_layers[?(@.tag === "phewas")].color[?(@.scale_function === "categorical_bin")]', function(options) { options.field = 'newfield'; options.parameters.null_value = 'red' ; return options; });
 
 // For debugging purposes, there is a read-only function that can be used to verify that a selector works as expected. It will return a list, one item per result.
 > LocusZoom.Layouts.query_attrs(plot_layout, '$..id');
@@ -96,11 +96,13 @@ We do not implement the entire JsonPath specification. The syntax used by LocusZ
 
  - DOES support single child (`.`), deep nested (`..`), and wild-card (`*`) accessors
  - DOES support filtering arrays-of-config-objects to only items that match a simple single-attribute-exact-match predicate (`$.panels_array[?(@.akeyhasvalue === "targetvalue")]`)
- - DOES support queries that nest/combine operators (`$..data_layers[@.tag === 'association'].fields`)
+ - DOES support queries that nest/combine operators (`$..data_layers[?(@.tag === 'association')].fields`)
  - DOES NOT support complex JS expressions in predicates (which would be a security issue), or indexing array items. (writing layouts based on item[0] is a maintainability anti-pattern, and we are actively trying to discourage doing that)
  - The end result of all selectors used should be to return a specific key inside an object. Lists can be filtered, but not indexed.
 
 Most pre-made data layer and panel layouts now contain a `tag` field, which can be used to write semantically meaningful selectors, like, "modify all scatter plots that show GWAS association data".
+
+> This helper function is aimed at making quick changes to one or two fields (before render), or more complex customizations (after render). If you are trying to make complex customizations to a layout when it is first defined, it is often better to build up in pieces so that you have more control of the result. For example, customizing a single data layer as part of a layout: `LocusZoom.Layouts.get('data_layer', 'association', { id: 'customoverridevalue' })`.
 
 ## Events communicate with the outside world
 Each time that a LocusZoom plot is modified, it fires an *event* that notifies any listeners of the change.
