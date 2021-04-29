@@ -5,7 +5,7 @@
  */
 import * as d3 from 'd3';
 
-import {query} from './jsonpath';
+import {mutate, query} from './jsonpath';
 
 const sqrt3 = Math.sqrt(3);
 // D3 v5 does not provide a triangle down symbol shape, but it is very useful for showing direction of effect.
@@ -199,23 +199,13 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
  *   The callback will be applied to ALL matching selectors
  *  (see Layouts guide for syntax and limitations)
  * @param {*|function} value_or_callable The new value, or a function that receives the old value and returns a new one
- *
  * @alias LayoutRegistry.mutate_attrs
  */
 function mutate_attrs(layout, selector, value_or_callable) {
-    const jsonpath_callback = (parent, key) => { // users provide a function based on old value, and we convert that to a callback that jsonpath can work with
-        if (typeof value_or_callable === 'function') {
-            // Callback determines new value as `(old_value) => new_value`
-            value_or_callable = value_or_callable(parent[key]);
-        }
-        // Overwrite the old value at this key, and return the new value
-        return parent[key] = value_or_callable;
-    };
-
-    return query(
+    return mutate(
         layout,
         selector,
-        jsonpath_callback
+        value_or_callable
     );
 }
 

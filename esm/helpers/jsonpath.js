@@ -60,7 +60,7 @@ function get_next_token(q) {
         return {
             text: m[0],
             attrs: m[1].substr(1).split('.'),
-            value: value,
+            value,
         };
     } else {
         throw `The query ${JSON.stringify(q)} doesn't look valid.`;
@@ -93,29 +93,48 @@ function tokenize (q) {
     return selectors;
 }
 
-function get_elements_from_selectors (data, selectors, item_callback) {
-    item_callback = item_callback || ((parent, key) => parent[key]);
+/**
+ * Fetch the attribute from a dotted path inside a nested object, eg `extract_path({k:['a','b']}, ['k', 1])` would retrieve `'b'`
+ *
+ * This function returns a three item array `[parent, key, object]`. This is done to support mutating the value, which requires access to the parent.
+ *
+ * @param obj
+ * @param path
+ * @returns {*[]}
+ */
+function get_item_at_deep_path(obj, path) {
+    let parent;
+    for (let key of path) {
+        parent = obj;
+        obj = obj[key];
+    }
+    return [parent, path[path.length - 1], obj];
+}
 
-    // This returns a list of matching elements
+function tokens_to_keys(data, selectors) {
+    // Resolve the jsonpath query into full path specifier keys in the object, eg
+    //  `$..data_layers[?(@.tag === 'association)].color
+    //  would become
+    // ["panels", 0, "data_layers", 1, "color"]
     if (!selectors.length) {
-        return [data];
+        return [[]];
     }
     const sel = selectors[0];
     const remaining_selectors = selectors.slice(1);
-    let ret = [];
+    let paths = [];
 
     if (sel.attr && sel.depth === '.' && sel.attr !== '*') { // .attr
         const d = data[sel.attr];
         if (selectors.length === 1) {
             if (d !== undefined) {
-                ret.push(item_callback(data, sel.attr));
+                paths.push([sel.attr]);
             }
         } else {
-            ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
+            paths.push(...tokens_to_keys(d, remaining_selectors).map((p) => [sel.attr].concat(p)));
         }
     } else if (sel.attr && sel.depth === '.' && sel.attr === '*') { // .*
-        for (let d of Object.values(data)) {
-            ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
+        for (let [k, d] of Object.entries(data)) {
+            paths.push(...tokens_to_keys(d, remaining_selectors).map((p) => [k].concat(p)));
         }
     } else if (sel.attr && sel.depth === '..') { // ..
         // If `sel.attr` matches, recurse with that match.
@@ -123,46 +142,84 @@ function get_elements_from_selectors (data, selectors, item_callback) {
         // I bet `..*..*` duplicates results, so don't do it please.
         if (typeof data === 'object' && data !== null) {
             if (sel.attr !== '*' && sel.attr in data) { // Exact match!
-                // The .. could be in the middle of a selector string, so we may or may not be returning a result immediately
-                if (!remaining_selectors.length) {
-                    // If we are mutating the value, we need access to both parent and field: run the (maybe mutation) callback before we recurse
-                    item_callback(data, sel.attr);
-                }
-                ret.push(...get_elements_from_selectors(data[sel.attr], remaining_selectors, item_callback));
+                paths.push(...tokens_to_keys(data[sel.attr], remaining_selectors).map((p) => [sel.attr].concat(p)));
             }
-            for (let d of Object.values(data)) {
-                ret.push(...get_elements_from_selectors(d, selectors, item_callback)); // No match, just recurse
+            for (let [k, d] of Object.entries(data)) {
+                paths.push(...tokens_to_keys(d, selectors).map((p) => [k].concat(p))); // No match, just recurse
                 if (sel.attr === '*') { // Wildcard match
-                    ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
+                    paths.push(...tokens_to_keys(d, remaining_selectors).map((p) => [k].concat(p)));
                 }
             }
         }
     } else if (sel.attrs) { // [?(@.attr===value)]
-        for (let d of Object.values(data)) {
-            let subject = d;
-            for (let a of sel.attrs) {
-                subject = subject[a];
-            }
+        for (let [k, d] of Object.entries(data)) {
+            const [_, __, subject] = get_item_at_deep_path(d, sel.attrs);
             if (subject === sel.value) {
-                ret.push(...get_elements_from_selectors(d, remaining_selectors, item_callback));
+                paths.push(...tokens_to_keys(d, remaining_selectors).map((p) => [k].concat(p)));
             }
         }
     }
-    return ret;
+
+    const uniqPaths = uniqBy(paths, JSON.stringify); // dedup
+    uniqPaths.sort((a, b) => b.length - a.length || JSON.stringify(a).localeCompare(JSON.stringify(b))); // sort longest-to-shortest, breaking ties lexicographically
+    return uniqPaths;
+}
+
+function uniqBy(arr, key) {
+    // Sometimes, the process of resolving paths to selectors returns duplicate results. This returns only the unique paths.
+    return [...new Map(arr.map((elem) => [key(elem), elem])).values()];
+}
+
+function get_items_from_tokens(data, selectors) {
+    let items = [];
+    for (let path of tokens_to_keys(data, selectors)) {
+        items.push(get_item_at_deep_path(data, path));
+    }
+    return items;
 }
 
 /**
- *
- * @param {object} data The data object to query
- * @param {string} query A JSONPath-compliant query string
-  * @param {function} [item_callback] A function that will be called on every matching leaf node (eg, the last item when resolving the selector): `(parent, key) => item_value`
- *  This is used internally to implement query (get value) and mutations (change value).
- *  By default, simply returns the desired value (key from a data object).
- * @returns {Array}
+ * Perform a query, and return the item + its parent context
+ * @param data
+ * @param query
+ * @returns {*[]}
+ * @private
  */
-function query (data, query, item_callback) {
-    const selectors = tokenize(query);
-    return get_elements_from_selectors(data, selectors, item_callback);
+function _query(data, query) {
+    const tokens = tokenize(query);
+
+    const matches = get_items_from_tokens(data, tokens);
+    if (!matches.length) {
+        console.warn('No items matched the specified query');
+    }
+    return matches;
 }
 
-export { query };
+/**
+ * Fetch the value(s) for each possible match for a given query. Returns only the item values.
+ * @param {object} data The data object to query
+ * @param {string} query A JSONPath-compliant query string
+ * @returns {Array}
+ */
+function query(data, query) {
+    return _query(data, query).map((item) => item[2]);
+}
+
+/**
+ * Modify the value(s) for each possible match for a given jsonpath query. Returns the new item values.
+ * @param {object} data The data object to query
+ * @param {string} query A JSONPath-compliant query string
+ * @param {function|*} value_or_callback The new value for the specified field. Mutations will only be applied
+ *  after the keys are resolved; this prevents infinite recursion, but could invalidate some matches
+ *  (if the mutation removed the expected key).
+ */
+function mutate(data, query, value_or_callback) {
+    const matches_in_context = _query(data, query);
+    return matches_in_context.map(([parent, key, old_value]) => {
+        const new_value = (typeof value_or_callback === 'function') ? value_or_callback(old_value) : value_or_callback;
+        parent[key] = new_value;
+        return new_value;
+    });
+}
+
+export {mutate, query};

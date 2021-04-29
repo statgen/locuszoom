@@ -394,25 +394,27 @@ describe('Layout helpers', function () {
             ];
 
             for (let [label, selector, expected] of scenarios) {
-                assert.deepEqual(registry.query_attrs(base, selector), expected, `Scenario '${label}' passed`);
+                assert.sameDeepMembers(registry.query_attrs(base, selector), expected, `Scenario '${label}' passed`);
             }
         });
 
         it('can mutate a set of values based on a jsonpath selector', function () {
-            const base = registry.get('plot', 'standard_association');
+            const base_panel = registry.get('panel', 'association');
             const base_layer = registry.get('data_layer', 'association_pvalues');
-
-            base.fake_field = false;
 
             const scenarios = [
                 ['set single value to a constant', '$.panels[?(@.tag === "association")].id', 'one', ['one']],
                 ['toggle a boolean false to true', '$.fake_field', true, [true]],
                 ['set many values to a constant', '$..id', 'all', ['all', 'all', 'all', 'all', 'all', 'all']],
-                ['mutate an array in place', '$..data_layers[?(@.tag === "association")].fields', (old_value) => old_value.concat(['field1', 'field2']), [base_layer.fields.concat(['field1', 'field2'])]],
-                ['mutate an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 50, right: 50, top: 35, new_field: 10}]],
+                ['add items to an array', '$..data_layers[?(@.tag === "association")].fields', (old_value) => old_value.concat(['field1', 'field2']), [base_layer.fields.concat(['field1', 'field2'])]],
+                // Two subtly different cases for nested objects (direct query, and as part of filtered list)
+                ['mutate an object inside an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 50, right: 50, top: 35, new_field: 10}]],
+                ['mutate an object inside a list', '$..panels[?(@.tag === "association")]', (old_config) => (old_config.margin.new_field = 10) && old_config, [Object.assign(base_panel, {margin: {bottom: 40, left: 50, right: 50, top: 35, new_field: 10}})]],
             ];
 
             for (let [label, selector, mutator, expected] of scenarios) {
+                const base = registry.get('plot', 'standard_association');
+                base.fake_field = false;
                 assert.deepEqual(registry.mutate_attrs(base, selector, mutator), expected, `Scenario '${label}' passed`);
             }
         });
