@@ -1,5 +1,5 @@
 import {RegistryBase} from './base';
-import {applyNamespaces, deepCopy, merge, renameField} from '../helpers/layouts';
+import {applyNamespaces, deepCopy, mutate_attrs, merge, query_attrs, renameField} from '../helpers/layouts';
 import * as layouts from '../layouts';
 
 /**
@@ -99,6 +99,24 @@ class LayoutRegistry extends RegistryBase {
      */
     renameField() {
         return renameField(...arguments);
+    }
+
+    /**
+     * Static alias to a helper method. Allows mutating nested layout attributes
+     * @static
+     * @private
+     */
+    mutate_attrs() {
+        return mutate_attrs(...arguments);
+    }
+
+    /**
+     * Static alias to a helper method. Allows mutating nested layout attributes
+     * @static
+     * @private
+     */
+    query_attrs() {
+        return query_attrs(...arguments);
     }
 }
 

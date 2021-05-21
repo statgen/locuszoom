@@ -64,12 +64,45 @@ Each LocusZoom rendering is controlled by a declarative set of layout options. I
 In practice, this is the key idea behind the `display_options` widget, a built-in feature that handles such mutations in a controlled fashion. If you are doing this using your own code, the following "gotchas" apply:
 
 * When the layout is defined before first render, it uses abstract syntax (eg `{{namespace[assoc]field}}`. To modify an existing plot layout after it has been rendered, you will need to use concrete syntax in which the namespace has been filled in: `assoc2_mystudy:field`.
-* LocusZoom layouts are nested and hierarchical (plot --> panels[] --> data_layers[]). Writing a layout thus involves awkward syntax such as `layout.panels[0].data_layers[1]`. This is very fragile if you frequently add or rename panels: when writing code that modifies a layout, ask what you can do to make it maintainable. 
-	* Make it semantically clear which item is being modified, in case the array changes later:  `const assoc_panel_layout = panel_layouts[0]`
-	* Instead of hard-coding position in an array, consider dynamically locating the desired section by a property that may change less often: `const assoc_layer = assoc_panel_layout.data_layers.find(item => item.id === 'association')`
+* LocusZoom layouts are nested and hierarchical (plot --> panels[] --> data_layers[]). See the helper functions below for advice on how to write mutations that are more readable and maintainable.
 * Be conservative in how many fields you allow to be changed. Layouts allow almost any aspect of the plot to be customized, but it can be difficult to test every possible combination. It's generally easier to code and maintain controlled options (like a list of preset views).
 
 After re-defining the layout, be sure to call `plot.applyState()` (also known as `plot.refresh()`) to trigger a re-render, so that the changes to the layout take effect. 
+
+### Helper functions for modifying nested layouts
+The "building block" style of layouts makes it easy to reuse pieces, but customizing part of a layout after rendering can be very clunky (example: `layout.panels[0].data_layers[1]`). In particular, if the order of elements in the layout ever changed (like adding a new panel or toolbar button), then code that accessed items by array position would break in ways that are very hard to debug. This is a maintainability headache.
+
+As an alternative, a helper function `LocusZoom.Layouts.mutate_attrs` can be used to modify all parts of a layout that match a selector, using a readable syntax based on the [JsonPath](https://goessner.net/articles/JsonPath/) query language. See the developer documentation for further details.
+
+Examples:
+```javascript
+// Add a field to a data layer, taking into account what fields are already there. The third argument is a function that receives the old value and returns the new one 
+> LocusZoom.Layouts.mutate_attrs(plot_layout, '$..data_layers[?(@.tag === "association")].fields', (old_value) => old_value.concat(['assoc:field1', 'assoc:field2']));
+
+// When the user clicks a button on the page, change what field is used for the y-axis for all association scatter plots. In this syntax, all matches receive the same value (the last argument is a value, instead of a callable function).
+> LocusZoom.Layouts.mutate_attrs(existing_plot.layout, '$..data_layers[?(@.tag === "association")].y_axis.field', 'assoc:pip_cluster');
+> existing_plot.applyState();
+
+// The mutation function is not limited to changing scalar values or lists. If the selector targets a compound object, the function can be used to modify several properties all at once. Make sure to return the resulting config object when done.
+> LocusZoom.Layouts.mutate_attrs(existing_plot.layout, '$..data_layers[?(@.tag === "phewas")].color[?(@.scale_function === "categorical_bin")]', function(options) { options.field = 'newfield'; options.parameters.null_value = 'red' ; return options; });
+
+// For debugging purposes, there is a read-only function that can be used to verify that a selector works as expected. It will return a list, one item per result.
+> LocusZoom.Layouts.query_attrs(plot_layout, '$..id');
+```
+
+*Notes:*
+
+We do not implement the entire JsonPath specification. The syntax used by LocusZoom: 
+
+ - DOES support single child (`.`), deep nested (`..`), and wild-card (`*`) accessors
+ - DOES support filtering arrays-of-config-objects to only items that match a simple single-attribute-exact-match predicate (`$.panels_array[?(@.akeyhasvalue === "targetvalue")]`)
+ - DOES support queries that nest/combine operators (`$..data_layers[?(@.tag === 'association')].fields`)
+ - DOES NOT support complex JS expressions in predicates (which would be a security issue), or indexing array items. (writing layouts based on item[0] is a maintainability anti-pattern, and we are actively trying to discourage doing that)
+ - The end result of all selectors used should be to return a specific key inside an object. Lists can be filtered, but not indexed.
+
+Most pre-made data layer and panel layouts now contain a `tag` field, which can be used to write semantically meaningful selectors, like, "modify all scatter plots that show GWAS association data".
+
+> This helper function is aimed at making quick changes to one or two fields (before render), or more complex customizations (after render). If you are trying to make complex customizations to a layout when it is first defined, it is often better to build up in pieces so that you have more control of the result. For example, customizing a single data layer as part of a layout: `LocusZoom.Layouts.get('data_layer', 'association', { id: 'customoverridevalue' })`.
 
 ## Events communicate with the outside world
 Each time that a LocusZoom plot is modified, it fires an *event* that notifies any listeners of the change.

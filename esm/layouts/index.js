@@ -104,6 +104,7 @@ const coaccessibility_tooltip = {
 const significance_layer = {
     id: 'significance',
     type: 'orthogonal_line',
+    tag: 'significance',
     orientation: 'horizontal',
     offset: LZ_SIG_THRESHOLD_LOGP,
 };
@@ -117,6 +118,7 @@ const recomb_rate_layer = {
     namespace: { 'recomb': 'recomb' },
     id: 'recombrate',
     type: 'line',
+    tag: 'recombination',
     fields: ['{{namespace[recomb]}}position', '{{namespace[recomb]}}recomb_rate'],
     z_index: 1,
     style: {
@@ -143,6 +145,7 @@ const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
+    tag: 'association',
     fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
     id_field: '{{namespace[assoc]}}variant',
     coalesce: {
@@ -229,6 +232,7 @@ const coaccessibility_layer = {
     namespace: { 'access': 'access' },
     id: 'coaccessibility',
     type: 'arcs',
+    tag: 'coaccessibility',
     fields: ['{{namespace[access]}}start1', '{{namespace[access]}}end1', '{{namespace[access]}}start2', '{{namespace[access]}}end2', '{{namespace[access]}}id', '{{namespace[access]}}target', '{{namespace[access]}}score'],
     match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
     id_field: '{{namespace[access]}}id',
@@ -307,6 +311,7 @@ const phewas_pvalues_layer = {
     namespace: { 'phewas': 'phewas' },
     id: 'phewaspvalues',
     type: 'category_scatter',
+    tag: 'phewas',
     point_shape: 'circle',
     point_size: 70,
     tooltip_positioning: 'vertical',
@@ -388,6 +393,7 @@ const genes_layer = {
     namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
     type: 'genes',
+    tag: 'genes',
     fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
     id_field: 'gene_id',
     behaviors: {
@@ -441,6 +447,7 @@ const annotation_catalog_layer = {
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
     id: 'annotation_catalog',
     type: 'annotation_track',
+    tag: 'gwascatalog',
     id_field: '{{namespace[assoc]}}variant',
     x_axis: {
         field: '{{namespace[assoc]}}position',
@@ -484,6 +491,7 @@ const annotation_catalog_layer = {
 const ldlz2_pop_selector_menu = {
     // **Note**: this widget is aimed at the LDServer datasource, and the UM 1000G LDServer
     type: 'set_state',
+    tag: 'ld_population',
     position: 'right',
     color: 'blue',
     button_html: 'LD Population: ',
@@ -511,6 +519,7 @@ const ldlz2_pop_selector_menu = {
  */
 const gene_selector_menu = {
     type: 'display_options',
+    tag: 'gene_filter',
     custom_event_name: 'widget_gene_filter_choice',
     position: 'right',
     color: 'blue',
@@ -664,6 +673,7 @@ const region_nav_plot_toolbar = function () {
  */
 const association_panel = {
     id: 'association',
+    tag: 'association',
     min_height: 200,
     height: 225,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
@@ -718,6 +728,7 @@ const association_panel = {
  */
 const coaccessibility_panel = {
     id: 'coaccessibility',
+    tag: 'coaccessibility',
     min_height: 150,
     height: 180,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
@@ -816,6 +827,7 @@ const association_catalog_panel = function () {
  */
 const genes_panel = {
     id: 'genes',
+    tag: 'genes',
     min_height: 150,
     height: 225,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
@@ -848,6 +860,7 @@ const genes_panel = {
  */
 const phewas_panel = {
     id: 'phewas',
+    tag: 'phewas',
     min_height: 300,
     height: 300,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
@@ -882,6 +895,7 @@ const phewas_panel = {
  */
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
+    tag: 'gwascatalog',
     min_height: 50,
     height: 50,
     margin: { top: 25, right: 50, bottom: 10, left: 50 },

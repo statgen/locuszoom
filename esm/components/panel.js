@@ -17,6 +17,7 @@ import data_layers from '../registry/data_layers';
  */
 const default_layout = {
     id: '',
+    tag: 'custom_data_type',
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
     min_height: 1,
@@ -59,6 +60,11 @@ const default_layout = {
 class Panel {
     /**
      * @param {string} [layout.id=''] An identifier string that must be unique across all panels in the plot
+     * @param {string} [layout.tag='custom_data_type'] Tags have no functional purpose, but they can be used
+     *   as a semantic label for what is being displayed in this element. This makes it easy to write custom code like "find every panel
+     *   that shows association scatter plots, anywhere": even if the IDs are different, the tag can be the same.
+     *   Most built-in panels will contain a tag that describes, in human-readable terms, what kind of data is being shown.
+     *   (see: {@link LayoutRegistry.mutate_attrs})
      * @param {boolean} [layout.show_loading_indicator=true] Whether to show a "loading indicator" while data is being fetched
      * @param {module:LocusZoom_DataLayers[]} [layout.data_layers] Data layer layout objects
      * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each toolbar widget; {@link module:LocusZoom_Widgets}
@@ -760,6 +766,10 @@ class Panel {
             this.data_layers[data_layer_id].draw().render();
         });
 
+        // Rerender legend last (on top of data). A legend must have been defined at the start in order for this to work.
+        if (this.legend) {
+            this.legend.render();
+        }
         return this;
     }
 

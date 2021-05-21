@@ -108,19 +108,21 @@
         initialState = { chr: 10, start: 114176406, end: 115176406 };
     }
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
-    var loop_panel = layout.panels[0];
-    loop_panel.title = { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
-    loop_panel.toolbar.widgets.push(
-        {
-            type: 'filter_field',
-            position: 'right',
-            layer_name: 'coaccessibility',
-            field: 'access:score',
-            field_display_html: 'Score',
-            operator: '>=',
-            data_type: 'number',
-        }
-    );
+    LocusZoom.Layouts.mutate_attrs(layout, '$.panels[?(@.tag === "coaccessibility")]', (config) => {
+        config.title = { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
+        config.toolbar.widgets.push(
+            {
+                type: 'filter_field',
+                position: 'right',
+                layer_name: 'coaccessibility',
+                field: 'access:score',
+                field_display_html: 'Score',
+                operator: '>=',
+                data_type: 'number',
+            }
+        );
+        return config;
+    });
 
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
