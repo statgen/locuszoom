@@ -103,7 +103,7 @@ function tokenize (q) {
  *
  * @param obj
  * @param path
- * @returns {*[]}
+ * @returns {Array}
  */
 function get_item_at_deep_path(obj, path) {
     let parent;
@@ -185,7 +185,7 @@ function get_items_from_tokens(data, selectors) {
  * Perform a query, and return the item + its parent context
  * @param data
  * @param query
- * @returns {*[]}
+ * @returns {Array}
  * @private
  */
 function _query(data, query) {
