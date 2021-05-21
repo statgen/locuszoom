@@ -203,6 +203,7 @@ function install(LocusZoom) {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
         type: 'intervals_enrichment',
+        tag: 'intervals_enrichment',
         match: { send: '{{namespace[intervals]}}tissueId' },
         fields: ['{{namespace[intervals]}}chromosome', '{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}pValue', '{{namespace[intervals]}}fold', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
         id_field: '{{namespace[intervals]}}start', // not a good ID field for overlapping intervals
@@ -283,6 +284,7 @@ function install(LocusZoom) {
      */
     const intervals_panel_layout = {
         id: 'intervals_enrichment',
+        tag: 'intervals_enrichment',
         min_height: 250,
         height: 250,
         margin: { top: 35, right: 50, bottom: 40, left: 50 },

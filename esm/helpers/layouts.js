@@ -199,6 +199,7 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
  *   The callback will be applied to ALL matching selectors
  *  (see Interactivity guide for syntax and limitations)
  * @param {*|function} value_or_callable The new value, or a function that receives the old value and returns a new one
+ * @returns {Array}
  * @alias LayoutRegistry.mutate_attrs
  */
 function mutate_attrs(layout, selector, value_or_callable) {
@@ -214,6 +215,7 @@ function mutate_attrs(layout, selector, value_or_callable) {
  *      This is mostly only useful for debugging, to verify that a particular selector matches the intended field.
  * @param {object} layout The layout object to be mutated
  * @param {string} selector The JSONPath-compliant selector string specifying which values to return. (see Interactivity guide for limits)
+ * @returns {Array}
  * @alias LayoutRegistry.query_attrs
  */
 function query_attrs(layout, selector) {
