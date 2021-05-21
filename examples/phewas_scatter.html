@@ -220,8 +220,9 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
           }
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
-        layout.panels[0].margin.top = 32;
-        layout.panels[1].data_layers.push({
+
+        LocusZoom.Layouts.mutate_attrs(layout, '$.panels[?(@.tag === "phewas")].margin.top', 32);
+        LocusZoom.Layouts.mutate_attrs(layout, '$.panels[?(@.tag === "genes")].data_layers', (old_layers) => old_layers.concat([{
           id: "variant",
           type: "orthogonal_line",
           orientation: "vertical",
@@ -231,14 +232,12 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
             "stroke-width": "2px",
             "stroke-dasharray": "4px 4px"
           }
-        });
+        }]));
 
         // Modify the tooltips for PheWAS result data layer points to contain more data. The fields in this sample
         //   tooltip are specific to the LZ-Portal API, and are not guaranteed to be in other PheWAS datasources.
-        var phewas_layer = layout.panels[0].data_layers[1];
-        // Tell the layer to also fetch some special fields; otherwise the datasource will hide this info (TODO)
-        phewas_layer.fields.push("phewas:pmid", "phewas:description", "phewas:study");
-        phewas_layer.tooltip.html = [
+        LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].fields', (fields) => fields.concat(["phewas:pmid", "phewas:description", "phewas:study"]));
+        LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].tooltip.html', [
             "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
             "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
             "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>",
@@ -249,7 +248,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
             "{{#if phewas:pmid}} {{#if phewas:description}}",
                 '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
             "{{/if}} {{/if}}"
-        ].join("");
+        ].join(""));
 
         // Generate the plot
         var plot = LocusZoom.populate("#plot", dataSources, layout);

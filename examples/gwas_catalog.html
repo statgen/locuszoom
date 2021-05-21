@@ -109,31 +109,6 @@
       layout = LocusZoom.Layouts.get("plot", "association_catalog", {
           state: initialState
       });
-      // Although the demo will work very well with the base layout, this section adds some additional custom features
-      var layout_assoc_layer = layout.panels[1].data_layers[2];
-      layout_assoc_layer.match = { send: 'assoc:position', receive: 'assoc:position' };
-      layout_assoc_layer.color.unshift({
-          field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
-          scale_function: 'if',
-          parameters: {
-              field_value: true,
-              then: '#FFF000'
-          }
-      });
-
-      var layout_annotation_track = layout.panels[0].data_layers[0];
-      layout_annotation_track.match = { send: 'catalog:pos', receive: 'catalog:pos' };
-      layout_annotation_track.color = [
-          {
-              field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
-              scale_function: 'if',
-              parameters: {
-                  field_value: true,
-                  then: '#FF0000'
-              }
-          },
-          '#0000CC'
-      ];
 
       // Generate the LocusZoom plot
       window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);

@@ -5,6 +5,8 @@
  */
 import * as d3 from 'd3';
 
+import {mutate, query} from './jsonpath';
+
 const sqrt3 = Math.sqrt(3);
 // D3 v5 does not provide a triangle down symbol shape, but it is very useful for showing direction of effect.
 //  Modified from https://github.com/d3/d3-shape/blob/master/src/symbol/triangle.js
@@ -190,4 +192,34 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
     }
 }
 
-export { applyNamespaces, deepCopy, merge, nameToSymbol, renameField };
+/**
+ * Modify any and all attributes at the specified path in the object
+ * @param {object} layout The layout object to be mutated
+ * @param {string} selector The JSONPath-compliant selector string specifying which field(s) to change.
+ *   The callback will be applied to ALL matching selectors
+ *  (see Interactivity guide for syntax and limitations)
+ * @param {*|function} value_or_callable The new value, or a function that receives the old value and returns a new one
+ * @returns {Array}
+ * @alias LayoutRegistry.mutate_attrs
+ */
+function mutate_attrs(layout, selector, value_or_callable) {
+    return mutate(
+        layout,
+        selector,
+        value_or_callable
+    );
+}
+
+/**
+ * Query any and all attributes at the specified path in the object.
+ *      This is mostly only useful for debugging, to verify that a particular selector matches the intended field.
+ * @param {object} layout The layout object to be mutated
+ * @param {string} selector The JSONPath-compliant selector string specifying which values to return. (see Interactivity guide for limits)
+ * @returns {Array}
+ * @alias LayoutRegistry.query_attrs
+ */
+function query_attrs(layout, selector) {
+    return query(layout, selector);
+}
+
+export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, renameField };

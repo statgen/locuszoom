@@ -76,9 +76,7 @@
     const layout = LocusZoom.Layouts.get("plot", "intervals_association_enrichment");
 
     // In the demo, we use a static JSON file. Disable all pan and zoom interactions because there's no data out of range.
-    for (let panel of layout.panels) {
-        panel.interaction = {};
-    }
+    LocusZoom.Layouts.mutate_attrs(layout, '$..panels..interaction', {});
 
     // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);
