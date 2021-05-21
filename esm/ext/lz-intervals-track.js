@@ -619,6 +619,7 @@ function install (LocusZoom) {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals',
         type: 'intervals',
+        tag: 'intervals',
         fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name', '{{namespace[intervals]}}itemRgb'],
         id_field: '{{namespace[intervals]}}start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
         start_field: '{{namespace[intervals]}}start',
@@ -671,6 +672,7 @@ function install (LocusZoom) {
      */
     const intervals_panel_layout = {
         id: 'intervals',
+        tag: 'intervals',
         min_height: 50,
         height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
