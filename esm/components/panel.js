@@ -766,6 +766,10 @@ class Panel {
             this.data_layers[data_layer_id].draw().render();
         });
 
+        // Rerender legend last (on top of data). A legend must have been defined at the start in order for this to work.
+        if (this.legend) {
+            this.legend.render();
+        }
         return this;
     }
 
