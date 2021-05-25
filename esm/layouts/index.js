@@ -855,7 +855,7 @@ const genes_panel = {
 };
 
 /**
- * A pael that displays PheWAS scatter plots and automatically generates a color scheme
+ * A panel that displays PheWAS scatter plots and automatically generates a color scheme
  * @type panel
  */
 const phewas_panel = {
