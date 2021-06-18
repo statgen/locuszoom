@@ -15,14 +15,15 @@ const outputPath = path.resolve(__dirname, 'dist');
 const FILENAMES = {
     // For legacy reasons, the filenames that people expect are different than the "library" name
     LocusZoom: 'locuszoom.app.min.js',
-    LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
-    LzWidgetAddons: 'ext/lz-widget-addons.min.js',
-    LzForestTrack: 'ext/lz-forest-track.min.js',
-    LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
-    LzIntervalsEnrichment: 'ext/lz-intervals-enrichment.min.js',
-    LzCredibleSets: 'ext/lz-credible-sets.min.js',
-    LzTabix: 'ext/lz-tabix-source.min.js',
     LzAggregationTests: 'ext/lz-aggregation-tests.min.js',
+    LzCredibleSets: 'ext/lz-credible-sets.min.js',
+    LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
+    LzForestTrack: 'ext/lz-forest-track.min.js',
+    LzIntervalsEnrichment: 'ext/lz-intervals-enrichment.min.js',
+    LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
+    LzMultiLD: 'ext/lz-multi-ld.min.js',
+    LzTabix: 'ext/lz-tabix-source.min.js',
+    LzWidgetAddons: 'ext/lz-widget-addons.min.js',
 };
 
 module.exports = {
@@ -30,14 +31,15 @@ module.exports = {
     entry: {
         // When a <script> is included in the page, entrypoint name = variable with content
         LocusZoom: path.resolve(srcPath, 'index.js'),
-        LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
-        LzWidgetAddons: path.resolve(srcPath, 'ext', 'lz-widget-addons.js'),
-        LzForestTrack: path.resolve(srcPath, 'ext', 'lz-forest-track.js'),
-        LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
-        LzIntervalsEnrichment: path.resolve(srcPath, 'ext', 'lz-intervals-enrichment.js'),
-        LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
-        LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
         LzAggregationTests: path.resolve(srcPath, 'ext', 'lz-aggregation-tests.js'),
+        LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
+        LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
+        LzForestTrack: path.resolve(srcPath, 'ext', 'lz-forest-track.js'),
+        LzIntervalsEnrichment: path.resolve(srcPath, 'ext', 'lz-intervals-enrichment.js'),
+        LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
+        LzMultiLD: path.resolve(srcPath, 'ext', 'lz-multi-ld.js'),
+        LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
+        LzWidgetAddons: path.resolve(srcPath, 'ext', 'lz-widget-addons.js'),
     },
     plugins: [
         new CleanWebpackPlugin({

@@ -100,8 +100,9 @@ class Legend {
         let y = padding;
         let line_height = 0;
         this.parent.data_layer_ids_by_z_index.slice().reverse().forEach((id) => {
-            if (Array.isArray(this.parent.data_layers[id].layout.legend)) {
-                this.parent.data_layers[id].layout.legend.forEach((element) => {
+            const layer_legend = this.parent.data_layers[id].layout.legend;
+            if (Array.isArray(layer_legend)) {
+                layer_legend.forEach((element) => {
                     const selector = this.elements_group.append('g')
                         .attr('transform', `translate(${x}, ${y})`);
                     const label_size = +element.label_size || +this.layout.label_size || 12;
@@ -135,6 +136,50 @@ class Legend {
 
                         label_x = width + padding;
                         line_height = Math.max(line_height, height + padding);
+                    } else if (shape === 'ribbon') {
+                        // Color ribbons describe a series of color stops: small boxes of color across a continuous
+                        //  scale. Drawn like:
+                        //      [red | orange | yellow | green ] label
+                        // For example, this can be used with the numerical-bin color scale to describe LD color stops in a compact way.
+                        const width = +element.width || 8;
+                        const height = +element.height || width;
+                        const color_stops = element.color_stops;
+                        const ribbon_group = selector.append('g');
+                        let axis_offset = 0;
+                        if (element.tick_labels) {
+                            const scale = d3.scaleLinear()
+                                .domain(d3.extent(element.tick_labels)) // Assumes tick labels are always numeric in this mode
+                                .range([0, width * color_stops.length - 1]); // 1 px offset to align tick with inner borders
+                            const axis = d3.axisTop(scale)
+                                .tickSize(3)
+                                .tickValues(element.tick_labels)
+                                .tickFormat((v) => v);
+                            ribbon_group.call(axis);
+                            axis_offset += ribbon_group.node().getBoundingClientRect().height;
+                        }
+                        ribbon_group
+                            .attr('transform', `translate(${0}, ${axis_offset})`);
+
+                        for (let i = 0; i < color_stops.length; i++) {
+                            const color = color_stops[i];
+                            ribbon_group
+                                .append('rect')
+                                .attr('class', element.class || '')
+                                .attr('stroke', 'black')
+                                .attr('transform', `translate(${width * i}, 0)`)
+                                .attr('stroke-width', 0.5)
+                                .attr('width', width)
+                                .attr('height', height)
+                                .attr('fill', color)
+                                .call(applyStyles, element.style || {});
+                        }
+
+                        label_x = width * color_stops.length + padding;
+                        label_y += axis_offset;
+                        // {
+                        //      shape: 'ribbon', label: _, style: _,
+                        //      color-stops: [], ticks: []
+                        // }
                     } else if (shape_factory) {
                         // Shape symbol is a recognized d3 type, so we can draw it in the legend (circle, diamond, etc.)
                         const size = +element.size || 40;

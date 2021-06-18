@@ -479,17 +479,18 @@ describe('Data adapters', function () {
 
         it('will prefer a refvar in plot.state if one is provided', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const [ref, _] = source.getRefvar(
+            const urls = source.getRefvar(
                 { ldrefvar: '12:100_A/C' },
                 { header: {}, body: [{ id: 'a', pvalue: 0 }] },
                 ['ldrefvar', 'state']
             );
+            const [ref, _] = urls[0];
             assert.equal(ref, '12:100_A/C');
         });
 
         it('auto-selects the best reference variant (lowest pvalue)', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const [ref, _] = source.getRefvar(
+            const allRefVars = source.getRefvar(
                 {},
                 {
                     header: {},
@@ -501,12 +502,14 @@ describe('Data adapters', function () {
                 },
                 ['isrefvar', 'state']
             );
+
+            const [ref, _] = allRefVars[0];
             assert.equal(ref, '12:100_A/B');
         });
 
         it('auto-selects the best reference variant (largest nlog_pvalue)', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const [ref, _] = source.getRefvar(
+            const allRefVars = source.getRefvar(
                 {},
                 {
                     header: {},
@@ -518,6 +521,7 @@ describe('Data adapters', function () {
                 },
                 ['isrefvar', 'state']
             );
+            const [ref, _] = allRefVars[0];
             assert.equal(ref, '12:100_A/B');
         });
 
@@ -557,10 +561,10 @@ describe('Data adapters', function () {
             const request_url = source.getURL({ ldrefvar: portal_format }, {
                 header: {},
                 body: [],
-            }, ['isrefvar', 'state']);
+            }, ['isrefvar', 'state'])[0];
             assert.equal(
                 request_url,
-                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])
+                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])[0]
             );
             assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
         });
@@ -572,10 +576,10 @@ describe('Data adapters', function () {
             const request_url = source.getURL({ ldrefvar: norefvar_topmed }, {
                 header: {},
                 body: [],
-            }, ['isrefvar', 'state']);
+            }, ['isrefvar', 'state'])[0];
             assert.equal(
                 request_url,
-                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])
+                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])[0]
             );
             assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
         });
