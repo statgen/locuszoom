@@ -1,0 +1,32 @@
+# YAML 1.2
+---
+abstract: "LocusZoom.js is a JavaScript library for creating interactive web-based visualizations of genetic association study results. It can display one or more traits in the context of relevant biological data (such as gene models and other genomic annotation), and allows interactive refinement of analysis models (by selecting linkage disequilibrium reference panels, identifying sets of likely causal variants, or comparisons to the GWAS catalog). It can be embedded in web pages to enable data sharing and exploration. Views can be customized and extended to display other data types such as phenome-wide association study (PheWAS) results, chromatin co-accessibility, or eQTL measurements. A new web upload service harmonizes datasets, adds annotations, and makes it easy to explore user-provided result sets."
+authors:
+  -
+    family-names: Boughton
+    given-names: Andrew
+    orcid: "https://orcid.org/0000-0002-0318-4912"
+  -
+    family-names: Welch
+    given-names: Ryan
+  -
+    family-names: Matthew
+    given-names: Flickinger
+  -
+    family-names: VandeHaar
+    given-names: Peter
+  -
+    family-names: Taliun
+    given-names: Daniel
+  -
+    family-names: Abecasis
+    given-names: "Gonçalo"
+  -
+    family-names: Boehnke
+    given-names: Michael
+cff-version: "1.1.0"
+date-published: "2021-03-18"
+doi: "10.1093/bioinformatics/btab186"
+journal: "Bioinformatics"
+message: "If you use this software, please cite the paper."
+title: " LocusZoom.js: interactive and embeddable visualization of genetic association study results"
