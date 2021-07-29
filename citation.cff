@@ -30,3 +30,5 @@ doi: "10.1093/bioinformatics/btab186"
 journal: "Bioinformatics"
 message: "If you use this software, please cite the paper."
 title: " LocusZoom.js: interactive and embeddable visualization of genetic association study results"
+# Insert dummy version b/c the paper reports ongoing efforts
+version: 1.0
