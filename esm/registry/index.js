@@ -4,6 +4,7 @@
 import ADAPTERS from './adapters';
 import DATA_LAYERS from './data_layers';
 import LAYOUTS from './layouts';
+import JOINS from './joins';
 import MATCHERS from './matchers';
 import SCALABLE from './scalable';
 import TRANSFORMS from './transforms';
@@ -13,5 +14,5 @@ export {
     // Base classes and reusable components
     ADAPTERS, DATA_LAYERS, LAYOUTS, WIDGETS,
     // User defined functions for injecting custom behavior into layout directives
-    MATCHERS, SCALABLE, TRANSFORMS,
+    JOINS, MATCHERS, SCALABLE, TRANSFORMS,
 };

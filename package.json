@@ -39,7 +39,8 @@
     "docs": "./build_docs.sh"
   },
   "dependencies": {
-    "d3": "^5.16.0"
+    "d3": "^5.16.0",
+    "just-clone": "^3.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.13.1",

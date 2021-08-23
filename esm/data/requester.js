@@ -1,4 +1,19 @@
-import { TRANSFORMS } from '../registry';
+import {getLinkedData} from 'undercomplicate';
+
+import { JOINS } from '../registry';
+
+
+class JoinTask {
+    constructor(join_type, params) {
+        this._callable = JOINS.get(join_type);
+        this._params = params;
+    }
+
+    getData(options, left, right) {
+        return Promise.resolve(this._callable(left, right, ...this._params));
+    }
+}
+
 
 /**
  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
@@ -17,57 +32,53 @@ class Requester {
         this._sources = sources;
     }
 
-    __split_requests(fields) {
-        // Given a fields array, return an object specifying what datasource names the data layer should make requests
-        //  to, and how to handle the returned data
-        var requests = {};
-        // Regular expression finds namespace:field|trans
-        var re = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/;
-        fields.forEach(function(raw) {
-            var parts = re.exec(raw);
-            var ns = parts[1] || 'base';
-            var field = parts[2];
-            var trans = TRANSFORMS.get(parts[3]);
-            if (typeof requests[ns] == 'undefined') {
-                requests[ns] = {outnames:[], fields:[], trans:[]};
+    _config_to_sources(namespace_options, join_options) {
+        // 1. Find the data sources needed for this request, and add in the joins for this layer
+        // namespaces: { assoc: assoc, ld(assoc): ld }
+        // TODO: Move this to the data layer creation step, along with contract validation
+        // Dependencies are defined as raw data + joins
+        const dependencies = [];
+        // Create a list of sources unique to this layer, including both fetch and join operations
+        const entities = new Map();
+        Object.entries(namespace_options)
+            .forEach(([label, source_name]) => {
+                // In layout syntax, namespace names and dependencies are written together, like ld = ld(assoc). Convert.
+                let match = label.match(/^(\w+)$|^(\w+)\(/);
+                if (!match) {
+                    throw new Error(`Invalid namespace name: '${label}'. Should be 'somename' or 'somename(somedep)'`);
+                }
+                label = match[1] || match[2];
+
+                const source = this._sources.get(source_name);
+
+                if (entities.has(label)) {
+                    throw new Error(`Configuration error: within a layer, namespace name '${label}' must be unique`);
+                }
+
+                entities.set(label, source);
+                dependencies.push(label);
+            });
+
+        join_options.forEach((config) => {
+            const {type, name, requires, params} = config;
+            if (entities.has(name)) {
+                throw new Error(`Configuration error: within a layer, join name '${name}' must be unique`);
             }
-            requests[ns].outnames.push(raw);
-            requests[ns].fields.push(field);
-            requests[ns].trans.push(trans);
+            const task = new JoinTask(type, params);
+            entities.set(name, task);
+            dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
         });
-        return requests;
+        return [entities, dependencies];
     }
 
-    /**
-     * Fetch data, and create a chain that only connects two data sources if they depend on each other
-     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields The list of data fields specified in the `layout` for a specific data layer
-     * @returns {Promise}
-     */
-    getData(state, fields) {
-        var requests = this.__split_requests(fields);
-        // Create an array of functions that, when called, will trigger the request to the specified datasource
-        var request_handles = Object.keys(requests).map((key) => {
-            if (!this._sources.get(key)) {
-                throw new Error(`Datasource for namespace ${key} not found`);
-            }
-            return this._sources.get(key).getData(
-                state,
-                requests[key].fields,
-                requests[key].outnames,
-                requests[key].trans
-            );
-        });
-        //assume the fields are requested in dependent order
-        //TODO: better manage dependencies
-        var ret = Promise.resolve({header:{}, body: [], discrete: {}});
-        for (var i = 0; i < request_handles.length; i++) {
-            // If a single datalayer uses multiple sources, perform the next request when the previous one completes
-            ret = ret.then(request_handles[i]);
-        }
-        return ret;
+    getData(state, namespace_options, join_options) {
+        const [entities, dependencies] = this._config_to_sources(namespace_options, join_options);
+        return getLinkedData(state, entities, dependencies, true);
+        // entities: { assoc: adapter, ld: adapter }
     }
 }
 
 
 export default Requester;
+
+export {JoinTask as _JoinTask};
