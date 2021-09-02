@@ -6,7 +6,7 @@ import { JOINS } from '../registry';
 class JoinTask {
     constructor(join_type, params) {
         this._callable = JOINS.get(join_type);
-        this._params = params;
+        this._params = params || [];
     }
 
     getData(options, left, right) {
