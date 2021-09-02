@@ -605,7 +605,7 @@ function install (LocusZoom) {
         closable: false,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}',
+        html: '{{intervals.state_name|htmlescape}}<br>{{intervals.start|htmlescape}}-{{intervals.end|htmlescape}}',
     };
 
     /**
@@ -620,23 +620,23 @@ function install (LocusZoom) {
         id: 'intervals',
         type: 'intervals',
         tag: 'intervals',
-        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name', '{{namespace[intervals]}}itemRgb'],
-        id_field: '{{namespace[intervals]}}start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
-        start_field: '{{namespace[intervals]}}start',
-        end_field: '{{namespace[intervals]}}end',
-        track_split_field: '{{namespace[intervals]}}state_name',
-        track_label_field: '{{namespace[intervals]}}state_name',
+        fields: ['intervals.start', 'intervals.end', 'intervals.state_id', 'intervals.state_name', 'intervals.itemRgb'],
+        id_field: 'intervals.start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
+        start_field: 'intervals.start',
+        end_field: 'intervals.end',
+        track_split_field: 'intervals.state_name',
+        track_label_field: 'intervals.state_name',
         split_tracks: false,
         always_hide_legend: true,
         color: [
             {
                 // If present, an explicit color field will override any other option (and be used to auto-generate legend)
-                field: '{{namespace[intervals]}}itemRgb',
+                field: 'intervals.itemRgb',
                 scale_function: 'to_rgb',
             },
             {
                 // TODO: Consider changing this to stable_choice in the future, for more stable coloring
-                field: '{{namespace[intervals]}}state_name',
+                field: 'intervals.state_name',
                 scale_function: 'categorical_bin',
                 parameters: {
                     // Placeholder. Empty categories and values will automatically be filled in when new data loads.

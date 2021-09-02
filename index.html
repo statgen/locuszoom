@@ -202,15 +202,15 @@
     if (online) {
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
-        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+        .add("assoc", ["AssociationLZ", {base_url: apiBase + "statistic/single/", source: 45 }]);
+        // .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        // .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+        // .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+        // .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "examples/data/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
+        .add("assoc", ["AssociationLZ", {base_url: apiBase + "assoc_10_114550452-115067678.json?", source: 45 }])
         .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" , params: { build: 'GRCh37' }}])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])

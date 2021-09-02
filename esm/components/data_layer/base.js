@@ -1488,9 +1488,9 @@ class BaseDataLayer {
         // and then recreated if returning to visibility
 
         // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
-        return this.parent_plot.lzd.getData(this.state, this.layout.fields)
+        return this.parent_plot.lzd.getData(this.state, this.layout.namespace || {}, this.layout.join_options || [])
             .then((new_data) => {
-                this.data = new_data.body;  // chain.body from datasources
+                this.data = new_data;
                 this.applyDataMethods();
                 this.initialized = true;
             });

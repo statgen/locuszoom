@@ -32,19 +32,139 @@
  * @module LocusZoom_Adapters
  */
 
-function validateBuildSource(class_name, build, source) {
-    // Build OR Source, not both
-    if ((build && source) || !(build || source)) {
-        throw new Error(`${class_name} must provide a parameter specifying either "build" or "source". It should not specify both.`);
+import {BaseUrlAdapter} from 'undercomplicate';
+
+
+function validateBuildSource() {
+    // TODO: deleteme
+}
+
+class BaseLZAdapter extends BaseUrlAdapter {
+    constructor(config) {
+        super(config);
+
+        this._validate_fields = true;
+        // Prefix the namespace for this source to all fieldnames: id -> assoc.id
+        // This is useful for almost all layers because the layout object says where to find every field, exactly.
+        // For some very complex data structure- mainly the Genes API payload- the datalayer might want to operate on
+        //   that complex set of fields directly. Disable _prefix_namespace to get field names as they appear
+        //   in the response. (gene_name instead of genes.gene_name)
+        const {prefix_namespace} = config;
+        this._prefix_namespace = (typeof prefix_namespace === 'boolean') ? prefix_namespace : true;
     }
-    // If the build isn't recognized, our APIs can't transparently select a source to match
-    if (build && !['GRCh37', 'GRCh38'].includes(build)) {
-        throw new Error(`${class_name} must specify a valid genome build number`);
+
+    /**
+     * Note: since namespacing is the last thing we usually want to do, calculations will want to call super AFTER their own code.
+     * @param records
+     * @param options
+     * @returns {*}
+     * @private
+     */
+    _annotateRecords(records, options) {
+        if (!this._prefix_namespace) {
+            return records;
+        }
+
+        // Transform fieldnames to include the namespace name as a prefix. For example, a data layer that asks for
+        //   assoc data might see "variant" as "assoc.variant"
+        return records.map((row) => {
+            return Object.entries(row).reduce(
+                (acc, [label, value]) => {
+                    acc[`${options._provider_name}.${label}`] = value;
+                    return acc;
+                },
+                {}
+            );
+        });
     }
 }
 
 
-// NOTE: Custom adapaters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
+class BaseUMAdapter extends BaseLZAdapter {
+    constructor(config) {
+        super(config);
+        // The UM portaldev API accepts an (optional) parameter "genome_build"
+        this._genome_build = config.genome_build;
+    }
+
+    _validateBuildSource(build, source) {
+        // Build OR Source, not both
+        if ((build && source) || !(build || source)) {
+            throw new Error(`${this.constructor.name} must provide a parameter specifying either "build" or "source". It should not specify both.`);
+        }
+        // If the build isn't recognized, our APIs can't transparently select a source to match
+        if (build && !['GRCh37', 'GRCh38'].includes(build)) {
+            throw new Error(`${this.constructor.name} must specify a valid 'genome_build'`);
+        }
+    }
+
+    // Special behavior for the UM portaldev API: col -> row format normalization
+    _normalizeResponse(response_text, options) {
+        let data = super._normalizeResponse(...arguments);
+        // Most portaldev endpoints (though not all) store the desired response in just one specific part of the payload
+        data = data.data || data;
+
+        if (Array.isArray(data)) {
+            // Already in the desired form
+            return data;
+        }
+        // Otherwise, assume the server response is an object representing columns of data.
+        // Each array should have the same length (verify), and a given array index corresponds to a single row.
+        const keys = Object.keys(data);
+        const N = data[keys[0]].length;
+        const sameLength = keys.every(function (key) {
+            const item = data[key];
+            return item.length === N;
+        });
+        if (!sameLength) {
+            throw new Error(`${this.constructor.name} expects a response in which all arrays of data are the same length`);
+        }
+
+        // Go down the columns, and create an object for each row record
+        const records = [];
+        const fields = Object.keys(data);
+        for (let i = 0; i < N; i++) {
+            const record = {};
+            for (let j = 0; j < fields.length; j++) {
+                record[fields[j]] = data[fields[j]][i];
+            }
+            records.push(record);
+        }
+        return records;
+    }
+}
+
+
+class AssociationLZ extends BaseUMAdapter {
+    constructor(config) {
+        // Minimum adapter contract hard-codes fields contract based on UM PortalDev API
+        // For layers that require more functionality, pass extra_fields to source options
+        config.fields = ['variant', 'position', 'log_pvalue', 'ref_allele'];
+
+        super(config);
+
+        const { source } = config;
+        if (!source) {
+            throw new Error('Association adapter must specify dataset ID via "source" option');
+        }
+        this._source_id = source;
+    }
+
+    _getURL (state) {
+        const {chr, start, end} = state;
+        return `${this._base_url}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
+    }
+}
+
+
+
+
+// class LDServer2 extends BaseUMAdapter {
+
+// }
+
+
+// NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
 //  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
 //  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
 //  private API methods exist in the base class.
@@ -418,62 +538,6 @@ class BaseApiAdapter extends BaseAdapter {
     }
 }
 
-/**
- * Retrieve Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a request
- *  to a specific REST API.
- * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {string} config.url The base URL for the remote data.
- * @param {object} config.params
- * @param [config.params.sort=false] Whether to sort the association data (by an assumed field named "position"). This
- *   is primarily a site-specific workaround for a particular LZ usage; we encourage apis to sort by position before returning
- *   data to the browser.
- * @param [config.params.source] The ID of the GWAS dataset to use for this request, as matching the API backend
- */
-class AssociationLZ extends BaseApiAdapter {
-    preGetData (state, fields, outnames, trans) {
-        // TODO: Modify internals to see if we can go without this method
-        const id_field = this.params.id_field || 'id';
-        [id_field, 'position'].forEach(function(x) {
-            if (!fields.includes(x)) {
-                fields.unshift(x);
-                outnames.unshift(x);
-                trans.unshift(null);
-            }
-        });
-        return {fields: fields, outnames:outnames, trans:trans};
-    }
-
-    /**
-     * Add query parameters to the URL to construct a query for the specified region
-     */
-    getURL (state, chain, fields) {
-        const analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
-        if (typeof analysis == 'undefined') {
-            throw new Error('Association source must specify an analysis ID to plot');
-        }
-        return `${this.url}results/?filter=analysis in ${analysis} and chromosome in  '${state.chr}' and position ge ${state.start} and position le ${state.end}`;
-    }
-
-    /**
-     * Some association sources do not sort their data in a predictable order, which makes it hard to reliably
-     *   align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
-     *   TODO: Consider more fine grained sorting control in the future. This was added as a very specific
-     *    workaround for the original T2D portal.
-     * @protected
-     * @param data
-     * @return {Object}
-     */
-    normalizeResponse (data) {
-        data = super.normalizeResponse(data);
-        if (this.params && this.params.sort && data.length && data[0]['position']) {
-            data.sort(function (a, b) {
-                return a['position'] - b['position'];
-            });
-        }
-        return data;
-    }
-}
 
 /**
  * Fetch linkage disequilibrium information from a UMich LDServer-compatible API, relative to a reference variant.
