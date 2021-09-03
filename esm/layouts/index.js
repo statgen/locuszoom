@@ -30,7 +30,7 @@ const standard_association_tooltip = {
     html: `<strong>{{assoc.variant|htmlescape}}</strong><br>
         P Value: <strong>{{assoc.log_pvalue|logtoscinotation|htmlescape}}</strong><br>
         Ref. Allele: <strong>{{assoc.ref_allele|htmlescape}}</strong><br>
-        {{#if ld.isrefvar}}<strong>LD Reference Variant</strong>{{#else}}
+        {{#if lz_is_ld_refvar}}<strong>LD Reference Variant</strong>{{#else}}
         <a href="javascript:void(0);" 
         onclick="var data = this.parentNode.__data__;
                  data.getDataLayer().makeLDReference(data);"
@@ -142,36 +142,36 @@ const recomb_rate_layer = {
  * @type data_layer
  */
 const association_pvalues_layer = {
-    // FIXME: implement fields contract
-    namespace: { 'assoc': 'assoc' }, // 'ld(assoc)': 'ld' },
-    // join_options: [{
-    //     type: 'left_match',
-    //     name: 'combined',
-    //     requires: ['assoc', 'ld'],
-    //     params: ['assoc.variant', 'ld.variant'],
-    // }],
+    // FIXME: current design requires people to specify dependencies whenever overriding a namespace. That's a little unintuitive; alternatives?
+    namespace: { 'assoc': 'assoc', 'ld(assoc)': 'ld' },
+    join_options: [{
+        type: 'left_match',
+        name: 'combined',
+        requires: ['assoc', 'ld'],
+        params: ['assoc.position', 'ld.position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc.variant = ld.variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
+    }],
     id: 'associationpvalues',
     type: 'scatter',
     tag: 'association',
-    fields: ['assoc.variant', 'assoc.position', 'assoc.log_pvalue', 'assoc.log_pvalue|logtoscinotation', 'assoc.ref_allele', 'ld.state', 'ld.isrefvar'],
+    fields: ['assoc.variant', 'assoc.position', 'assoc.log_pvalue', 'assoc.log_pvalue|logtoscinotation', 'assoc.ref_allele'],
     id_field: 'assoc.variant',
     coalesce: {
         active: true,
     },
     point_shape: {
         scale_function: 'if',
-        field: 'ld.isrefvar',
+        field: 'lz_is_ld_refvar',
         parameters: {
-            field_value: 1,
+            field_value: true,
             then: 'diamond',
             else: 'circle',
         },
     },
     point_size: {
         scale_function: 'if',
-        field: 'ld.isrefvar',
+        field: 'lz_is_ld_refvar',
         parameters: {
-            field_value: 1,
+            field_value: true,
             then: 80,
             else: 40,
         },
@@ -179,15 +179,15 @@ const association_pvalues_layer = {
     color: [
         {
             scale_function: 'if',
-            field: 'ld.isrefvar',
+            field: 'lz_is_ld_refvar',
             parameters: {
-                field_value: 1,
+                field_value: true,
                 then: '#9632b8',
             },
         },
         {
             scale_function: 'numerical_bin',
-            field: 'ld.state',
+            field: 'ld.correlation',
             parameters: {
                 breaks: [0, 0.2, 0.4, 0.6, 0.8],
                 // Derived from Google "Turbo" colormap, breakpoints [0.05, 0.25, 0.45, 0.65, 0.85]
@@ -398,11 +398,15 @@ const phewas_pvalues_layer = {
  * @type data_layer
  */
 const genes_layer = {
-    namespace: { 'gene': 'gene', 'constraint': 'constraint' },
+    namespace: { 'gene': 'gene', 'constraint(gene)': 'constraint' },
+    join_options: [{
+        type: 'genes_to_gnomad_constraint',
+        name: 'combined',
+        requires: ['gene', 'constraint'],
+    }],
     id: 'genes',
     type: 'genes',
     tag: 'genes',
-    fields: ['gene.all', 'constraint.all'],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -453,6 +457,12 @@ const genes_layer_filtered = merge({
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
+    join_options: [{
+        type: 'assoc_to_gwas_catalog',
+        name: 'combined',
+        requires: ['assoc', 'catalog'],
+        params: ['assoc.variant', 'catalog.variant', 'catalog.log_pvalue'],
+    }],
     id: 'annotation_catalog',
     type: 'annotation_track',
     tag: 'gwascatalog',
@@ -724,8 +734,8 @@ const association_panel = {
         x_linked: true,
     },
     data_layers: [
-        // deepCopy(significance_layer),
-        // deepCopy(recomb_rate_layer),
+        deepCopy(significance_layer),
+        deepCopy(recomb_rate_layer),
         deepCopy(association_pvalues_layer),
     ],
 };
@@ -940,7 +950,7 @@ const standard_association_plot = {
     toolbar: standard_association_toolbar,
     panels: [
         deepCopy(association_panel),
-        // deepCopy(genes_panel),
+        deepCopy(genes_panel),
     ],
 };
 

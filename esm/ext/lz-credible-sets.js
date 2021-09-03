@@ -34,7 +34,7 @@
 import {marking, scoring} from 'gwas-credible-sets';
 
 function install (LocusZoom) {
-    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+    const BaseUMAdapter = LocusZoom.Adapters.get('BaseUMAdapter');
 
     /**
      * (**extension**) Custom data adapter that calculates the 95% credible set based on provided association data.
@@ -43,9 +43,9 @@ function install (LocusZoom) {
      * @alias module:LocusZoom_Adapters~CredibleSetLZ
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
-    class CredibleSetLZ extends BaseAdapter {
+    class CredibleSetLZ extends BaseUMAdapter {
         /**
-         * @param {String} config.params.fields.log_pvalue The name of the field containing -log10 pvalue information
+         * @param {String} config.params.join_fields.log_pvalue The name of the field containing -log10 pvalue information
          * @param {Number} [config.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
          *  until the posterior probabilities add up to at least this fraction of the total.
          * @param {Number} [config.params.significance_threshold=7.301] Do not perform a credible set calculation for this
@@ -54,50 +54,53 @@ function install (LocusZoom) {
          *  create a credible set for the entire region; the resulting set may include things below the line of significance.
          */
         constructor(config) {
+            config.url = true; // FIXME: This is embarrassing
             super(...arguments);
-            this.dependentSource = true; // Don't do calcs for a region with no assoc data
-        }
-
-        parseInit(config) {
-            super.parseInit(...arguments);
-            if (!(this.params.fields && this.params.fields.log_pvalue)) {
-                throw new Error(`Source config for ${this.constructor.SOURCE_NAME} must specify how to find 'fields.log_pvalue'`);
+            if (!(this._config.join_fields && this._config.join_fields.log_pvalue)) {
+                throw new Error(`Source config for ${this.constructor.name} must specify how to find 'fields.log_pvalue'`);
             }
 
             // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
-            this.params = Object.assign(
+            this._config = Object.assign(
                 { threshold: 0.95, significance_threshold: 7.301 },
-                this.params
+                this._config
             );
+            this._prefix_namespace = false;
         }
 
-        getCacheKey (state, chain, fields) {
-            const threshold = state.credible_set_threshold || this.params.threshold;
+        _getCacheKey (state) {
+            const threshold = state.credible_set_threshold || this._config.threshold;
             return [threshold, state.chr, state.start, state.end].join('_');
         }
 
-        fetchRequest(state, chain) {
-            if (!chain.body.length) {
+        _buildRequestOptions(options, assoc_data) {
+            const base = super._buildRequestOptions(...arguments);
+            base._assoc_data = assoc_data;
+            console.log('hi');
+            return base;
+        }
+
+        _performRequest(options) {
+            const {_assoc_data} = options;
+            console.log('calculating');
+            if (!_assoc_data.length) {
                 // No credible set can be calculated because there is no association data for this region
                 return Promise.resolve([]);
             }
 
-            const self = this;
-            // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
-            const threshold = state.credible_set_threshold || this.params.threshold;
+            const threshold = this._config.threshold;
             // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-            if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
+            if (typeof _assoc_data[0][this._config.join_fields.log_pvalue] === 'undefined') {
                 throw new Error('Credible set source could not locate the required fields from a previous request.');
             }
-            const nlogpvals = chain.body.map((item) => item[self.params.fields.log_pvalue]);
+            const nlogpvals = _assoc_data.map((item) => item[this._config.join_fields.log_pvalue]);
 
-            if (!nlogpvals.some((val) => val >= self.params.significance_threshold)) {
+            if (!nlogpvals.some((val) => val >= this._config.significance_threshold)) {
                 // If NO points have evidence of significance, define the credible set to be empty
                 //  (rather than make a credible set that we don't think is meaningful)
                 return Promise.resolve([]);
             }
 
-            const credset_data = [];
             try {
                 const scores = scoring.bayesFactors(nlogpvals);
                 const posteriorProbabilities = scoring.normalizeProbabilities(scores);
@@ -109,32 +112,16 @@ function install (LocusZoom) {
                 const credSetBool = marking.markBoolean(credibleSet);
 
                 // Annotate each response record based on credible set membership
-                for (let i = 0; i < chain.body.length; i++) {
-                    credset_data.push({
-                        posterior_prob: posteriorProbabilities[i],
-                        contrib_fraction: credSetScaled[i],
-                        is_member: credSetBool[i],
-                    });
+                for (let i = 0; i < _assoc_data.length; i++) {
+                    _assoc_data[i][`${options._provider_name}.posterior_prob`] = posteriorProbabilities[i];
+                    _assoc_data[i][`${options._provider_name}.contrib_fraction`] = credSetScaled[i];
+                    _assoc_data[i][`${options._provider_name}.is_member`] = credSetBool[i];
                 }
             } catch (e) {
                 // If the calculation cannot be completed, return the data without annotation fields
                 console.error(e);
             }
-            return Promise.resolve(credset_data);
-        }
-
-        combineChainBody(data, chain, fields, outnames, trans) {
-            // At this point namespacing has been applied; add the calculated fields for this source to the chain
-            if (chain.body.length && data.length) {
-                for (let i = 0; i < data.length; i++) {
-                    const src = data[i];
-                    const dest = chain.body[i];
-                    Object.keys(src).forEach(function (attr) {
-                        dest[attr] = src[attr];
-                    });
-                }
-            }
-            return chain.body;
+            return Promise.resolve(JSON.stringify(_assoc_data));
         }
     }
 
@@ -163,7 +150,6 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
     const annotation_credible_set_tooltip = {
-        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
         closable: true,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
@@ -184,7 +170,7 @@ function install (LocusZoom) {
         const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
             unnamespaced: true,
             id: 'associationcredibleset',
-            namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
+            namespace: { 'assoc': 'assoc', 'credset(assoc)': 'credset', 'ld(assoc)': 'ld' },
             fill_opacity: 0.7,
             tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
             fields: [
@@ -216,7 +202,7 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
     const annotation_credible_set_layer = {
-        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+        namespace: { 'assoc': 'assoc', 'credset(assoc)': 'credset' },
         id: 'annotationcredibleset',
         type: 'annotation_track',
         id_field: 'assoc.variant',
@@ -297,7 +283,6 @@ function install (LocusZoom) {
         const l = LocusZoom.Layouts.get('panel', 'association', {
             unnamespaced: true,
             id: 'associationcrediblesets',
-            namespace: { 'assoc': 'assoc', 'credset': 'credset' },
             data_layers: [
                 LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
                 LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),

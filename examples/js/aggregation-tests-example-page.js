@@ -192,23 +192,23 @@ function createDisplayWidgets(label_store, context) {
         .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/v1/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
-            params: { id_field: 'variant' },
+            id_field: 'variant',
         }])
         .add('ld', ['LDServer', {
             url: 'https://portaldev.sph.umich.edu/ld/',
-            params: { source: '1000G', build: 'GRCh37', population: 'ALL' },
+            source: '1000G', build: 'GRCh37', population: 'ALL',
         }])
-        .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', params: { build: 'GRCh37' } }])
+        .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', build: 'GRCh37' }])
         .add('aggregation_genes', ['GeneAggregationConnectorLZ', {
             sources: {
                 aggregation_ns: 'aggregation',
                 gene_ns: 'gene',
             },
         }])
-        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
+        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', build: 'GRCh37' }])
         .add('constraint', ['GeneConstraintLZ', {
             url: 'https://gnomad.broadinstitute.org/api/',
-            params: { build: 'GRCh37' },
+            build: 'GRCh37',
         }]);
 
     const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };

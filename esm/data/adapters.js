@@ -35,9 +35,8 @@
 import {BaseUrlAdapter} from 'undercomplicate';
 
 
-function validateBuildSource() {
-    // TODO: deleteme
-}
+const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
+
 
 class BaseLZAdapter extends BaseUrlAdapter {
     constructor(config) {
@@ -76,6 +75,26 @@ class BaseLZAdapter extends BaseUrlAdapter {
                 {}
             );
         });
+    }
+
+    /**
+     * Convenience method, manually called in LZ sources that deal with dependent data.
+     *
+     * In the last step of fetching data, LZ adds a prefix to each field name.
+     * This means that operations like "build query based on prior data" can't just ask for "log_pvalue" because
+     *  they are receiving "assoc.log_pvalue" or some such unknown prefix.
+     *
+     * This lets use easily use dependent data
+     *
+     * @private
+     */
+    _findPrefixedKey(a_record, fieldname) {
+        const suffixer = new RegExp(`\\.${fieldname}$`);
+        const match = Object.keys(a_record).find((key) => suffixer.test(key));
+        if (!match) {
+            throw new Error(`Could not locate the required key name: ${fieldname} in dependent data`);
+        }
+        return match;
     }
 }
 
@@ -152,16 +171,137 @@ class AssociationLZ extends BaseUMAdapter {
 
     _getURL (state) {
         const {chr, start, end} = state;
-        return `${this._base_url}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
+        return `${this._url}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
     }
 }
 
 
 
 
-// class LDServer2 extends BaseUMAdapter {
+class LDServer extends BaseUMAdapter {
+    constructor(config) {
+        // item1 = refvar, item2 = othervar
+        config.fields = ['chromosome2', 'position2', 'variant2', 'correlation'];
+        super(config);
+    }
 
-// }
+    _getURL(request_options) {
+        // The LD source/pop can be overridden from plot.state for dynamic layouts
+        const build = request_options.genome_build || this._config.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
+        let source = request_options.ld_source || this._config.source || '1000G';
+        const population = request_options.ld_pop || this._config.population || 'ALL';  // LDServer panels will always have an ALL
+        const method = this._config.method || 'rsquare';
+
+        if (source === '1000G' && build === 'GRCh38') {
+            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
+            source = '1000G-FRZ09';
+        }
+
+        this._validateBuildSource(build, null);  // LD doesn't need to validate `source` option
+
+        const refvar = request_options.ld_refvar;
+
+        return  [
+            this._url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
+            '?correlation=', method,
+            '&variant=', encodeURIComponent(refvar),
+            '&chrom=', encodeURIComponent(request_options.chr),
+            '&start=', encodeURIComponent(request_options.start),
+            '&stop=', encodeURIComponent(request_options.end),
+        ].join('');
+    }
+
+    _buildRequestOptions(state, assoc_data) {
+        // If no state refvar is provided, find the most significant variant in any provided assoc data. Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
+        const base = super._buildRequestOptions(...arguments);
+        if (!assoc_data.length) {
+            base._skip_request = true;
+            return base;
+        }
+
+        const assoc_variant_name = this._findPrefixedKey(assoc_data[0], 'variant');
+        const assoc_logp_name = this._findPrefixedKey(assoc_data[0], 'log_pvalue');
+
+        // Determine the reference variant (via user selected OR automatic-per-track)
+        let refvar;
+        let best_hit = {};
+        if (state.ldrefvar) {
+            // State/ldrefvar would store the variant in the format used by assoc data, so no need to clean up to match in data
+            // FIXME: mark Ld refvar for top hits. What if assoc format is different than how we talk to the server?
+            refvar = state.ldrefvar;
+            best_hit = assoc_data.find((item) => item[assoc_variant_name] === refvar) || {};
+        } else {
+            // find highest log-value and associated var spec
+            let best_logp = 0;
+            for (let item of assoc_data) {
+                const { [assoc_variant_name]: variant, [assoc_logp_name]: log_pvalue} = item;
+                if (log_pvalue > best_logp) {
+                    best_logp = log_pvalue;
+                    refvar = variant;
+                    best_hit = item;
+                }
+            }
+        }
+
+        // Add a special field that is not part of the assoc or LD data from the server, but has significance for plotting.
+        //  Since we already know the best hit, it's easier to do this here rather than in annotate or join phase.
+        best_hit.lz_is_ld_refvar = true;
+
+        // Above, we compared the ldrefvar to the assoc data. But for talking to the LD server,
+        //   the variant fields must be normalized to a specific format. All later LD operations will use that format.
+        const match = refvar && refvar.match(REGEX_MARKER);
+        if (!match) {
+            throw new Error('Could not request LD for a missing or incomplete marker format');
+        }
+
+        const [_, chrom, pos, ref, alt] = match;
+        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
+        //  a partial match at most leaves room for potential future features.
+        refvar = `${chrom}:${pos}`; // FIXME: is this a server request that we can skip?
+        if (ref && alt) {
+            refvar += `_${ref}/${alt}`;
+        }
+
+        base.ld_refvar = refvar;
+        return base;
+    }
+
+    _getCacheKey(options) {
+        // LD is keyed by more than just region; use full URL as cache key
+        // TODO: Support multiregion cache calls
+        return this._getURL(options);
+    }
+
+    _performRequest(options) {
+        // Skip request if this one depends on other data, in a region with no data
+        if (options._skip_request) {
+            return Promise.resolve([]);
+        }
+        // The UM LDServer uses API pagination; fetch all data by chaining requests when pages are detected
+        const url = this._getURL(options);
+
+        let combined = { data: {} };
+        let chainRequests = function (url) {
+            return fetch(url).then().then((response) => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.text();
+            }).then(function(payload) {
+                payload = JSON.parse(payload);
+                Object.keys(payload.data).forEach(function (key) {
+                    combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
+                });
+                if (payload.next) {
+                    return chainRequests(payload.next);
+                }
+                return combined;
+            });
+        };
+        return chainRequests(url)
+            .then((response) => JSON.stringify(response));
+    }
+}
 
 
 // NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
@@ -540,317 +680,6 @@ class BaseApiAdapter extends BaseAdapter {
 
 
 /**
- * Fetch linkage disequilibrium information from a UMich LDServer-compatible API, relative to a reference variant.
- *  If no `plot.state.ldrefvar` is explicitly provided, this source will attempt to find the most significant GWAS
- *  variant (smallest pvalue or largest neg_log_pvalue) and yse that as the LD reference variant.
- *
- * This source is designed to connect its results to association data, and therefore depends on association data having
- *  been loaded by a previous request in the data chain. For custom association APIs, some additional options might
- *  need to be be specified in order to locate the most significant SNP. Variant IDs of the form `chrom:pos_ref/alt`
- *  are preferred, but this source will attempt to harmonize other common data formats into something that the LD
- *  server can understand.
- *
- * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
- */
-class LDServer extends BaseApiAdapter {
-    /**
-     * @param {string} config.url The base URL for the remote data.
-     * @param {object} config.params
-     * @param [config.params.build='GRCh37'] The genome build to use when calculating LD relative to a specified reference variant.
-     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
-     * @param [config.params.source='1000G'] The name of the reference panel to use, as specified in the LD server instance.
-     *  May be overridden by a global parameter `plot.state.ld_source` to implement widgets that alter LD display.
-     * @param [config.params.population='ALL'] The sample population used to calculate LD for a specified source;
-     *  population names vary depending on the reference panel and how the server was populated wth data.
-     *  May be overridden by a global parameter `plot.state.ld_pop` to implement widgets that alter LD display.
-     * @param [config.params.method='rsquare'] The metric used to calculate LD
-     * @param [config.params.id_field] The association data field that contains variant identifier information. The preferred
-     *   format of LD server is `chrom:pos_ref/alt` and this source will attempt to normalize other common formats.
-     *   This source can auto-detect possible matches for field names containing "variant" or "id"
-     * @param [config.params.position_field] The association data field that contains variant position information.
-     *   This source can auto-detect possible matches for field names containing "position" or "pos"
-     * @param [config.params.pvalue_field] The association data field that contains pvalue information.
-     *   This source can auto-detect possible matches for field names containing "pvalue" or "log_pvalue".
-     *   The suggested LD refvar will be the smallest pvalue, or the largest log_pvalue: this source will auto-detect
-     *   the word "log" in order to determine the sign of the comparison.
-     */
-    constructor(config) {
-        super(config);
-        this.__dependentSource = true;
-    }
-
-    preGetData(state, fields) {
-        if (fields.length > 1) {
-            if (fields.length !== 2 || !fields.includes('isrefvar')) {
-                throw new Error(`LD does not know how to get all fields: ${fields.join(', ')}`);
-            }
-        }
-    }
-
-    findMergeFields(chain) {
-        // Find the fields (as provided by a previous step in the chain, like an association source) that will be needed to
-        //  combine LD data with existing information
-
-        // Since LD information may be shared across multiple assoc sources with different namespaces,
-        //   we use regex to find columns to join on, rather than requiring exact matches
-        const exactMatch = function (arr) {
-            return function () {
-                const regexes = arguments;
-                for (let i = 0; i < regexes.length; i++) {
-                    const regex = regexes[i];
-                    const m = arr.filter(function (x) {
-                        return x.match(regex);
-                    });
-                    if (m.length) {
-                        return m[0];
-                    }
-                }
-                return null;
-            };
-        };
-        let dataFields = {
-            id: this.params.id_field,
-            position: this.params.position_field,
-            pvalue: this.params.pvalue_field,
-            _names_:null,
-        };
-        if (chain && chain.body && chain.body.length > 0) {
-            const names = Object.keys(chain.body[0]);
-            const nameMatch = exactMatch(names);
-            // Internally, fields are generally prefixed with the name of the source they come from.
-            // If the user provides an id_field (like `variant`), it should work across data sources (`assoc1:variant`,
-            //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
-            // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
-            const id_match = dataFields.id && nameMatch(new RegExp(`${dataFields.id}\\b`));
-            dataFields.id = id_match || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
-            dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
-            dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
-            dataFields._names_ = names;
-        }
-        return dataFields;
-    }
-
-    findRequestedFields (fields, outnames) {
-        // Assumption: all usages of this source will only ever ask for "isrefvar" or "state". This maps to output names.
-        let obj = {};
-        for (let i = 0; i < fields.length; i++) {
-            if (fields[i] === 'isrefvar') {
-                obj.isrefvarin = fields[i];
-                obj.isrefvarout = outnames && outnames[i];
-            } else {
-                obj.ldin = fields[i];
-                obj.ldout = outnames && outnames[i];
-            }
-        }
-        return obj;
-    }
-
-    /**
-     * The LD API payload does not obey standard format conventions; do not try to transform it.
-     */
-    normalizeResponse (data) {
-        return data;
-    }
-
-    /**
-     * Get the LD reference variant, which by default will be the most significant hit in the assoc results
-     *   This will be used in making the original query to the LD server for pairwise LD information.
-     *
-     * This is meant to join a single LD request to any number of association results, and to work with many kinds of API.
-     *   To do this, the datasource looks for fields with special known names such as pvalue, log_pvalue, etc.
-     *   If your API uses different nomenclature, an option must be specified.
-     *
-     * @protected
-     * @returns {String[]} Two strings: 1) the marker id (expected to be in `chr:pos_ref/alt` format) of the reference
-     *  variant, and 2) the marker ID as it appears in the original dataset that we are joining to, so that the exact
-     *  refvar can be marked when plotting the data..
-     */
-    getRefvar(state, chain, fields) {
-        let findExtremeValue = function(records, pval_field) {
-            // Finds the most significant hit (smallest pvalue, or largest -log10p). Will try to auto-detect the appropriate comparison.
-            pval_field = pval_field || 'log_pvalue';  // The official LZ API returns log_pvalue
-            const is_log = /log/.test(pval_field);
-            let cmp;
-            if (is_log) {
-                cmp = function(a, b) {
-                    return a > b;
-                };
-            } else {
-                cmp = function(a, b) {
-                    return a < b;
-                };
-            }
-            let extremeVal = records[0][pval_field], extremeIdx = 0;
-            for (let i = 1; i < records.length; i++) {
-                if (cmp(records[i][pval_field], extremeVal)) {
-                    extremeVal = records[i][pval_field];
-                    extremeIdx = i;
-                }
-            }
-            return extremeIdx;
-        };
-
-        let reqFields = this.findRequestedFields(fields);
-        let refVar = reqFields.ldin;
-        if (refVar === 'state') {
-            refVar = state.ldrefvar || chain.header.ldrefvar || 'best';
-        }
-        if (refVar === 'best') {
-            if (!chain.body) {
-                throw new Error('No association data found to find best pvalue');
-            }
-            let keys = this.findMergeFields(chain);
-            if (!keys.pvalue || !keys.id) {
-                let columns = '';
-                if (!keys.id) {
-                    columns += `${columns.length ? ', ' : ''}id`;
-                }
-                if (!keys.pvalue) {
-                    columns += `${columns.length ? ', ' : ''}pvalue`;
-                }
-                throw new Error(`Unable to find necessary column(s) for merge: ${columns} (available: ${keys._names_})`);
-            }
-            refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
-        }
-        // Some datasets, notably the Portal, use a different marker format.
-        //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
-        const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
-        const match = refVar && refVar.match(REGEX_MARKER);
-
-        if (!match) {
-            throw new Error('Could not request LD for a missing or incomplete marker format');
-        }
-        const [original, chrom, pos, ref, alt] = match;
-        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
-        //  a partial match at most leaves room for potential future features.
-        let refVar_formatted = `${chrom}:${pos}`;
-        if (ref && alt) {
-            refVar_formatted += `_${ref}/${alt}`;
-        }
-
-        return [refVar_formatted, original];
-    }
-
-    /**
-     * Identify (or guess) the LD reference variant, then add query parameters to the URL to construct a query for the specified region
-     */
-    getURL(state, chain, fields) {
-        // The LD source/pop can be overridden from plot.state for dynamic layouts
-        const build = state.genome_build || this.params.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
-        let source = state.ld_source || this.params.source || '1000G';
-        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
-        const method = this.params.method || 'rsquare';
-
-        if (source === '1000G' && build === 'GRCh38') {
-            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
-            source = '1000G-FRZ09';
-        }
-
-        validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
-
-        const [refVar_formatted, refVar_raw] = this.getRefvar(state, chain, fields);
-
-        // Preserve the user-provided variant spec for use when matching to assoc data
-        chain.header.ldrefvar = refVar_raw;
-
-        return  [
-            this.url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
-            '?correlation=', method,
-            '&variant=', encodeURIComponent(refVar_formatted),
-            '&chrom=', encodeURIComponent(state.chr),
-            '&start=', encodeURIComponent(state.start),
-            '&stop=', encodeURIComponent(state.end),
-        ].join('');
-    }
-
-    /**
-     * The LD adapter caches based on region, reference panel, and population name
-     * @param state
-     * @param chain
-     * @param fields
-     * @return {string}
-     */
-    getCacheKey(state, chain, fields) {
-        const base = super.getCacheKey(state, chain, fields);
-        let source = state.ld_source || this.params.source || '1000G';
-        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
-        const [refVar, _] = this.getRefvar(state, chain, fields);
-        return `${base}_${refVar}_${source}_${population}`;
-    }
-
-    /**
-     * The LD adapter attempts to intelligently match retrieved LD information to a request for association data earlier in the data chain.
-     * Since each layer only asks for the data needed for that layer, one LD call is sufficient to annotate many separate association tracks.
-     */
-    combineChainBody(data, chain, fields, outnames, trans) {
-        let keys = this.findMergeFields(chain);
-        let reqFields = this.findRequestedFields(fields, outnames);
-        if (!keys.position) {
-            throw new Error(`Unable to find position field for merge: ${keys._names_}`);
-        }
-        const leftJoin = function (left, right, lfield, rfield) {
-            let i = 0, j = 0;
-            while (i < left.length && j < right.position2.length) {
-                if (left[i][keys.position] === right.position2[j]) {
-                    left[i][lfield] = right[rfield][j];
-                    i++;
-                    j++;
-                } else if (left[i][keys.position] < right.position2[j]) {
-                    i++;
-                } else {
-                    j++;
-                }
-            }
-        };
-        const tagRefVariant = function (data, refvar, idfield, outrefname, outldname) {
-            for (let i = 0; i < data.length; i++) {
-                if (data[i][idfield] && data[i][idfield] === refvar) {
-                    data[i][outrefname] = 1;
-                    data[i][outldname] = 1; // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
-                } else {
-                    data[i][outrefname] = 0;
-                }
-            }
-        };
-
-        // LD servers vary slightly. Some report corr as "rsquare", others as "correlation"
-        let corrField = data.rsquare ? 'rsquare' : 'correlation';
-        leftJoin(chain.body, data, reqFields.ldout, corrField);
-        if (reqFields.isrefvarin && chain.header.ldrefvar) {
-            tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
-        }
-        return chain.body;
-    }
-
-    /**
-     * The LDServer API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
-     */
-    fetchRequest(state, chain, fields) {
-        let url = this.getURL(state, chain, fields);
-        let combined = { data: {} };
-        let chainRequests = function (url) {
-            return fetch(url).then().then((response) => {
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                return response.text();
-            }).then(function(payload) {
-                payload = JSON.parse(payload);
-                Object.keys(payload.data).forEach(function (key) {
-                    combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
-                });
-                if (payload.next) {
-                    return chainRequests(payload.next);
-                }
-                return combined;
-            });
-        };
-        return chainRequests(url);
-    }
-}
-
-/**
  * Fetch GWAS catalog data for a list of known variants, and align the data with previously fetched association data.
  * There can be more than one claim per variant; this adapter is written to support a visualization in which each
  * association variant is labeled with the single most significant hit in the GWAS catalog. (and enough information to link to the external catalog for more information)
@@ -863,7 +692,7 @@ class LDServer extends BaseApiAdapter {
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
  */
-class GwasCatalogLZ extends BaseApiAdapter {
+class GwasCatalogLZ extends BaseUMAdapter {
     /**
      * @param {string} config.url The base URL for the remote data.
      * @param {Object} config.params
@@ -873,100 +702,22 @@ class GwasCatalogLZ extends BaseApiAdapter {
      *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
      */
     constructor(config) {
+        config.fields = ['rsid', 'trait', 'log_pvalue'];
         super(config);
-        this.__dependentSource = true;
     }
 
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
-    getURL(state, chain, fields) {
-        // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
-        //  (regardless of the actual match field)
-        const build = state.genome_build || this.params.build;
-        const source = this.params.source;
-        validateBuildSource(this.constructor.name, build, source);
+    _getURL(request_options) {
+        const build = request_options.genome_build || this._config.build;
+        const source = this._config.source;
+        this._validateBuildSource(build, source);
 
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and id eq ${source}`;
-        return `${this.url  }?format=objects&sort=pos&filter=chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}${source_query}`;
-    }
-
-    findMergeFields(records) {
-        // Data from previous sources is already namespaced. Find the alignment field by matching.
-        const knownFields = Object.keys(records);
-        // Note: All API endoints involved only give results for 1 chromosome at a time; match is implied
-        const posMatch = knownFields.find(function (item) {
-            return item.match(/\b(position|pos)\b/i);
-        });
-
-        if (!posMatch) {
-            throw new Error('Could not find data to align with GWAS catalog results');
-        }
-        return { 'pos': posMatch };
-    }
-
-    extractFields (data, fields, outnames, trans) {
-        // Skip the "individual field extraction" step; extraction will be handled when building chain body instead
-        return data;
-    }
-
-    /**
-     * Intelligently combine the LD data with the association data used for this data layer. See class description
-     *  for a summary of how this works.
-     */
-    combineChainBody(data, chain, fields, outnames, trans) {
-        if (!data.length) {
-            return chain.body;
-        }
-
-        //  TODO: Better reuse options in the future. This source is very specifically tied to the UM PortalDev API, where
-        //   the field name is always "log_pvalue". Relatively few sites will write their own gwas-catalog endpoint.
-        const decider = 'log_pvalue';
-        const decider_out = outnames[fields.indexOf(decider)];
-
-        function leftJoin(left, right, fields, outnames, trans) { // Add `fields` from `right` to `left`
-            // Add a synthetic, un-namespaced field to all matching records
-            const n_matches = left['n_catalog_matches'] || 0;
-            left['n_catalog_matches'] = n_matches + 1;
-            if (decider && left[decider_out] && left[decider_out] > right[decider]) {
-                // There may be more than one GWAS catalog entry for the same SNP. This source is intended for a 1:1
-                //  annotation scenario, so for now it only joins the catalog entry that has the best -log10 pvalue
-                return;
-            }
-
-            for (let j = 0; j < fields.length; j++) {
-                const fn = fields[j];
-                const outn = outnames[j];
-
-                let val = right[fn];
-                if (trans && trans[j]) {
-                    val = trans[j](val);
-                }
-                left[outn] = val;
-            }
-        }
-
-        const chainNames = this.findMergeFields(chain.body[0]);
-        const catNames = this.findMergeFields(data[0]);
-
-        var i = 0, j = 0;
-        while (i < chain.body.length && j < data.length) {
-            var left = chain.body[i];
-            var right = data[j];
-
-            if (left[chainNames.pos] === right[catNames.pos]) {
-                // There may be multiple catalog entries for each matching SNP; evaluate match one at a time
-                leftJoin(left, right, fields, outnames, trans);
-                j += 1;
-            } else if (left[chainNames.pos] < right[catNames.pos]) {
-                i += 1;
-            } else {
-                j += 1;
-            }
-        }
-        return chain.body;
+        return `${this._url  }?format=objects&sort=pos&filter=chrom eq '${request_options.chr}' and pos ge ${request_options.start} and pos le ${request_options.end}${source_query}`;
     }
 }
 
@@ -981,38 +732,28 @@ class GwasCatalogLZ extends BaseApiAdapter {
  * @param {Number} [config.params.source] The ID of the chosen gene dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent GENCODE data, GRCh37.
  */
-class GeneLZ extends BaseApiAdapter {
+class GeneLZ extends BaseUMAdapter {
+    constructor(config) {
+        super(config);
+
+        // The UM Genes API has a very complex internal format and the genes layer is written to work with it exactly as given.
+        //  We will avoid transforming or modifying the payload.
+        this._validate_fields = false;
+        this._prefix_namespace = false;
+    }
+
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
-    getURL(state, chain, fields) {
-        const build = state.genome_build || this.params.build;
-        let source = this.params.source;
-        validateBuildSource(this.constructor.name, build, source);
+    _getURL(request_options) {
+        const build = request_options.genome_build || this._config.build;
+        let source = this._config.source;
+        this._validateBuildSource(build, source);
 
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and source in ${source}`;
-        return `${this.url}?filter=chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}${source_query}`;
-    }
-
-    /**
-     * The UM genes API has a very complex internal data format. Bypass any record parsing, and provide the data layer with
-     *  the exact information returned by the API. (ignoring the fields array in the layout)
-     * @param data
-     * @return {Object[]|Object}
-     */
-    normalizeResponse(data) {
-        return data;
-    }
-
-    /**
-     * Does not attempt to namespace or modify the fields from the API payload; the payload format is very complex and
-     *  quite coupled with the data rendering implementation.
-     * Typically, requests to this adapter specify a single dummy field sufficient to trigger the request: `fields:[ 'gene:all' ]`
-     */
-    extractFields(data, fields, outnames, trans) {
-        return data;
+        return `${this._url}?filter=chrom eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}${source_query}`;
     }
 }
 
@@ -1026,7 +767,7 @@ class GeneLZ extends BaseApiAdapter {
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
  */
-class GeneConstraintLZ extends BaseApiAdapter {
+class GeneConstraintLZ extends BaseLZAdapter {
     /**
      * @param {string} config.url The base URL for the remote data
      * @param {Object} config.params
@@ -1035,56 +776,54 @@ class GeneConstraintLZ extends BaseApiAdapter {
      */
     constructor(config) {
         super(config);
-        this.__dependentSource = true;
+        this._validate_fields = false;
+        this._prefix_namespace = false;
     }
 
-    /**
-     * GraphQL API: request details are encoded in the body, not the URL
-     */
-    getURL() {
-        return this.url;
-    }
-
-    /**
-     * The gnomAD API has a very complex internal data format. Bypass any record parsing, and provide the data layer with
-     *  the exact information returned by the API.
-     */
-    normalizeResponse(data) {
-        return data;
-    }
-
-    fetchRequest(state, chain, fields) {
-        const build = state.genome_build || this.params.build;
+    _buildRequestOptions(options, genes_data) {
+        const build = options.genome_build || this._config.build;
         if (!build) {
             throw new Error(`Adapter ${this.constructor.name} must specify a 'genome_build' option`);
         }
 
-        const unique_gene_names = chain.body.reduce(
+        const unique_gene_names = new Set();
+        for (let gene of genes_data) {
             // In rare cases, the same gene symbol may appear at multiple positions. (issue #179) We de-duplicate the
             //  gene names to avoid issuing a malformed GraphQL query.
-            function (acc, gene) {
-                acc[gene.gene_name] = null;
-                return acc;
-            },
-            {}
-        );
-        let query = Object.keys(unique_gene_names).map(function (gene_name) {
+            unique_gene_names.add(gene.gene_name);
+        }
+
+        options.query = [...unique_gene_names.values()].map(function (gene_name) {
             // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
             const alias = `_${gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;
             // Each gene symbol is a separate graphQL query, grouped into one request using aliases
             return `${alias}: gene(gene_symbol: "${gene_name}", reference_genome: ${build}) { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } `;
         });
+        options.build = build;
+        return Object.assign({}, options);
+    }
 
+    /**
+     * The gnomAD API has a very complex internal data format. Bypass any record parsing or transform steps.
+     */
+    _normalizeResponse(response_text) {
+        const data = JSON.parse(response_text);
+        return data.data;
+    }
+
+    _performRequest(options) {
+        let {query, build} = options;
         if (!query.length || query.length > 25 || build === 'GRCh38') {
             // Skip the API request when it would make no sense:
             // - Build 38 (gnomAD supports build GRCh37 only; don't hit server when invalid. This isn't future proof, but we try to be good neighbors.)
-            // - Too many genes (gnomAD appears max cost ~25 genes)
+            // - Too many genes (gnomAD appears to set max cost ~25 genes)
             // - No genes in region (hence no constraint info)
-            return Promise.resolve({ data: null });
+            return Promise.resolve([]);
         }
-
         query = `{${query.join(' ')} }`; // GraphQL isn't quite JSON; items are separated by spaces but not commas
-        const url = this.getURL(state, chain, fields);
+
+        const url = this._getURL(options);
+
         // See: https://graphql.org/learn/serving-over-http/
         const body = JSON.stringify({ query: query });
         const headers = { 'Content-Type': 'application/json' };
@@ -1097,35 +836,6 @@ class GeneConstraintLZ extends BaseApiAdapter {
             }
             return response.text();
         }).catch((err) => []);
-    }
-
-    /**
-     * Annotate GENCODE data (from a previous request to the genes adapter) with additional gene constraint data from
-     *   the gnomAD API. See class description for a summary of how this works.
-     */
-    combineChainBody(data, chain, fields, outnames, trans) {
-        if (!data) {
-            return chain;
-        }
-
-        chain.body.forEach(function(gene) {
-            // Find payload keys that match gene names in this response
-            const alias = `_${gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;  // aliases are modified gene names
-            const constraint = data[alias] && data[alias]['gnomad_constraint']; // gnomad API has two ways of specifying missing data for a requested gene
-            if (constraint) {
-                // Add all fields from constraint data- do not override fields present in the gene source
-                Object.keys(constraint).forEach(function (key) {
-                    let val = constraint[key];
-                    if (typeof gene[key] === 'undefined') {
-                        if (typeof val == 'number' && val.toString().includes('.')) {
-                            val = parseFloat(val.toFixed(2));
-                        }
-                        gene[key] = val;   // These two sources are both designed to bypass namespacing
-                    }
-                });
-            }
-        });
-        return chain.body;
     }
 }
 
@@ -1140,19 +850,19 @@ class GeneConstraintLZ extends BaseApiAdapter {
  * @param {Number} [config.params.source] The ID of the chosen dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
-class RecombLZ extends BaseApiAdapter {
+class RecombLZ extends BaseUMAdapter {
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
-    getURL(state, chain, fields) {
-        const build = state.genome_build || this.params.build;
-        let source = this.params.source;
-        validateBuildSource(this.constructor.SOURCE_NAME, build, source);
+    _getURL(request_options) {
+        const build = request_options.genome_build || this._config.build;
+        let source = this._config.source;
+        this._validateBuildSource(build, source);
 
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and id in ${source}`;
-        return `${this.url}?filter=chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}${source_query}`;
+        return `${this._url}?filter=chromosome eq '${request_options.chr}' and position le ${request_options.end} and position ge ${request_options.start}${source_query}`;
     }
 }
 
@@ -1171,13 +881,14 @@ class RecombLZ extends BaseApiAdapter {
  * @see module:LocusZoom_Adapters~BaseAdapter
  * @param {object} data The data to be returned by this source (subject to namespacing rules)
  */
-class StaticSource extends BaseAdapter {
-    parseInit(data) {
+class StaticSource extends BaseLZAdapter {
+    constructor(config) {
         // Does not receive any config; the only argument is the raw data, embedded when source is created
-        this._data = data;
+        super(...arguments);
+        this._data = config.data;
     }
 
-    getRequest(state, chain, fields) {
+    _performRequest(options) {
         return Promise.resolve(this._data);
     }
 }
@@ -1191,124 +902,27 @@ class StaticSource extends BaseAdapter {
  * @param {String[]} config.params.build This datasource expects to be provided the name of the genome build that will
  *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
-class PheWASLZ extends BaseApiAdapter {
-    getURL(state, chain, fields) {
-        const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
+class PheWASLZ extends BaseUMAdapter {
+    _getURL(request_options) {
+        const build = (request_options.genome_build ? [request_options.genome_build] : null) || this._config.build;
         if (!build || !Array.isArray(build) || !build.length) {
-            throw new Error(['Adapter', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
+            throw new Error(['Adapter', this.constructor.name, 'requires that you specify array of one or more desired genome build names'].join(' '));
         }
         const url = [
-            this.url,
-            "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
+            this._url,
+            "?filter=variant eq '", encodeURIComponent(request_options.variant), "'&format=objects&",
             build.map(function (item) {
                 return `build=${encodeURIComponent(item)}`;
             }).join('&'),
         ];
         return url.join('');
     }
-
-    getCacheKey(state, chain, fields) {
-        // This is not a region-based source; it doesn't make sense to cache by a region
-        return this.getURL(state, chain, fields);
-    }
 }
 
-/**
- * Base class for "connectors"- this is a highly specialized kind of adapter that is rarely used in most LocusZoom
- *  deployments. This is meant to be subclassed, rather than used directly.
- *
- * A connector is a data adapter that makes no server requests and caches no data of its own. Instead, it decides how to
- *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
- *  useful piece of information once, but apply it to many different kinds of record types.
- *
- * Typically, a subclass will implement the field merging logic in `combineChainBody`.
- *
- * @public
- * @see module:LocusZoom_Adapters~BaseAdapter
- */
-class ConnectorSource extends BaseAdapter {
-    /**
-     * @param {Object} config.params Additional parameters
-     * @param {Object} config.params.sources Specify how the hard-coded logic should find the data it relies on in the chain,
-     *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
-     *  assumptions about what namespaces a source is using.     *
-     */
-    constructor(config) {
-        super(config);
-
-        if (!config || !config.sources) {
-            throw new Error('Connectors must specify the data they require as config.sources = {internal_name: chain_source_id}} pairs');
-        }
-
-        /**
-         * Tells the connector how to find the data it relies on
-         *
-         * For example, a connector that applies burden test information to the genes layer might specify:
-         *  {gene_ns: "gene", aggregation_ns: "aggregation"}
-         *
-         * @member {Object}
-         * @private
-         */
-        this._source_name_mapping = config.sources;
-
-        // Validate that this source has been told how to find the required information
-        const specified_ids = Object.keys(config.sources);
-        /** @property {String[]} Specifies the sources that must be provided in the original config object */
-
-        this._getRequiredSources().forEach((k) => {
-            if (!specified_ids.includes(k)) {
-                // TODO: Fix constructor.name usage in minified bundles
-                throw new Error(`Configuration for ${this.constructor.name} must specify a source ID corresponding to ${k}`);
-            }
-        });
-    }
-
-    // Stub- connectors don't have their own url or data, so the defaults don't make sense
-    parseInit() {}
-
-    getRequest(state, chain, fields) {
-        // Connectors do not request their own data by definition, but they *do* depend on other sources having been loaded
-        //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
-        Object.keys(this._source_name_mapping).forEach((ns) => {
-            const chain_source_id = this._source_name_mapping[ns];
-            if (chain.discrete && !chain.discrete[chain_source_id]) {
-                throw new Error(`${this.constructor.name} cannot be used before loading required data for: ${chain_source_id}`);
-            }
-        });
-        return Promise.resolve(chain.body || []);
-    }
-
-    parseResponse(data, chain, fields, outnames, trans) {
-        // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
-        //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
-
-        // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
-        // Typically connectors are called with `connector_name:all` in the fields array.
-        return Promise.resolve(this.combineChainBody(data, chain, fields, outnames, trans))
-            .then(function(new_body) {
-                return {header: chain.header || {}, discrete: chain.discrete || {}, body: new_body};
-            });
-    }
-
-    combineChainBody(records, chain) {
-        // Stub method: specifies how to combine the data
-        throw new Error('This method must be implemented in a subclass');
-    }
-
-    /**
-     * Helper method since ES6 doesn't support class fields
-     * @private
-     */
-    _getRequiredSources() {
-        throw new Error('Must specify an array that identifes the kind of data required by this source');
-    }
-}
-
-export { BaseAdapter, BaseApiAdapter };
+export { BaseAdapter, BaseApiAdapter, BaseLZAdapter, BaseUMAdapter };
 
 export {
     AssociationLZ,
-    ConnectorSource,
     GeneConstraintLZ,
     GeneLZ,
     GwasCatalogLZ,

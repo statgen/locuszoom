@@ -43,7 +43,7 @@ const YCE = Symbol.for('lzYCE');
 
 
 function install (LocusZoom) {
-    const BaseApiAdapter = LocusZoom.Adapters.get('BaseApiAdapter');
+    const BaseUMAdapter = LocusZoom.Adapters.get('BaseUMAdapter');
     const _Button = LocusZoom.Widgets.get('_Button');
     const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
@@ -55,11 +55,11 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      * @param {number} config.params.source The numeric ID for a specific dataset as assigned by the API server
      */
-    class IntervalLZ extends BaseApiAdapter {
-        getURL(state, chain, fields) {
-            const source = chain.header.bedtracksource || this.params.source;
-            const query = `?filter=id in ${source} and chromosome eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
-            return `${this.url}${query}`;
+    class IntervalLZ extends BaseUMAdapter {
+        _getURL(request_options) {
+            const source = this._config.source;
+            const query = `?filter=id in ${source} and chromosome eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}`;
+            return `${this._url}${query}`;
         }
     }
 

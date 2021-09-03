@@ -47,15 +47,15 @@ class Requester {
                 if (!match) {
                     throw new Error(`Invalid namespace name: '${label}'. Should be 'somename' or 'somename(somedep)'`);
                 }
-                label = match[1] || match[2];
+                const entity_label = match[1] || match[2];
 
                 const source = this._sources.get(source_name);
 
-                if (entities.has(label)) {
+                if (entities.has(entity_label)) {
                     throw new Error(`Configuration error: within a layer, namespace name '${label}' must be unique`);
                 }
 
-                entities.set(label, source);
+                entities.set(entity_label, source);
                 dependencies.push(label);
             });
 
@@ -73,8 +73,10 @@ class Requester {
 
     getData(state, namespace_options, join_options) {
         const [entities, dependencies] = this._config_to_sources(namespace_options, join_options);
+        if (!dependencies.length) {
+            return Promise.resolve([]);
+        }
         return getLinkedData(state, entities, dependencies, true);
-        // entities: { assoc: adapter, ld: adapter }
     }
 }
 
