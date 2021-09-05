@@ -648,7 +648,7 @@ class Plot {
 
         // Register an event listener that is notified whenever new data has been rendered
         const error_callback = opts.onerror || function (err) {
-            console.log('An error occurred while acting on an external callback', err);
+            console.error('An error occurred while acting on an external callback', err);
         };
 
         const listener = () => {

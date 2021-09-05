@@ -54,7 +54,6 @@ function install (LocusZoom) {
          *  create a credible set for the entire region; the resulting set may include things below the line of significance.
          */
         constructor(config) {
-            config.url = true; // FIXME: This is embarrassing
             super(...arguments);
             if (!(this._config.join_fields && this._config.join_fields.log_pvalue)) {
                 throw new Error(`Source config for ${this.constructor.name} must specify how to find 'fields.log_pvalue'`);
@@ -76,13 +75,11 @@ function install (LocusZoom) {
         _buildRequestOptions(options, assoc_data) {
             const base = super._buildRequestOptions(...arguments);
             base._assoc_data = assoc_data;
-            console.log('hi');
             return base;
         }
 
         _performRequest(options) {
             const {_assoc_data} = options;
-            console.log('calculating');
             if (!_assoc_data.length) {
                 // No credible set can be calculated because there is no association data for this region
                 return Promise.resolve([]);
@@ -121,7 +118,7 @@ function install (LocusZoom) {
                 // If the calculation cannot be completed, return the data without annotation fields
                 console.error(e);
             }
-            return Promise.resolve(JSON.stringify(_assoc_data));
+            return Promise.resolve(_assoc_data);
         }
     }
 

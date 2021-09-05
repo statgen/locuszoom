@@ -22,8 +22,8 @@
  *
  *  ```
  *  const data_sources = new LocusZoom.DataSources();
- *  data_sources.add("trait1", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 1}}]);
- *  data_sources.add("trait2", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 2}}]);
+ *  data_sources.add("trait1", ["AssociationLZ", { url: "http://server.com/api/single/", source: 1 }]);
+ *  data_sources.add("trait2", ["AssociationLZ", { url: "http://server.com/api/single/", source: 2 }]);
  *  ```
  *
  *  These data sources are then passed to the plot when data is to be rendered:
@@ -185,13 +185,12 @@ class AssociationLZ extends BaseUMAdapter {
         this._source_id = source;
     }
 
-    _getURL (state) {
-        const {chr, start, end} = state;
-        return `${this._url}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
+    _getURL (request_options) {
+        const {chr, start, end} = request_options;
+        const base = super._getURL(request_options);
+        return `${base}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
     }
 }
-
-
 
 
 class LDServer extends BaseUMAdapter {
@@ -209,8 +208,10 @@ class LDServer extends BaseUMAdapter {
             genome_build, ld_source, ld_population,
         } = request_options;
 
+        const base = super._getURL(request_options);
+
         return  [
-            this._url, 'genome_builds/', genome_build, '/references/', ld_source, '/populations/', ld_population, '/variants',
+            base, 'genome_builds/', genome_build, '/references/', ld_source, '/populations/', ld_population, '/variants',
             '?correlation=', method,
             '&variant=', encodeURIComponent(ld_refvar),
             '&chrom=', encodeURIComponent(chr),
@@ -323,8 +324,7 @@ class LDServer extends BaseUMAdapter {
                 return combined;
             });
         };
-        return chainRequests(url)
-            .then((response) => JSON.stringify(response));
+        return chainRequests(url);
     }
 }
 
@@ -334,350 +334,9 @@ class LDServer extends BaseUMAdapter {
 //  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
 //  private API methods exist in the base class.
 
-/**
- * Base class for LocusZoom data sources (any). See also: BaseApiAdapter for requests from a remote URL.
- * @public
- */
 class BaseAdapter {
-    /**
-     * @param {object} config Configuration options
-     */
-    constructor(config) {
-        /**
-         * Whether to enable caching (true for most data adapters)
-         * @private
-         * @member {Boolean}
-         */
-        this._enableCache = true;
-        this._cachedKey = null;
-
-        // Almost all LZ sources are "region based". Cache the region requested and use it to determine whether
-        //   the cache would satisfy the request.
-        this._cache_pos_start = null;
-        this._cache_pos_end = null;
-
-        /**
-         * Whether this adapter type is dependent on previous requests- for example, the LD source cannot annotate
-         *  association data if no data was found for that region.
-         * @private
-         * @member {boolean}
-         */
-        this.__dependentSource = false;
-
-        // Parse configuration options
-        this.parseInit(config);
-    }
-
-    /**
-     * Parse configuration used to create the instance. Many custom sources will override this method to suit their
-     *  needs (eg specific config options, or for sources that do not retrieve data from a URL)
-     * @protected
-     * @param {String|Object} config Basic configuration- either a url, or a config object
-     * @param {String} [config.url] The datasource URL
-     * @param {String} [config.params] Initial config params for the datasource
-     */
-    parseInit(config) {
-        /**
-         * @private
-         * @member {Object}
-         */
-        this.params = config.params || {};
-    }
-
-    /**
-     * A unique identifier that indicates whether cached data is valid for this request. For most sources using GET
-     *  requests to a REST API, this is usually the region requested. Some sources will append additional params to define the request.
-     *
-     *  This means that to change caching behavior, both the URL and the cache key may need to be updated. However,
-     *      it allows most datasources to skip an extra network request when zooming in.
-     * @protected
-     * @param {Object} state Information available in plot.state (chr, start, end). Sometimes used to inject globally
-     *  available information that influences the request being made.
-     * @param {Object} chain The data chain from previous requests made in a sequence.
-     * @param fields
-     * @returns {String}
-     */
-    getCacheKey(state, chain, fields) {
-        // Most region sources, by default, will cache the largest region that satisfies the request: zooming in
-        //  should be satisfied via the cache, but pan or region change operations will cause a network request
-
-        // Some adapters rely on values set in chain.header during the getURL call. (eg, the LD source uses
-        //  this to find the LD refvar) Calling this method is a backwards-compatible way of ensuring that value is set,
-        //  even on a cache hit in which getURL otherwise wouldn't be called.
-        // Some of the adapters that rely on this behavior are user-defined, hence compatibility hack
-        this.getURL(state, chain, fields);
-
-        const cache_pos_chr = state.chr;
-        const {_cache_pos_start, _cache_pos_end} = this;
-        if (_cache_pos_start && state.start >= _cache_pos_start && _cache_pos_end && state.end <= _cache_pos_end ) {
-            return `${cache_pos_chr}_${_cache_pos_start}_${_cache_pos_end}`;
-        } else {
-            return `${state.chr}_${state.start}_${state.end}`;
-        }
-    }
-
-    /**
-     * Stub: build the URL for any requests made by this source.
-     * @protected
-     */
-    getURL(state, chain, fields) {
-        return this.url;
-    }
-
-    /**
-     * Perform a network request to fetch data for this source. This is usually the method that is used to override
-     *  when defining how to retrieve data.
-     * @protected
-     * @param {Object} state The state of the parent plot
-     * @param chain
-     * @param fields
-     * @returns {Promise}
-     */
-    fetchRequest(state, chain, fields) {
-        const url = this.getURL(state, chain, fields);
-        return fetch(url).then((response) => {
-            if (!response.ok) {
-                throw new Error(response.statusText);
-            }
-            return response.text();
-        });
-    }
-
-    /**
-     * Gets the data for just this source, typically via a network request (but using cache where possible)
-     *
-     * For most use cases, it is better to override `fetchRequest` instead, to avoid bypassing the cache mechanism
-     * by accident.
-     * @protected
-     * @return {Promise}
-     */
-    getRequest(state, chain, fields) {
-        let req;
-        const cacheKey = this.getCacheKey(state, chain, fields);
-
-        if (this._enableCache && typeof(cacheKey) !== 'undefined' && cacheKey === this._cachedKey) {
-            req = Promise.resolve(this._cachedResponse);  // Resolve to the value of the current promise
-        } else {
-            req = this.fetchRequest(state, chain, fields);
-            if (this._enableCache) {
-                this._cachedKey = cacheKey;
-                this._cache_pos_start = state.start;
-                this._cache_pos_end = state.end;
-                this._cachedResponse = req;
-            }
-        }
-        return req;
-    }
-
-    /**
-     * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
-     * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
-     *
-     * Does not apply namespacing, transformations, or field extraction.
-     *
-     * May be overridden by data adapters that inherently return more complex payloads, or that exist to annotate other
-     *  sources (eg, if the payload provides extra data rather than a series of records).
-     * @protected
-     * @param {Object[]|Object} data The original parsed server response
-     */
-    normalizeResponse(data) {
-        if (Array.isArray(data)) {
-            // Already in the desired form
-            return data;
-        }
-        // Otherwise, assume the server response is an object representing columns of data.
-        // Each array should have the same length (verify), and a given array index corresponds to a single row.
-        const keys = Object.keys(data);
-        const N = data[keys[0]].length;
-        const sameLength = keys.every(function (key) {
-            const item = data[key];
-            return item.length === N;
-        });
-        if (!sameLength) {
-            throw new Error(`${this.constructor.name} expects a response in which all arrays of data are the same length`);
-        }
-
-        // Go down the rows, and create an object for each record
-        const records = [];
-        const fields = Object.keys(data);
-        for (let i = 0; i < N; i++) {
-            const record = {};
-            for (let j = 0; j < fields.length; j++) {
-                record[fields[j]] = data[fields[j]][i];
-            }
-            records.push(record);
-        }
-        return records;
-    }
-
-    /**
-     * Hook to post-process the data returned by this source with new, additional behavior.
-     *   (eg cleaning up API values or performing complex calculations on the returned data)
-     *
-     * @protected
-     * @param {Object[]} records The parsed data from the source (eg standardized api response)
-     * @param {Object} chain The data chain object. For example, chain.headers may provide useful annotation metadata
-     * @returns {Object[]|Promise} The modified set of records
-     */
-    annotateData(records, chain) {
-        // Default behavior: no transformations
-        return records;
-    }
-
-    /**
-     * Clean up the server records for use by datalayers: extract only certain fields, with the specified names.
-     *   Apply per-field transformations as appropriate.
-     *
-     * This hook can be overridden, eg to create a source that always returns all records and ignores the "fields" array.
-     *  This is particularly common for sources at the end of a chain- many "dependent" sources do not allow
-     *  cherry-picking individual fields, in which case by **convention** the fields array specifies "last_source_name:all"
-     *
-     * @protected
-     * @param {Object[]} data One record object per element
-     * @param {String[]} fields The names of fields to extract (as named in the source data). Eg "afield"
-     * @param {String[]} outnames How to represent the source fields in the output. Eg "namespace:afield|atransform"
-     * @param {function[]} trans An array of transformation functions (if any). One function per data element, or null.
-     * @protected
-     */
-    extractFields (data, fields, outnames, trans) {
-        //intended for an array of objects
-        //  [ {"id":1, "val":5}, {"id":2, "val":10}]
-        // Since a number of sources exist that do not obey this format, we will provide a convenient pass-through
-        if (!Array.isArray(data)) {
-            return data;
-        }
-
-        if (!data.length) {
-            // Sometimes there are regions that just don't have data- this should not trigger a missing field error message!
-            return data;
-        }
-
-        const fieldFound = [];
-        for (let k = 0; k < fields.length; k++) {
-            fieldFound[k] = 0;
-        }
-
-        const records = data.map(function (item) {
-            const output_record = {};
-            for (let j = 0; j < fields.length; j++) {
-                let val = item[fields[j]];
-                if (typeof val != 'undefined') {
-                    fieldFound[j] = 1;
-                }
-                if (trans && trans[j]) {
-                    val = trans[j](val);
-                }
-                output_record[outnames[j]] = val;
-            }
-            return output_record;
-        });
-        fieldFound.forEach(function(v, i) {
-            if (!v) {
-                throw new Error(`field ${fields[i]} not found in response for ${outnames[i]}`);
-            }
-        });
-        return records;
-    }
-
-    /**
-     * Combine records from this source with others in the chain to yield final chain body.
-     *   Handles merging this data with other sources (if applicable).
-     *
-     * @protected
-     * @param {Object[]} data The data That would be returned from this source alone
-     * @param {Object} chain The data chain built up during previous requests
-     * @param {String[]} fields
-     * @param {String[]} outnames
-     * @param {String[]} trans
-     * @return {Promise|Object[]} The new chain body
-     */
-    combineChainBody(data, chain, fields, outnames, trans) {
-        return data;
-    }
-
-    /**
-     * Coordinates the work of parsing a response and returning records. This is broken into 4 steps, which may be
-     *  overridden separately for fine-grained control. Each step can return either raw data or a promise.
-     *
-     * @see {module:LocusZoom_Adapters~BaseAdapter#normalizeResponse}
-     * @see {module:LocusZoom_Adapters~BaseAdapter#annotateData}
-     * @see {module:LocusZoom_Adapters~BaseAdapter#extractFields}
-     * @see {module:LocusZoom_Adapters~BaseAdapter#combineChainBody}
-     * @protected
-     *
-     * @param {String|Object} resp The raw data associated with the response
-     * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
-     * @param {String[]} fields Array of requested field names (as they would appear in the response payload)
-     * @param {String[]} outnames  Array of field names as they will be represented in the data returned by this source,
-     *  including the namespace. This must be an array with the same length as `fields`
-     * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
-     *     This must be an array with the same length as `fields`
-     * @returns {Promise} A promise that resolves to an object containing
-     *   request metadata (`headers: {}`), the consolidated data for plotting (`body: []`), and the individual responses that would be
-     *   returned by each source in the chain in isolation (`discrete: {}`)
-     */
-    parseResponse (resp, chain, fields, outnames, trans) {
-        const source_id = this.source_id || this.constructor.name;
-        if (!chain.discrete) {
-            chain.discrete = {};
-        }
-
-        const json = typeof resp == 'string' ? JSON.parse(resp) : resp;
-
-        // Perform the 4 steps of parsing the payload and return a combined chain object
-        return Promise.resolve(this.normalizeResponse(json.data || json))
-            .then((standardized) => {
-                // Perform calculations on the data from just this source
-                return Promise.resolve(this.annotateData(standardized, chain));
-            }).then((data) => {
-                return Promise.resolve(this.extractFields(data, fields, outnames, trans));
-            }).then((one_source_body) => {
-                // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
-                //   fields array into account). This is useful when we want to re-use the source output in many ways.
-                chain.discrete[source_id] = one_source_body;
-                return Promise.resolve(this.combineChainBody(one_source_body, chain, fields, outnames, trans));
-            }).then((new_body) => {
-                return { header: chain.header || {}, discrete: chain.discrete, body: new_body };
-            });
-    }
-
-    /**
-     * Fetch the data from the specified data adapter, and apply transformations requested by an external consumer.
-     * This is the public-facing datasource method that will most be called by the plot, but custom data adapters will
-     *  almost never want to override this method directly- more specific hooks are provided to control individual pieces
-     *  of the request lifecycle.
-     *
-     * @private
-     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields Array of field names that the plot has requested from this data adapter. (without the "namespace" prefix)
-     * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
-     *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
-     * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
-     *     This must be an array with the same length as `fields`
-     * @returns {function} A callable operation that can be used as part of the data chain
-     */
-    getData(state, fields, outnames, trans) {
-        if (this.preGetData) { // TODO try to remove this method if at all possible
-            const pre = this.preGetData(state, fields, outnames, trans);
-            if (this.pre) {
-                state = pre.state || state;
-                fields = pre.fields || fields;
-                outnames = pre.outnames || outnames;
-                trans = pre.trans || trans;
-            }
-        }
-
-        return (chain) => {
-            if (this.__dependentSource && chain && chain.body && !chain.body.length) {
-                // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
-                // Therefore, it should simply return the previous data chain.
-                return Promise.resolve(chain);
-            }
-
-            return this.getRequest(state, chain, fields).then((resp) => {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            });
-        };
+    constructor() {
+        throw new Error('The "BaseAdapter" and "BaseApiAdapter" classes have been replaced in LocusZoom 0.14. See migration guide for details.');
     }
 }
 
@@ -688,20 +347,7 @@ class BaseAdapter {
  * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
  * @inheritDoc
  */
-class BaseApiAdapter extends BaseAdapter {
-    parseInit(config) {
-        super.parseInit(config);
-
-        /**
-         * @private
-         * @member {String}
-         */
-        this.url = config.url;
-        if (!this.url) {
-            throw new Error('Source not initialized with required URL');
-        }
-    }
-}
+class BaseApiAdapter extends BaseAdapter {}
 
 
 /**
@@ -715,7 +361,7 @@ class BaseApiAdapter extends BaseAdapter {
  *  field in association data by looking for the field name `position` or `pos`.
  *
  * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
  */
 class GwasCatalogLZ extends BaseUMAdapter {
     /**
@@ -742,7 +388,9 @@ class GwasCatalogLZ extends BaseUMAdapter {
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and id eq ${source}`;
-        return `${this._url  }?format=objects&sort=pos&filter=chrom eq '${request_options.chr}' and pos ge ${request_options.start} and pos le ${request_options.end}${source_query}`;
+
+        const base = super._getURL(request_options);
+        return `${base}?format=objects&sort=pos&filter=chrom eq '${request_options.chr}' and pos ge ${request_options.start} and pos le ${request_options.end}${source_query}`;
     }
 }
 
@@ -778,7 +426,9 @@ class GeneLZ extends BaseUMAdapter {
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and source in ${source}`;
-        return `${this._url}?filter=chrom eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}${source_query}`;
+
+        const base = super._getURL(request_options);
+        return `${base}?filter=chrom eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}${source_query}`;
     }
 }
 
@@ -828,14 +478,6 @@ class GeneConstraintLZ extends BaseLZAdapter {
         return Object.assign({}, options);
     }
 
-    /**
-     * The gnomAD API has a very complex internal data format. Bypass any record parsing or transform steps.
-     */
-    _normalizeResponse(response_text) {
-        const data = JSON.parse(response_text);
-        return data.data;
-    }
-
     _performRequest(options) {
         let {query, build} = options;
         if (!query.length || query.length > 25 || build === 'GRCh38') {
@@ -862,6 +504,14 @@ class GeneConstraintLZ extends BaseLZAdapter {
             return response.text();
         }).catch((err) => []);
     }
+
+    /**
+     * The gnomAD API has a very complex internal data format. Bypass any record parsing or transform steps.
+     */
+    _normalizeResponse(response_text) {
+        const data = JSON.parse(response_text);
+        return data.data;
+    }
 }
 
 /**
@@ -887,7 +537,9 @@ class RecombLZ extends BaseUMAdapter {
         // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
         //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
         const source_query = build ? `&build=${build}` : ` and id in ${source}`;
-        return `${this._url}?filter=chromosome eq '${request_options.chr}' and position le ${request_options.end} and position ge ${request_options.start}${source_query}`;
+
+        const base = super._getURL(request_options);
+        return `${base}?filter=chromosome eq '${request_options.chr}' and position le ${request_options.end} and position ge ${request_options.start}${source_query}`;
     }
 }
 
@@ -933,8 +585,9 @@ class PheWASLZ extends BaseUMAdapter {
         if (!build || !Array.isArray(build) || !build.length) {
             throw new Error(['Adapter', this.constructor.name, 'requires that you specify array of one or more desired genome build names'].join(' '));
         }
+        const base = super._getURL(request_options);
         const url = [
-            this._url,
+            base,
             "?filter=variant eq '", encodeURIComponent(request_options.variant), "'&format=objects&",
             build.map(function (item) {
                 return `build=${encodeURIComponent(item)}`;
@@ -949,8 +602,13 @@ class PheWASLZ extends BaseUMAdapter {
     }
 }
 
-export { BaseAdapter, BaseApiAdapter, BaseLZAdapter, BaseUMAdapter };
+// Deprecated symbols
+export { BaseAdapter, BaseApiAdapter };
 
+// Usually used as a parent class for custom code
+export { BaseLZAdapter, BaseUMAdapter };
+
+// Usually used as a standalone class
 export {
     AssociationLZ,
     GeneConstraintLZ,

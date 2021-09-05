@@ -63,7 +63,6 @@ function install(LocusZoom) {
      */
     class TabixUrlSource extends BaseLZAdapter {
         constructor(config) {
-            config.url = config.url_data;
             super(config);
             if (!config.parser_func || !config.url_data) {
                 throw new Error('Tabix source is missing required configuration options');

@@ -59,7 +59,9 @@ function install (LocusZoom) {
         _getURL(request_options) {
             const source = this._config.source;
             const query = `?filter=id in ${source} and chromosome eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}`;
-            return `${this._url}${query}`;
+
+            const base = super._getURL(request_options);
+            return `${base}${query}`;
         }
     }
 
