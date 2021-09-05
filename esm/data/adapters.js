@@ -52,6 +52,22 @@ class BaseLZAdapter extends BaseUrlAdapter {
         this._prefix_namespace = (typeof prefix_namespace === 'boolean') ? prefix_namespace : true;
     }
 
+    _getCacheKey(options) {
+        // Most LZ adapters are fetching REGION data, and it makes sense to treat zooming as a cache hit by default
+        let {chr, start, end} = options;  // Current view: plot.state
+
+        // Does a prior cache hit qualify as a superset of the ROI?
+        const superset = this._cache.find(({metadata: md}) => chr === md.chr && start >= md.start && end <= md.end);
+        if (superset) {
+            ({ chr, start, end } = superset.metadata);
+        }
+
+        // The default cache key is region-based, and this method only returns the region-based part of the cache hit
+        //  That way, methods that override the key can extend the base value and still get the benefits of region-overlap-check
+        options._cache_meta = { chr, start, end };
+        return `${chr}_${start}_${end}`;
+    }
+
     /**
      * Note: since namespacing is the last thing we usually want to do, calculations will want to call super AFTER their own code.
      * @param records
@@ -59,7 +75,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
      * @returns {*}
      * @private
      */
-    _annotateRecords(records, options) {
+    _postProcessResponse(records, options) {
         if (!this._prefix_namespace) {
             return records;
         }
@@ -186,33 +202,30 @@ class LDServer extends BaseUMAdapter {
     }
 
     _getURL(request_options) {
-        // The LD source/pop can be overridden from plot.state for dynamic layouts
-        const build = request_options.genome_build || this._config.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
-        let source = request_options.ld_source || this._config.source || '1000G';
-        const population = request_options.ld_pop || this._config.population || 'ALL';  // LDServer panels will always have an ALL
         const method = this._config.method || 'rsquare';
-
-        if (source === '1000G' && build === 'GRCh38') {
-            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
-            source = '1000G-FRZ09';
-        }
-
-        this._validateBuildSource(build, null);  // LD doesn't need to validate `source` option
-
-        const refvar = request_options.ld_refvar;
+        const {
+            chr, start, end,
+            ld_refvar,
+            genome_build, ld_source, ld_population,
+        } = request_options;
 
         return  [
-            this._url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
+            this._url, 'genome_builds/', genome_build, '/references/', ld_source, '/populations/', ld_population, '/variants',
             '?correlation=', method,
-            '&variant=', encodeURIComponent(refvar),
-            '&chrom=', encodeURIComponent(request_options.chr),
-            '&start=', encodeURIComponent(request_options.start),
-            '&stop=', encodeURIComponent(request_options.end),
+            '&variant=', encodeURIComponent(ld_refvar),
+            '&chrom=', encodeURIComponent(chr),
+            '&start=', encodeURIComponent(start),
+            '&stop=', encodeURIComponent(end),
         ].join('');
     }
 
     _buildRequestOptions(state, assoc_data) {
-        // If no state refvar is provided, find the most significant variant in any provided assoc data. Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
+        if (!assoc_data) {
+            throw new Error('LD request must depend on association data');
+        }
+
+        // If no state refvar is provided, find the most significant variant in any provided assoc data.
+        //   Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
         const base = super._buildRequestOptions(...arguments);
         if (!assoc_data.length) {
             base._skip_request = true;
@@ -227,7 +240,6 @@ class LDServer extends BaseUMAdapter {
         let best_hit = {};
         if (state.ldrefvar) {
             // State/ldrefvar would store the variant in the format used by assoc data, so no need to clean up to match in data
-            // FIXME: mark Ld refvar for top hits. What if assoc format is different than how we talk to the server?
             refvar = state.ldrefvar;
             best_hit = assoc_data.find((item) => item[assoc_variant_name] === refvar) || {};
         } else {
@@ -263,13 +275,26 @@ class LDServer extends BaseUMAdapter {
         }
 
         base.ld_refvar = refvar;
-        return base;
+
+        // The LD source/pop can be overridden from plot.state, so that user choices can override initial source config
+        const genome_build = state.genome_build || this._config.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
+        let ld_source = state.ld_source || this._config.source || '1000G';
+        const ld_population = state.ld_pop || this._config.population || 'ALL';  // LDServer panels will always have an ALL
+
+        if (ld_source === '1000G' && genome_build === 'GRCh38') {
+            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
+            ld_source = '1000G-FRZ09';
+        }
+
+        this._validateBuildSource(genome_build, null);  // LD doesn't need to validate `source` option
+        return Object.assign({}, base, { genome_build, ld_source, ld_population });
     }
 
     _getCacheKey(options) {
-        // LD is keyed by more than just region; use full URL as cache key
-        // TODO: Support multiregion cache calls
-        return this._getURL(options);
+        // LD is keyed by more than just region; append other parameters to the base cache key
+        const base = super._getCacheKey(options);
+        const { ld_refvar, ld_source, ld_population } = options;
+        return `${base}_${ld_refvar}_${ld_source}_${ld_population}`;
     }
 
     _performRequest(options) {
@@ -916,6 +941,11 @@ class PheWASLZ extends BaseUMAdapter {
             }).join('&'),
         ];
         return url.join('');
+    }
+
+    _getCacheKey(options) {
+        // Not a region based source; don't do anything smart for cache check
+        return this._getURL(options);
     }
 }
 
