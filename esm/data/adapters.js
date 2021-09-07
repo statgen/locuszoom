@@ -38,6 +38,27 @@ import {BaseUrlAdapter} from 'undercomplicate';
 const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
 
 
+// NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
+//  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
+//  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
+//  private API methods exist in the base class.
+
+class BaseAdapter {
+    constructor() {
+        throw new Error('The "BaseAdapter" and "BaseApiAdapter" classes have been replaced in LocusZoom 0.14. See migration guide for details.');
+    }
+}
+
+/**
+ * Base class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
+ *  (and potentially other behavior) that are relevant to URL-based requests.
+ * @extends module:LocusZoom_Adapters~BaseAdapter
+ * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
+ * @inheritDoc
+ */
+class BaseApiAdapter extends BaseAdapter {}
+
+
 class BaseLZAdapter extends BaseUrlAdapter {
     constructor(config) {
         super(config);
@@ -48,8 +69,9 @@ class BaseLZAdapter extends BaseUrlAdapter {
         // For some very complex data structure- mainly the Genes API payload- the datalayer might want to operate on
         //   that complex set of fields directly. Disable _prefix_namespace to get field names as they appear
         //   in the response. (gene_name instead of genes.gene_name)
-        const {prefix_namespace} = config;
+        const {prefix_namespace, limit_fields} = config;
         this._prefix_namespace = (typeof prefix_namespace === 'boolean') ? prefix_namespace : true;
+        this._limit_fields = limit_fields;
     }
 
     _getCacheKey(options) {
@@ -76,7 +98,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
      * @private
      */
     _postProcessResponse(records, options) {
-        if (!this._prefix_namespace) {
+        if (!this._prefix_namespace || !Array.isArray(records)) {
             return records;
         }
 
@@ -85,7 +107,9 @@ class BaseLZAdapter extends BaseUrlAdapter {
         return records.map((row) => {
             return Object.entries(row).reduce(
                 (acc, [label, value]) => {
-                    acc[`${options._provider_name}.${label}`] = value;
+                    if (!this._limit_fields || this._fields_contract.has(label)) {
+                        acc[`${options._provider_name}.${label}`] = value;
+                    }
                     return acc;
                 },
                 {}
@@ -172,7 +196,7 @@ class BaseUMAdapter extends BaseLZAdapter {
 
 class AssociationLZ extends BaseUMAdapter {
     constructor(config) {
-        // Minimum adapter contract hard-codes fields contract based on UM PortalDev API
+        // Minimum adapter contract hard-codes fields contract based on UM PortalDev API + default assoc plot layout
         // For layers that require more functionality, pass extra_fields to source options
         config.fields = ['variant', 'position', 'log_pvalue', 'ref_allele'];
 
@@ -191,163 +215,6 @@ class AssociationLZ extends BaseUMAdapter {
         return `${base}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
     }
 }
-
-
-class LDServer extends BaseUMAdapter {
-    constructor(config) {
-        // item1 = refvar, item2 = othervar
-        config.fields = ['chromosome2', 'position2', 'variant2', 'correlation'];
-        super(config);
-    }
-
-    _getURL(request_options) {
-        const method = this._config.method || 'rsquare';
-        const {
-            chr, start, end,
-            ld_refvar,
-            genome_build, ld_source, ld_population,
-        } = request_options;
-
-        const base = super._getURL(request_options);
-
-        return  [
-            base, 'genome_builds/', genome_build, '/references/', ld_source, '/populations/', ld_population, '/variants',
-            '?correlation=', method,
-            '&variant=', encodeURIComponent(ld_refvar),
-            '&chrom=', encodeURIComponent(chr),
-            '&start=', encodeURIComponent(start),
-            '&stop=', encodeURIComponent(end),
-        ].join('');
-    }
-
-    _buildRequestOptions(state, assoc_data) {
-        if (!assoc_data) {
-            throw new Error('LD request must depend on association data');
-        }
-
-        // If no state refvar is provided, find the most significant variant in any provided assoc data.
-        //   Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
-        const base = super._buildRequestOptions(...arguments);
-        if (!assoc_data.length) {
-            base._skip_request = true;
-            return base;
-        }
-
-        const assoc_variant_name = this._findPrefixedKey(assoc_data[0], 'variant');
-        const assoc_logp_name = this._findPrefixedKey(assoc_data[0], 'log_pvalue');
-
-        // Determine the reference variant (via user selected OR automatic-per-track)
-        let refvar;
-        let best_hit = {};
-        if (state.ldrefvar) {
-            // State/ldrefvar would store the variant in the format used by assoc data, so no need to clean up to match in data
-            refvar = state.ldrefvar;
-            best_hit = assoc_data.find((item) => item[assoc_variant_name] === refvar) || {};
-        } else {
-            // find highest log-value and associated var spec
-            let best_logp = 0;
-            for (let item of assoc_data) {
-                const { [assoc_variant_name]: variant, [assoc_logp_name]: log_pvalue} = item;
-                if (log_pvalue > best_logp) {
-                    best_logp = log_pvalue;
-                    refvar = variant;
-                    best_hit = item;
-                }
-            }
-        }
-
-        // Add a special field that is not part of the assoc or LD data from the server, but has significance for plotting.
-        //  Since we already know the best hit, it's easier to do this here rather than in annotate or join phase.
-        best_hit.lz_is_ld_refvar = true;
-
-        // Above, we compared the ldrefvar to the assoc data. But for talking to the LD server,
-        //   the variant fields must be normalized to a specific format. All later LD operations will use that format.
-        const match = refvar && refvar.match(REGEX_MARKER);
-        if (!match) {
-            throw new Error('Could not request LD for a missing or incomplete marker format');
-        }
-
-        const [_, chrom, pos, ref, alt] = match;
-        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
-        //  a partial match at most leaves room for potential future features.
-        refvar = `${chrom}:${pos}`; // FIXME: is this a server request that we can skip?
-        if (ref && alt) {
-            refvar += `_${ref}/${alt}`;
-        }
-
-        base.ld_refvar = refvar;
-
-        // The LD source/pop can be overridden from plot.state, so that user choices can override initial source config
-        const genome_build = state.genome_build || this._config.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
-        let ld_source = state.ld_source || this._config.source || '1000G';
-        const ld_population = state.ld_pop || this._config.population || 'ALL';  // LDServer panels will always have an ALL
-
-        if (ld_source === '1000G' && genome_build === 'GRCh38') {
-            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
-            ld_source = '1000G-FRZ09';
-        }
-
-        this._validateBuildSource(genome_build, null);  // LD doesn't need to validate `source` option
-        return Object.assign({}, base, { genome_build, ld_source, ld_population });
-    }
-
-    _getCacheKey(options) {
-        // LD is keyed by more than just region; append other parameters to the base cache key
-        const base = super._getCacheKey(options);
-        const { ld_refvar, ld_source, ld_population } = options;
-        return `${base}_${ld_refvar}_${ld_source}_${ld_population}`;
-    }
-
-    _performRequest(options) {
-        // Skip request if this one depends on other data, in a region with no data
-        if (options._skip_request) {
-            return Promise.resolve([]);
-        }
-        // The UM LDServer uses API pagination; fetch all data by chaining requests when pages are detected
-        const url = this._getURL(options);
-
-        let combined = { data: {} };
-        let chainRequests = function (url) {
-            return fetch(url).then().then((response) => {
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                return response.text();
-            }).then(function(payload) {
-                payload = JSON.parse(payload);
-                Object.keys(payload.data).forEach(function (key) {
-                    combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
-                });
-                if (payload.next) {
-                    return chainRequests(payload.next);
-                }
-                return combined;
-            });
-        };
-        return chainRequests(url);
-    }
-}
-
-
-// NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
-//  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
-//  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
-//  private API methods exist in the base class.
-
-class BaseAdapter {
-    constructor() {
-        throw new Error('The "BaseAdapter" and "BaseApiAdapter" classes have been replaced in LocusZoom 0.14. See migration guide for details.');
-    }
-}
-
-/**
- * Base class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
- *  (and potentially other behavior) that are relevant to URL-based requests.
- * @extends module:LocusZoom_Adapters~BaseAdapter
- * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
- * @inheritDoc
- */
-class BaseApiAdapter extends BaseAdapter {}
 
 
 /**
@@ -394,6 +261,7 @@ class GwasCatalogLZ extends BaseUMAdapter {
     }
 }
 
+
 /**
  * Retrieve Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
@@ -431,6 +299,7 @@ class GeneLZ extends BaseUMAdapter {
         return `${base}?filter=chrom eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}${source_query}`;
     }
 }
+
 
 /**
  * Retrieve Gene Constraint Data, as fetched from the gnomAD server (or compatible graphQL api endpoint)
@@ -514,6 +383,149 @@ class GeneConstraintLZ extends BaseLZAdapter {
     }
 }
 
+
+class LDServer extends BaseUMAdapter {
+    constructor(config) {
+        // item1 = refvar, item2 = othervar
+        config.fields = ['chromosome2', 'position2', 'variant2', 'correlation'];
+        super(config);
+    }
+
+    __find_ld_refvar(state, assoc_data) {
+        const assoc_variant_name = this._findPrefixedKey(assoc_data[0], 'variant');
+        const assoc_logp_name = this._findPrefixedKey(assoc_data[0], 'log_pvalue');
+
+        // Determine the reference variant (via user selected OR automatic-per-track)
+        let refvar;
+        let best_hit = {};
+        if (state.ldrefvar) {
+            // State/ldrefvar would store the variant in the format used by assoc data, so no need to clean up to match in data
+            refvar = state.ldrefvar;
+            best_hit = assoc_data.find((item) => item[assoc_variant_name] === refvar) || {};
+        } else {
+            // find highest log-value and associated var spec
+            let best_logp = 0;
+            for (let item of assoc_data) {
+                const { [assoc_variant_name]: variant, [assoc_logp_name]: log_pvalue} = item;
+                if (log_pvalue > best_logp) {
+                    best_logp = log_pvalue;
+                    refvar = variant;
+                    best_hit = item;
+                }
+            }
+        }
+
+        // Add a special field that is not part of the assoc or LD data from the server, but has significance for plotting.
+        //  Since we already know the best hit, it's easier to do this here rather than in annotate or join phase.
+        best_hit.lz_is_ld_refvar = true;
+
+        // Above, we compared the ldrefvar to the assoc data. But for talking to the LD server,
+        //   the variant fields must be normalized to a specific format. All later LD operations will use that format.
+        const match = refvar && refvar.match(REGEX_MARKER);
+        if (!match) {
+            throw new Error('Could not request LD for a missing or incomplete marker format');
+        }
+
+        const [_, chrom, pos, ref, alt] = match;
+        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
+        //  a partial match at most leaves room for potential future features.
+        refvar = `${chrom}:${pos}`; // FIXME: is this a server request that we can skip?
+        if (ref && alt) {
+            refvar += `_${ref}/${alt}`;
+        }
+
+        // Return the reference variant, in a normalized format suitable for LDServer queries
+        return refvar;
+    }
+
+    _buildRequestOptions(state, assoc_data) {
+        if (!assoc_data) {
+            throw new Error('LD request must depend on association data');
+        }
+
+        // If no state refvar is provided, find the most significant variant in any provided assoc data.
+        //   Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
+        const base = super._buildRequestOptions(...arguments);
+        if (!assoc_data.length) {
+            base._skip_request = true;
+            return base;
+        }
+
+        base.ld_refvar = this.__find_ld_refvar(state, assoc_data);
+
+        // The LD source/pop can be overridden from plot.state, so that user choices can override initial source config
+        const genome_build = state.genome_build || this._config.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
+        let ld_source = state.ld_source || this._config.source || '1000G';
+        const ld_population = state.ld_pop || this._config.population || 'ALL';  // LDServer panels will always have an ALL
+
+        if (ld_source === '1000G' && genome_build === 'GRCh38') {
+            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
+            ld_source = '1000G-FRZ09';
+        }
+
+        this._validateBuildSource(genome_build, null);  // LD doesn't need to validate `source` option
+        return Object.assign({}, base, { genome_build, ld_source, ld_population });
+    }
+
+    _getURL(request_options) {
+        const method = this._config.method || 'rsquare';
+        const {
+            chr, start, end,
+            ld_refvar,
+            genome_build, ld_source, ld_population,
+        } = request_options;
+
+        const base = super._getURL(request_options);
+
+        return  [
+            base, 'genome_builds/', genome_build, '/references/', ld_source, '/populations/', ld_population, '/variants',
+            '?correlation=', method,
+            '&variant=', encodeURIComponent(ld_refvar),
+            '&chrom=', encodeURIComponent(chr),
+            '&start=', encodeURIComponent(start),
+            '&stop=', encodeURIComponent(end),
+        ].join('');
+    }
+
+    _getCacheKey(options) {
+        // LD is keyed by more than just region; append other parameters to the base cache key
+        const base = super._getCacheKey(options);
+        const { ld_refvar, ld_source, ld_population } = options;
+        return `${base}_${ld_refvar}_${ld_source}_${ld_population}`;
+    }
+
+    _performRequest(options) {
+        // Skip request if this one depends on other data, in a region with no data
+        if (options._skip_request) {
+            return Promise.resolve([]);
+        }
+
+        const url = this._getURL(options);
+
+        // The UM LDServer uses API pagination; fetch all data by chaining requests when pages are detected
+        let combined = { data: {} };
+        let chainRequests = function (url) {
+            return fetch(url).then().then((response) => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.text();
+            }).then(function(payload) {
+                payload = JSON.parse(payload);
+                Object.keys(payload.data).forEach(function (key) {
+                    combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
+                });
+                if (payload.next) {
+                    return chainRequests(payload.next);
+                }
+                return combined;
+            });
+        };
+        return chainRequests(url);
+    }
+}
+
+
 /**
  * Retrieve Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
@@ -543,6 +555,7 @@ class RecombLZ extends BaseUMAdapter {
     }
 }
 
+
 /**
  * Retrieve static blobs of data as raw JS objects. This does not perform additional parsing, which is required
  *  for some sources (eg it does not know how to join together LD and association data).
@@ -569,6 +582,7 @@ class StaticSource extends BaseLZAdapter {
         return Promise.resolve(this._data);
     }
 }
+
 
 /**
  * Retrieve PheWAS data retrieved from a LocusZoom/PortalDev compatible API
