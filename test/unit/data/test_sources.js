@@ -15,7 +15,7 @@ describe('DataSources object', function() {
         const data_sources = new DataSources();
         const url = 'https://pheweb.org';
         data_sources
-            .add('assoc', ['AssociationLZ', { url, params: {}}]);
+            .add('assoc', ['AssociationLZ', { url }]);
         const source = data_sources.get('assoc');
         assert.instanceOf(source, AssociationLZ);
         assert.equal(url, source.url);
@@ -29,7 +29,7 @@ describe('DataSources object', function() {
     });
 
     it('can add source instances directly', function () {
-        const instance = new AssociationLZ({ url: 'https://pheweb.org', params: {}});
+        const instance = new AssociationLZ({ url: 'https://pheweb.org' });
         const data_sources = new DataSources();
         data_sources
             .add('assoc', instance);
@@ -38,8 +38,8 @@ describe('DataSources object', function() {
     });
 
     it('should allow chainable adding with a fluent API', function () {
-        const instance1 = new AssociationLZ({ url: 1, params: {}});
-        const instance2 = new AssociationLZ({ url: 2, params: {}});
+        const instance1 = new AssociationLZ({ url: 1 });
+        const instance2 = new AssociationLZ({ url: 2 });
 
         const data_sources = new DataSources();
         data_sources
@@ -52,9 +52,9 @@ describe('DataSources object', function() {
 
     it('should ensure that all sources are aware of their namespace', function () {
         const data_sources = new DataSources();
-        const instance = new AssociationLZ({ url: 1, params: {}});
+        const instance = new AssociationLZ({ url: 1 });
         data_sources
-            .add('assoc', ['AssociationLZ', { url: 1, params: {}}])
+            .add('assoc', ['AssociationLZ', { url: 1 }])
             .add('assoc2', instance);
 
         assert.equal(data_sources.get('assoc').source_id, 'assoc');

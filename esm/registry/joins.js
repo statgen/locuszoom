@@ -39,8 +39,10 @@ registry.add('assoc_to_gwas_catalog', (assoc_data, catalog_data, assoc_key, cata
         let best = 0;
         let best_variant;
         for (let item of claims) {
-            if (item[catalog_logp_name] >= best) {
+            const val = item[catalog_logp_name];
+            if ( val >= best) {
                 best_variant = item;
+                best = val;
             }
         }
         best_variant.n_catalog_matches = claims.length;

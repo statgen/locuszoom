@@ -461,7 +461,7 @@ const annotation_catalog_layer = {
         type: 'assoc_to_gwas_catalog',
         name: 'combined',
         requires: ['assoc', 'catalog'],
-        params: ['assoc.variant', 'catalog.variant', 'catalog.log_pvalue'],
+        params: ['assoc.position', 'catalog.pos', 'catalog.log_pvalue'],
     }],
     id: 'annotation_catalog',
     type: 'annotation_track',
