@@ -106,7 +106,7 @@
     phenos.forEach(function(pheno){
         data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/",  source: pheno.study_id, id_field: "variant" }]);
         var association_data_layer_mods = {
-            // FIXME: implement dependency fetcher so that this demo doesn't pull LD when it shouldn't
+            // FIXME: Merge logic prevents us from removing a namespace- LD is still present after override!
             namespace: { "assoc": pheno.namespace },
             join_options: [],
             id: "associationpvalues_" + pheno.namespace,

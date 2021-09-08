@@ -131,9 +131,11 @@ describe('Interval annotation track', function () {
         beforeEach(function() {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('intervals', ['StaticJSON', [
-                    { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
-                ]]);
+                .add('intervals', ['StaticJSON', {
+                    data: [
+                        { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
+                    ],
+                }]);
 
             const layout = {
                 panels: [ LAYOUTS.get('panel', 'intervals') ],

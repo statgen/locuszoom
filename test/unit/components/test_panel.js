@@ -310,7 +310,9 @@ describe('Panel', function() {
         beforeEach(function() {
             this.plot = null;
             this.datasources = new DataSources()
-                .add('static', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }] ]);
+                .add('static', ['StaticJSON', {
+                    data: [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }],
+                }]);
             this.layout = {
                 width: 100,
                 panels: [
@@ -326,6 +328,7 @@ describe('Panel', function() {
                             {
                                 id: 'd',
                                 type: 'scatter',
+                                namespace: { static: 'static' },
                                 fields: ['static:id', 'static:x', 'static:y'],
                                 id_field: 'static:id',
                                 z_index: 0,

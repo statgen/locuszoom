@@ -76,7 +76,7 @@ describe('highlight_regions data layer', function () {
             };
             d3.select('body').append('div').attr('id', 'plot');
             const sources = new DataSources()
-                .add('intervals', ['StaticJSON', [{start: 1, end: 2}]]);
+                .add('intervals', ['StaticJSON', { data: [{start: 1, end: 2}] }]);
             this.plot = populate('#plot', sources, layout);
         });
         afterEach(function() {
@@ -90,13 +90,17 @@ describe('highlight_regions data layer', function () {
         });
         it('can render data from regions in data source', function () {
             // Rejigger the original plot layout to work in "datasource mode"
-            const d_layout = this.plot.panels.p.data_layers.d.layout;
-            d_layout.start_field = 'intervals:start';
-            d_layout.end_field = 'intervals:end';
-            d_layout.regions = [];
-            d_layout.fields = ['intervals:start', 'intervals:end'];
+            const layer = this.plot.panels.p.data_layers.d;
+            const d_layout = layer.layout;
+            Object.assign(d_layout, {
+                namespace: { intervals: 'intervals'},
+                start_field: 'intervals:start',
+                end_field: 'intervals:end',
+                regions: [],
+                fields: ['intervals:start', 'intervals:end'],
+            });
             return this.plot.applyState().then(() => {
-                assert.equal(this.plot.panels.p.data_layers.d.svg.group.selectAll('rect').size(), 1, 'Layer draws one region as pulled from the datasource');
+                assert.equal(layer.svg.group.selectAll('rect').size(), 1, 'Layer draws one region as pulled from the datasource');
             });
         });
     });

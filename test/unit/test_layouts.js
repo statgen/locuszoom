@@ -1,11 +1,11 @@
 import { assert } from 'chai';
-import registry, {_LayoutRegistry} from '../../esm/registry/layouts';
+import LAYOUTS, {_LayoutRegistry} from '../../esm/registry/layouts';
 import {deepCopy, merge} from '../../esm/helpers/layouts';
 
 describe('_LayoutRegistry', function() {
     describe('Provides a method to list current layouts by type', function() {
         it ('No argument: returns an object, keys are layout types and values are arrays of layout names', function() {
-            const list = registry.list();
+            const list = LAYOUTS.list();
             assert.isObject(list);
             assert.hasAllKeys(list, ['plot', 'panel', 'data_layer', 'toolbar', 'toolbar_widgets', 'tooltip']);
             Object.values(list).forEach((listing) => {
@@ -14,8 +14,8 @@ describe('_LayoutRegistry', function() {
         });
 
         it ('Passed a valid type: returns array of layout names matching that type', function() {
-            const all = registry.list();
-            const just_plots = registry.list('plot');
+            const all = LAYOUTS.list();
+            const just_plots = LAYOUTS.list('plot');
 
             assert.isArray(just_plots);
             assert.deepEqual(just_plots, all.plot);
@@ -25,13 +25,13 @@ describe('_LayoutRegistry', function() {
     describe('Provides a method to add new layouts', function() {
         it ('Requires arguments as (string, string, object) or throws an exception', function() {
             assert.throws(() => {
-                registry.add();
+                LAYOUTS.add();
             }, /must all/);
             assert.throws(() => {
-                registry.add('type_only');
+                LAYOUTS.add('type_only');
             }, /must all/, 'Only type provided');
             assert.throws(() => {
-                registry.add('type', 'name');
+                LAYOUTS.add('type', 'name');
             }, /must all/, 'Type and name provided, but no item');
         });
 
@@ -52,16 +52,16 @@ describe('_LayoutRegistry', function() {
     describe('Provides a method to get layout objects', function() {
         it('Must specify both type and name of the layout desired', function() {
             assert.throws(() => {
-                registry.get('plot');
+                LAYOUTS.get('plot');
             }, /Must specify/, 'Only type specified');
 
             assert.throws(() => {
-                registry.get('plot', 'nonexistent');
+                LAYOUTS.get('plot', 'nonexistent');
             }, /not found/, 'Unrecognized type specified');
         });
 
         it('Returns layout object when type and name match', function() {
-            const result = registry.get('panel', 'association');
+            const result = LAYOUTS.get('panel', 'association');
             assert.equal(result.id, 'association');
         });
 
@@ -382,11 +382,11 @@ describe('Layout helpers', function () {
 
     describe('Provides a method to query specific attributes', function () {
         it('can query a set of values based on a jsonpath selector', function () {
-            const base = registry.get('plot', 'standard_association');
+            const base = LAYOUTS.get('plot', 'standard_association');
             base.extra_field = false;
 
             const scenarios = [
-                ['predicate_filters retrieve only list items where a specific condition is met', '$..color[?(@.scale_function === "if")].field', ['ld:isrefvar']],
+                ['predicate_filters retrieve only list items where a specific condition is met', '$..color[?(@.scale_function === "if")].field', ['lz_is_ld_refvar']],
                 ['retrieves a list of scale function names', 'panels[?(@.tag === "association")]..scale_function', [ 'if', 'if', 'if', 'numerical_bin' ]],
                 ['fetches dotted field path - one specific axis label', 'panels[?(@.tag === "association")].axes.x.label', [ 'Chromosome {{chr}} (Mb)' ]],
                 ['is able to query and return falsy values', '$.extra_field', [false]],
@@ -394,13 +394,13 @@ describe('Layout helpers', function () {
             ];
 
             for (let [label, selector, expected] of scenarios) {
-                assert.sameDeepMembers(registry.query_attrs(base, selector), expected, `Scenario '${label}' passed`);
+                assert.sameDeepMembers(LAYOUTS.query_attrs(base, selector), expected, `Scenario '${label}' passed`);
             }
         });
 
         it('can mutate a set of values based on a jsonpath selector', function () {
-            const base_panel = registry.get('panel', 'association');
-            const base_layer = registry.get('data_layer', 'association_pvalues');
+            const base_panel = LAYOUTS.get('panel', 'association');
+            const base_layer = LAYOUTS.get('data_layer', 'association_pvalues');
 
             const scenarios = [
                 ['set single value to a constant', '$.panels[?(@.tag === "association")].id', 'one', ['one']],
@@ -413,9 +413,9 @@ describe('Layout helpers', function () {
             ];
 
             for (let [label, selector, mutator, expected] of scenarios) {
-                const base = registry.get('plot', 'standard_association');
+                const base = LAYOUTS.get('plot', 'standard_association');
                 base.fake_field = false;
-                assert.deepEqual(registry.mutate_attrs(base, selector, mutator), expected, `Scenario '${label}' passed`);
+                assert.deepEqual(LAYOUTS.mutate_attrs(base, selector, mutator), expected, `Scenario '${label}' passed`);
             }
         });
     });

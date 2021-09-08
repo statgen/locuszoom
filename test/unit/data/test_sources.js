@@ -18,7 +18,7 @@ describe('DataSources object', function() {
             .add('assoc', ['AssociationLZ', { url }]);
         const source = data_sources.get('assoc');
         assert.instanceOf(source, AssociationLZ);
-        assert.equal(url, source.url);
+        assert.equal(url, source._url);
     });
 
     it('warns when trying to create a source of unknown type', function () {
@@ -46,8 +46,8 @@ describe('DataSources object', function() {
             .add('assoc', instance1)
             .add('assoc2', instance2);
 
-        assert.equal(data_sources.get('assoc').url, 1);
-        assert.equal(data_sources.get('assoc2').url, 2);
+        assert.equal(data_sources.get('assoc')._url, 1);
+        assert.equal(data_sources.get('assoc2')._url, 2);
     });
 
     it('should ensure that all sources are aware of their namespace', function () {

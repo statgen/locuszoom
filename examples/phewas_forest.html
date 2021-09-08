@@ -102,7 +102,7 @@
                             point_shape: "square",
                             point_size: {
                                 scale_function: "interpolate",
-                                field: "phewas.log_pvalue",
+                                field: 'phewas:log_pvalue',
                                 parameters: {
                                     breaks: [0, 10],
                                     values: [60, 160],
@@ -111,7 +111,7 @@
                             },
                             color: {
                                 scale_function: "interpolate",
-                                field: "phewas.log_pvalue",
+                                field: 'phewas:log_pvalue',
                                 parameters: {
                                     breaks: [0, 10],
                                     values: ["#fee8c8","#b30000"],
@@ -127,21 +127,21 @@
                                 { shape: "square", class: "lz-data_layer-forest", color: "#d7301f", size: 140, label: "8 - 10" },
                                 { shape: "square", class: "lz-data_layer-forest", color: "#b30000", size: 160, label: "10+" }
                             ],
-                            id_field: "phewas.phenotype",
-                            fields: ["phewas.phenotype", "phewas.log_pvalue", "phewas.log_pvalue|logtoscinotation", "phewas.beta", "phewas.ci_start", "phewas.ci_end"],
+                            id_field: 'phewas:phenotype',
+                            fields: ['phewas:phenotype', 'phewas:log_pvalue', "phewas:log_pvalue|logtoscinotation", 'phewas:beta', 'phewas:ci_start', 'phewas:ci_end'],
                             x_axis: {
-                                field: "phewas.beta",
+                                field: 'phewas:beta',
                                 lower_buffer: 0.1,
                                 upper_buffer: 0.1
                             },
                             y_axis: {
                                 axis: 2,
-                                category_field: "phewas.phenotype",  // Labels
-                                field: "phewas.y_offset",  // Positions (dynamically added)
+                                category_field: 'phewas:phenotype',  // Labels
+                                field: 'phewas:y_offset',  // Positions (dynamically added)
                             },
                             confidence_intervals: {
-                                start_field: "phewas.ci_start",
-                                end_field: "phewas.ci_end"
+                                start_field: 'phewas:ci_start',
+                                end_field: 'phewas:ci_end'
                             },
                             behaviors: {
                                 onmouseover: [
@@ -162,10 +162,10 @@
                                 closable: true,
                                 show: { or: ["highlighted", "selected"] },
                                 hide: { and: ["unhighlighted", "unselected"] },
-                                html: "<strong>{{phewas.phenotype|htmlescape}}</strong><br>"
-                                    + "P Value: <strong>{{phewas.log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
-                                    + "Odds Ratio: <strong>{{phewas.beta|htmlescape}}</strong><br>"
-                                    + "95% Conf. Interval: <strong>[ {{phewas.ci_start|htmlescape}} {{phewas.ci_end|htmlescape}} ]</strong>"
+                                html: "<strong>{{phewas:phenotype|htmlescape}}</strong><br>"
+                                    + "P Value: <strong>{{phewas:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                                    + "Odds Ratio: <strong>{{phewas:beta|htmlescape}}</strong><br>"
+                                    + "95% Conf. Interval: <strong>[ {{phewas:ci_start|htmlescape}} {{phewas:ci_end|htmlescape}} ]</strong>"
                             }
                         },
                         {

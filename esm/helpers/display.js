@@ -160,7 +160,7 @@ function parseFields(html, data, extra) {
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
     const tokens = [];
-    const regex = /{{(?:(#if )?([A-Za-z0-9_.|]+)|(#else)|(\/if))}}/;
+    const regex = /{{(?:(#if )?([\w+_:|]+)|(#else)|(\/if))}}/;
     while (html.length > 0) {
         const m = regex.exec(html);
         if (!m) {

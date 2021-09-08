@@ -30,13 +30,13 @@ describe('Requester object defines and parses requests', function () {
                 type: 'left_match',
                 name: 'combined',
                 requires: ['assoc', 'ld'],
-                params: ['assoc.variant', 'ld.variant'],
+                params: ['assoc:variant', 'ld:variant'],
             }];
 
             const [entities, dependencies] = this._requester._config_to_sources(namespace_options, join_options);
 
             // Validate names of dependencies are correct
-            assert.deepEqual(dependencies, ['assoc', 'ld', 'combined(assoc, ld)'], 'Dependencies are resolved in expected order');
+            assert.deepEqual(dependencies, ['assoc', 'ld(assoc)', 'combined(assoc, ld)'], 'Dependencies are resolved in expected order');
 
             // Validate that correct dependencies were wired up
             assert.deepEqual([...entities.keys()], ['assoc', 'ld', 'combined']);
@@ -49,8 +49,8 @@ describe('Requester object defines and parses requests', function () {
         it('provides developer friendly error messages', function () {
             // Test parse errors: namespaces malformed
             assert.throws(() => {
-                this._requester._config_to_sources({ 'not.allowed': 'whatever' }, {});
-            }, /Invalid namespace name: 'not\.allowed'/);
+                this._requester._config_to_sources({ 'not:allowed': 'whatever' }, {});
+            }, /Invalid namespace name: 'not:allowed'/);
 
             // Test duplicate namespace errors: assoc
             assert.throws(() => {

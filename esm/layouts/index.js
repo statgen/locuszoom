@@ -27,9 +27,9 @@ const standard_association_tooltip = {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: `<strong>{{assoc.variant|htmlescape}}</strong><br>
-        P Value: <strong>{{assoc.log_pvalue|logtoscinotation|htmlescape}}</strong><br>
-        Ref. Allele: <strong>{{assoc.ref_allele|htmlescape}}</strong><br>
+    html: `<strong>{{assoc:variant|htmlescape}}</strong><br>
+        P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>
+        Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>
         {{#if lz_is_ld_refvar}}<strong>LD Reference Variant</strong>{{#else}}
         <a href="javascript:void(0);" 
         onclick="var data = this.parentNode.__data__;
@@ -70,12 +70,12 @@ const catalog_variant_tooltip = {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: '<strong>{{catalog.variant|htmlescape}}</strong><br>'
+    html: '<strong>{{catalog:variant|htmlescape}}</strong><br>'
         + 'Catalog entries: <strong>{{n_catalog_matches|htmlescape}}</strong><br>'
-        + 'Top Trait: <strong>{{catalog.trait|htmlescape}}</strong><br>'
-        + 'Top P Value: <strong>{{catalog.log_pvalue|logtoscinotation}}</strong><br>'
+        + 'Top Trait: <strong>{{catalog:trait|htmlescape}}</strong><br>'
+        + 'Top P Value: <strong>{{catalog:log_pvalue|logtoscinotation}}</strong><br>'
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{catalog.rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{catalog.rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>',
+        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{catalog:rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{catalog:rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>',
 };
 
 const coaccessibility_tooltip = {
@@ -85,11 +85,11 @@ const coaccessibility_tooltip = {
     hide: { and: ['unhighlighted', 'unselected'] },
     // TODO: Is there a more generic terminology? (eg not every technique is in terms of cis-regulatory element)
     html: '<strong>Regulatory element</strong><br>' +
-        '{{access.start1|htmlescape}}-{{access.end1|htmlescape}}<br>' +
+        '{{access:start1|htmlescape}}-{{access:end1|htmlescape}}<br>' +
         '<strong>Promoter</strong><br>' +
-        '{{access.start2|htmlescape}}-{{access.end2|htmlescape}}<br>' +
-        '{{#if access.target}}<strong>Target</strong>: {{access.target|htmlescape}}<br>{{/if}}' +
-        '<strong>Score</strong>: {{access.score|htmlescape}}',
+        '{{access:start2|htmlescape}}-{{access:end2|htmlescape}}<br>' +
+        '{{#if access:target}}<strong>Target</strong>: {{access:target|htmlescape}}<br>{{/if}}' +
+        '<strong>Score</strong>: {{access:score|htmlescape}}',
 };
 
 /*
@@ -119,18 +119,18 @@ const recomb_rate_layer = {
     id: 'recombrate',
     type: 'line',
     tag: 'recombination',
-    fields: ['recomb.position', 'recomb.recomb_rate'],
+    fields: ['recomb:position', 'recomb:recomb_rate'],
     z_index: 1,
     style: {
         'stroke': '#0000FF',
         'stroke-width': '1.5px',
     },
     x_axis: {
-        field: 'recomb.position',
+        field: 'recomb:position',
     },
     y_axis: {
         axis: 2,
-        field: 'recomb.recomb_rate',
+        field: 'recomb:recomb_rate',
         floor: 0,
         ceiling: 100,
     },
@@ -148,13 +148,13 @@ const association_pvalues_layer = {
         type: 'left_match',
         name: 'combined',
         requires: ['assoc', 'ld'],
-        params: ['assoc.position', 'ld.position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc.variant = ld.variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
+        params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
     }],
     id: 'associationpvalues',
     type: 'scatter',
     tag: 'association',
-    fields: ['assoc.variant', 'assoc.position', 'assoc.log_pvalue', 'assoc.log_pvalue|logtoscinotation', 'assoc.ref_allele'],
-    id_field: 'assoc.variant',
+    fields: ['assoc:variant', 'assoc:position', 'assoc:log_pvalue', 'assoc:log_pvalue|logtoscinotation', 'assoc:ref_allele'],
+    id_field: 'assoc:variant',
     coalesce: {
         active: true,
     },
@@ -187,7 +187,7 @@ const association_pvalues_layer = {
         },
         {
             scale_function: 'numerical_bin',
-            field: 'ld.correlation',
+            field: 'ld:correlation',
             parameters: {
                 breaks: [0, 0.2, 0.4, 0.6, 0.8],
                 // Derived from Google "Turbo" colormap, breakpoints [0.05, 0.25, 0.45, 0.65, 0.85]
@@ -208,11 +208,11 @@ const association_pvalues_layer = {
     label: null,
     z_index: 2,
     x_axis: {
-        field: 'assoc.position',
+        field: 'assoc:position',
     },
     y_axis: {
         axis: 1,
-        field: 'assoc.log_pvalue',
+        field: 'assoc:log_pvalue',
         floor: 0,
         upper_buffer: 0.10,
         min_extent: [0, 10],
@@ -241,11 +241,11 @@ const coaccessibility_layer = {
     id: 'coaccessibility',
     type: 'arcs',
     tag: 'coaccessibility',
-    fields: ['access.start1', 'access.end1', 'access.start2', 'access.end2', 'access.id', 'access.target', 'access.score'],
-    match: { send: 'access.target', receive: 'access.target' },
-    id_field: 'access.id',
+    fields: ['access:start1', 'access:end1', 'access:start2', 'access:end2', 'access:id', 'access:target', 'access:score'],
+    match: { send: 'access:target', receive: 'access:target' },
+    id_field: 'access:id',
     filters: [
-        { field: 'access.score', operator: '!=', value: null },
+        { field: 'access:score', operator: '!=', value: null },
     ],
     color: [
         {
@@ -272,12 +272,12 @@ const coaccessibility_layer = {
         },
     ],
     x_axis: {
-        field1: 'access.start1',
-        field2: 'access.start2',
+        field1: 'access:start1',
+        field2: 'access:start2',
     },
     y_axis: {
         axis: 1,
-        field: 'access.score',
+        field: 'access:score',
         upper_buffer: 0.1,
         min_extent: [0, 1],
     },
@@ -304,9 +304,17 @@ const association_pvalues_catalog_layer = function () {
     // Slightly modify an existing layout
     let base = deepCopy(association_pvalues_layer);
     base = merge({ id: 'associationpvaluescatalog', fill_opacity: 0.7 }, base);
-    base.tooltip.html += '{{#if catalog.rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{catalog.rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
+
+    base.join_options.push({
+        type: 'assoc_to_gwas_catalog',
+        name: 'assoc_catalog',
+        requires: ['combined', 'catalog'],
+        params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
+    });
+
+    base.tooltip.html += '{{#if catalog:rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{catalog:rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
     base.namespace.catalog = 'catalog';
-    base.fields.push('catalog.rsid', 'catalog.trait', 'catalog.log_pvalue');
+    base.fields.push('catalog:rsid', 'catalog:trait', 'catalog:log_pvalue');
     return base;
 }();
 
@@ -323,22 +331,22 @@ const phewas_pvalues_layer = {
     point_shape: 'circle',
     point_size: 70,
     tooltip_positioning: 'vertical',
-    id_field: 'phewas.id',
-    fields: ['phewas.id', 'phewas.log_pvalue', 'phewas.trait_group', 'phewas.trait_label'],
+    id_field: 'phewas:id',
+    fields: ['phewas:id', 'phewas:log_pvalue', 'phewas:trait_group', 'phewas:trait_label'],
     x_axis: {
-        field: 'phewas.x',  // Synthetic/derived field added by `category_scatter` layer
-        category_field: 'phewas.trait_group',
+        field: 'phewas:x',  // Synthetic/derived field added by `category_scatter` layer
+        category_field: 'phewas:trait_group',
         lower_buffer: 0.025,
         upper_buffer: 0.025,
     },
     y_axis: {
         axis: 1,
-        field: 'phewas.log_pvalue',
+        field: 'phewas:log_pvalue',
         floor: 0,
         upper_buffer: 0.15,
     },
     color: [{
-        field: 'phewas.trait_group',
+        field: 'phewas:trait_group',
         scale_function: 'categorical_bin',
         parameters: {
             categories: [],
@@ -352,9 +360,9 @@ const phewas_pvalues_layer = {
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
         html: [
-            '<strong>Trait:</strong> {{phewas.trait_label|htmlescape}}<br>',
-            '<strong>Trait Category:</strong> {{phewas.trait_group|htmlescape}}<br>',
-            '<strong>P-value:</strong> {{phewas.log_pvalue|logtoscinotation|htmlescape}}<br>',
+            '<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>',
+            '<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>',
+            '<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>',
         ].join(''),
     },
     behaviors: {
@@ -369,7 +377,7 @@ const phewas_pvalues_layer = {
         ],
     },
     label: {
-        text: '{{phewas.trait_label}}',
+        text: '{{phewas:trait_label}}',
         spacing: 6,
         lines: {
             style: {
@@ -380,7 +388,7 @@ const phewas_pvalues_layer = {
         },
         filters: [
             {
-                field: 'phewas.log_pvalue',
+                field: 'phewas:log_pvalue',
                 operator: '>=',
                 value: 20,
             },
@@ -461,25 +469,25 @@ const annotation_catalog_layer = {
         type: 'assoc_to_gwas_catalog',
         name: 'combined',
         requires: ['assoc', 'catalog'],
-        params: ['assoc.position', 'catalog.pos', 'catalog.log_pvalue'],
+        params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
     }],
     id: 'annotation_catalog',
     type: 'annotation_track',
     tag: 'gwascatalog',
-    id_field: 'assoc.variant',
+    id_field: 'assoc:variant',
     x_axis: {
-        field: 'assoc.position',
+        field: 'assoc:position',
     },
     color: '#0000CC',
     fields: [
-        'assoc.variant', 'assoc.chromosome', 'assoc.position',
-        'catalog.variant', 'catalog.rsid', 'catalog.trait',
-        'catalog.log_pvalue', 'catalog.pos',
+        'assoc:variant', 'assoc:chromosome', 'assoc:position',
+        'catalog:variant', 'catalog:rsid', 'catalog:trait',
+        'catalog:log_pvalue', 'catalog:pos',
     ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
-        { field: 'catalog.rsid', operator: '!=', value: null },
-        { field: 'catalog.log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
+        { field: 'catalog:rsid', operator: '!=', value: null },
+        { field: 'catalog:log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
     ],
     behaviors: {
         onmouseover: [
@@ -785,7 +793,7 @@ const association_catalog_panel = function () {
     let base = deepCopy(association_panel);
     base = merge({
         id: 'associationcatalog',
-        namespace: { 'assoc': 'assoc', 'ld': 'ld', 'catalog': 'catalog' }, // Required to resolve display options
+        namespace: { 'assoc': 'assoc', 'ld(assoc)': 'ld', 'catalog': 'catalog' }, // Required to resolve display options
     }, base);
 
     base.toolbar.widgets.push({
@@ -805,7 +813,7 @@ const association_catalog_panel = function () {
                 display_name: 'Label catalog traits',  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
                     label: {
-                        text: '{{catalog.trait}}',
+                        text: '{{catalog:trait}}',
                         spacing: 6,
                         lines: {
                             style: {
@@ -817,9 +825,9 @@ const association_catalog_panel = function () {
                         filters: [
                             // Only label points if they are significant for some trait in the catalog, AND in high LD
                             //  with the top hit of interest
-                            { field: 'catalog.trait', operator: '!=', value: null },
-                            { field: 'catalog.log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
-                            { field: 'ld.state', operator: '>', value: 0.4 },
+                            { field: 'catalog:trait', operator: '!=', value: null },
+                            { field: 'catalog:log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
+                            { field: 'ld:state', operator: '>', value: 0.4 },
                         ],
                         style: {
                             'font-size': '10px',

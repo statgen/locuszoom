@@ -425,13 +425,14 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
                         id: 'p',
                         data_layers: [
                             {
+                                namespace: { d: 'd' },
                                 id: 'd',
                                 fields: ['d:id'],
                                 id_field: 'd:id',
@@ -450,7 +451,7 @@ describe('LocusZoom.DataLayer', function () {
             delete this.plot;
         });
         it('should allow for highlighting and unhighlighting a single element', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.lzd.getData({}, { d: 'd' }, [])
                 .then(() => {
                     const state_id = this.plot.panels.p.data_layers.d.state_id;
                     const layer_state = this.plot.state[state_id];
@@ -483,7 +484,7 @@ describe('LocusZoom.DataLayer', function () {
                 });
         });
         it('should allow for highlighting and unhighlighting all elements', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.lzd.getData({}, { d: 'd' }, [])
                 .then(() => {
                     const state_id = this.plot.panels.p.data_layers.d.state_id;
                     const layer_state = this.plot.state[state_id];
@@ -509,7 +510,7 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
@@ -517,6 +518,7 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
+                                namespace: { d: 'd' },
                                 fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
@@ -534,7 +536,7 @@ describe('LocusZoom.DataLayer', function () {
             delete this.plot;
         });
         it('should allow for selecting and unselecting a single element', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.lzd.getData({}, { d: 'd' }, [])
                 .then(() => {
                     const state_id = this.plot.panels.p.data_layers.d.state_id;
                     const layer_state = this.plot.state[state_id];
@@ -567,7 +569,7 @@ describe('LocusZoom.DataLayer', function () {
                 });
         });
         it('should allow for selecting and unselecting all elements', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.lzd.getData({}, { d: 'd' }, [])
                 .then(() => {
                     const state_id = this.plot.panels.p.data_layers.d.state_id;
                     const layer_state = this.plot.state[state_id];
@@ -715,7 +717,7 @@ describe('LocusZoom.DataLayer', function () {
     describe('data element behaviors', function () {
         beforeEach(function() {
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 2, y:0 }, { id: 'c', x: 3, y:1 }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 2, y:0 }, { id: 'c', x: 3, y:1 }] }]);
 
             const layout = {
                 panels: [
@@ -724,6 +726,7 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
+                                namespace: { d: 'd'},
                                 type: 'scatter',
                                 fields: ['d:id', 'd:x', 'd:y'],
                                 id_field: 'd:id',
@@ -884,7 +887,9 @@ describe('LocusZoom.DataLayer', function () {
             beforeEach(function () {
                 this.plot = null;
                 const data_sources = new DataSources()
-                    .add('d', ['StaticJSON', [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }]]);
+                    .add('d', ['StaticJSON', {
+                        data: [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }]
+                    }]);
                 const layout = {
                     panels: [
                         {
@@ -892,6 +897,7 @@ describe('LocusZoom.DataLayer', function () {
                             data_layers: [
                                 {
                                     id: 'd',
+                                    namespace: { d: 'd'},
                                     fields: ['d:id', 'd:a'],
                                     id_field: 'd:id',
                                     type: 'scatter',
@@ -970,7 +976,7 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
@@ -978,6 +984,7 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
+                                namespace: { d: 'd'},
                                 fields: ['d:id', 'd:some_field'],
                                 id_field: 'd:id',
                                 type: 'scatter',

@@ -56,7 +56,7 @@ function install (LocusZoom) {
         constructor(config) {
             super(...arguments);
             if (!(this._config.join_fields && this._config.join_fields.log_pvalue)) {
-                throw new Error(`Source config for ${this.constructor.name} must specify how to find 'fields.log_pvalue'`);
+                throw new Error(`Source config for ${this.constructor.name} must specify how to find 'fields:log_pvalue'`);
             }
 
             // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
@@ -110,9 +110,9 @@ function install (LocusZoom) {
 
                 // Annotate each response record based on credible set membership
                 for (let i = 0; i < _assoc_data.length; i++) {
-                    _assoc_data[i][`${options._provider_name}.posterior_prob`] = posteriorProbabilities[i];
-                    _assoc_data[i][`${options._provider_name}.contrib_fraction`] = credSetScaled[i];
-                    _assoc_data[i][`${options._provider_name}.is_member`] = credSetBool[i];
+                    _assoc_data[i][`${options._provider_name}:posterior_prob`] = posteriorProbabilities[i];
+                    _assoc_data[i][`${options._provider_name}:contrib_fraction`] = credSetScaled[i];
+                    _assoc_data[i][`${options._provider_name}:is_member`] = credSetBool[i];
                 }
             } catch (e) {
                 // If the calculation cannot be completed, return the data without annotation fields
@@ -134,7 +134,7 @@ function install (LocusZoom) {
     const association_credible_set_tooltip = function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
         const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '{{#if credset.posterior_prob}}<br>Posterior probability: <strong>{{credset.posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
+        l.html += '{{#if credset:posterior_prob}}<br>Posterior probability: <strong>{{credset:posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
         return l;
     }();
 
@@ -150,9 +150,9 @@ function install (LocusZoom) {
         closable: true,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: '<strong>{{assoc.variant|htmlescape}}</strong><br>'
-            + 'P Value: <strong>{{assoc.log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
-            '{{#if credset.posterior_prob}}<br>Posterior probability: <strong>{{credset.posterior_prob|scinotation|htmlescape}}</strong>{{/if}}',
+        html: '<strong>{{assoc:variant|htmlescape}}</strong><br>'
+            + 'P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
+            '{{#if credset:posterior_prob}}<br>Posterior probability: <strong>{{credset:posterior_prob|scinotation|htmlescape}}</strong>{{/if}}',
     };
     LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', annotation_credible_set_tooltip);
 
@@ -171,14 +171,14 @@ function install (LocusZoom) {
             fill_opacity: 0.7,
             tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
             fields: [
-                'assoc.variant', 'assoc.position',
-                'assoc.log_pvalue', 'assoc.log_pvalue|logtoscinotation',
-                'assoc.ref_allele',
-                'credset.posterior_prob', 'credset.contrib_fraction',
-                'credset.is_member',
-                'ld.state', 'ld.isrefvar',
+                'assoc:variant', 'assoc:position',
+                'assoc:log_pvalue', 'assoc:log_pvalue|logtoscinotation',
+                'assoc:ref_allele',
+                'credset:posterior_prob', 'credset:contrib_fraction',
+                'credset:is_member',
+                'ld:state', 'ld:isrefvar',
             ],
-            match: { send: 'assoc.variant', receive: 'assoc.variant' },
+            match: { send: 'assoc:variant', receive: 'assoc:variant' },
         });
         base.color.unshift({
             field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
@@ -202,9 +202,9 @@ function install (LocusZoom) {
         namespace: { 'assoc': 'assoc', 'credset(assoc)': 'credset' },
         id: 'annotationcredibleset',
         type: 'annotation_track',
-        id_field: 'assoc.variant',
+        id_field: 'assoc:variant',
         x_axis: {
-            field: 'assoc.position',
+            field: 'assoc:position',
         },
         color: [
             {
@@ -217,11 +217,11 @@ function install (LocusZoom) {
             },
             '#00CC00',
         ],
-        fields: ['assoc.variant', 'assoc.position', 'assoc.log_pvalue', 'credset.posterior_prob', 'credset.contrib_fraction', 'credset.is_member'],
-        match: { send: 'assoc.variant', receive: 'assoc.variant' },
+        fields: ['assoc:variant', 'assoc:position', 'assoc:log_pvalue', 'credset:posterior_prob', 'credset:contrib_fraction', 'credset:is_member'],
+        match: { send: 'assoc:variant', receive: 'assoc:variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
-            { field: 'credset.is_member', operator: '=', value: true },
+            { field: 'credset:is_member', operator: '=', value: true },
         ],
         behaviors: {
             onmouseover: [
@@ -306,7 +306,7 @@ function install (LocusZoom) {
                             point_shape: 'circle',
                             point_size: 40,
                             color: {
-                                field: 'credset.is_member',
+                                field: 'credset:is_member',
                                 scale_function: 'if',
                                 parameters: {
                                     field_value: true,
@@ -340,7 +340,7 @@ function install (LocusZoom) {
                             point_size: 40,
                             color: [
                                 {
-                                    field: 'credset.contrib_fraction',
+                                    field: 'credset:contrib_fraction',
                                     scale_function: 'if',
                                     parameters: {
                                         field_value: 0,
@@ -349,7 +349,7 @@ function install (LocusZoom) {
                                 },
                                 {
                                     scale_function: 'interpolate',
-                                    field: 'credset.contrib_fraction',
+                                    field: 'credset:contrib_fraction',
                                     parameters: {
                                         breaks: [0, 1],
                                         values: ['#fafe87', '#9c0000'],

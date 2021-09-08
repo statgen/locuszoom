@@ -60,7 +60,7 @@ class BaseApiAdapter extends BaseAdapter {}
 
 
 class BaseLZAdapter extends BaseUrlAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         super(config);
 
         this._validate_fields = true;
@@ -108,7 +108,8 @@ class BaseLZAdapter extends BaseUrlAdapter {
             return Object.entries(row).reduce(
                 (acc, [label, value]) => {
                     if (!this._limit_fields || this._fields_contract.has(label)) {
-                        acc[`${options._provider_name}.${label}`] = value;
+                        // Rename API fields to format `namespace:fieldname`
+                        acc[`${options._provider_name}:${label}`] = value;
                     }
                     return acc;
                 },
@@ -129,7 +130,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
      * @private
      */
     _findPrefixedKey(a_record, fieldname) {
-        const suffixer = new RegExp(`\\.${fieldname}$`);
+        const suffixer = new RegExp(`:${fieldname}$`);
         const match = Object.keys(a_record).find((key) => suffixer.test(key));
         if (!match) {
             throw new Error(`Could not locate the required key name: ${fieldname} in dependent data`);
@@ -140,7 +141,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
 
 
 class BaseUMAdapter extends BaseLZAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         super(config);
         // The UM portaldev API accepts an (optional) parameter "genome_build"
         this._genome_build = config.genome_build;
@@ -195,17 +196,15 @@ class BaseUMAdapter extends BaseLZAdapter {
 
 
 class AssociationLZ extends BaseUMAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         // Minimum adapter contract hard-codes fields contract based on UM PortalDev API + default assoc plot layout
         // For layers that require more functionality, pass extra_fields to source options
         config.fields = ['variant', 'position', 'log_pvalue', 'ref_allele'];
 
         super(config);
 
+        // We don't validate the source option because a depressing number of people use AssociationLZ to serve non-dynamic JSON files
         const { source } = config;
-        if (!source) {
-            throw new Error('Association adapter must specify dataset ID via "source" option');
-        }
         this._source_id = source;
     }
 
@@ -239,7 +238,7 @@ class GwasCatalogLZ extends BaseUMAdapter {
      * @param {Number} [config.params.source] The ID of the chosen catalog. Most usages should omit this parameter and
      *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
      */
-    constructor(config) {
+    constructor(config = {}) {
         config.fields = ['rsid', 'trait', 'log_pvalue'];
         super(config);
     }
@@ -274,7 +273,7 @@ class GwasCatalogLZ extends BaseUMAdapter {
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent GENCODE data, GRCh37.
  */
 class GeneLZ extends BaseUMAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         super(config);
 
         // The UM Genes API has a very complex internal format and the genes layer is written to work with it exactly as given.
@@ -318,7 +317,7 @@ class GeneConstraintLZ extends BaseLZAdapter {
      * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
      *   May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
      */
-    constructor(config) {
+    constructor(config = {}) {
         super(config);
         this._validate_fields = false;
         this._prefix_namespace = false;
@@ -385,7 +384,7 @@ class GeneConstraintLZ extends BaseLZAdapter {
 
 
 class LDServer extends BaseUMAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         // item1 = refvar, item2 = othervar
         config.fields = ['chromosome2', 'position2', 'variant2', 'correlation'];
         super(config);
@@ -538,6 +537,11 @@ class LDServer extends BaseUMAdapter {
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseUMAdapter {
+    constructor(config = {}) {
+        config.fields = ['position', 'recomb_rate'];
+        super(config);
+    }
+
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
@@ -572,10 +576,14 @@ class RecombLZ extends BaseUMAdapter {
  * @param {object} data The data to be returned by this source (subject to namespacing rules)
  */
 class StaticSource extends BaseLZAdapter {
-    constructor(config) {
+    constructor(config = {}) {
         // Does not receive any config; the only argument is the raw data, embedded when source is created
         super(...arguments);
-        this._data = config.data;
+        const { data } = config;
+        if (!data || Array.isArray(config)) { // old usages may provide an array directly instead of as config key
+            throw new Error("'StaticSource' must provide data as required option 'data'");
+        }
+        this._data = data;
     }
 
     _performRequest(options) {

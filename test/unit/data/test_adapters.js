@@ -62,7 +62,7 @@ describe('Data adapters', function () {
             return source.getData({
                 _provider_name: 'sometest',
                 _test_data: [{ a: 1, b: 2 }]}
-            ).then((result) => assert.deepEqual(result, [{'sometest.a': 1, 'sometest.b': 2}]));
+            ).then((result) => assert.deepEqual(result, [{'sometest:a': 1, 'sometest:b': 2}]));
         });
 
         it('can restrict the list of returned fields to those in the fields contract', function () {
@@ -70,17 +70,17 @@ describe('Data adapters', function () {
             return source.getData({
                 _provider_name: 'sometest',
                 _test_data: [{ a: 1, b: 2 }]}
-            ).then((result) => assert.deepEqual(result, [{ 'sometest.b': 2}]));
+            ).then((result) => assert.deepEqual(result, [{ 'sometest:b': 2}]));
         });
 
         it('has a helper to locate dependent fields that were already namespaced', function () {
             const source = new BaseTestClass({});
-            const match = source._findPrefixedKey({'sometest.aaa': 1, 'sometest.a': 2, 'sometest.aa': 3}, 'a');
+            const match = source._findPrefixedKey({'sometest:aaa': 1, 'sometest:a': 2, 'sometest:aa': 3}, 'a');
 
-            assert.equal(match, 'sometest.a', 'Found correct key and ignored partial suffixes');
+            assert.equal(match, 'sometest:a', 'Found correct key and ignored partial suffixes');
 
             assert.throws(
-                () => source._findPrefixedKey([{'sometest.aaa': 1 }], 'no_such_key'),
+                () => source._findPrefixedKey([{'sometest:aaa': 1 }], 'no_such_key'),
                 /Could not locate/,
                 'Pedantically insists that data match the expected contract'
             );
@@ -150,6 +150,17 @@ describe('Data adapters', function () {
     });
 
     describe('StaticSource', function () {
+        it('warns if the `data` key is missing', function () {
+            assert.throws(
+                () => new StaticSource([]),
+                /required option/
+            );
+            assert.throws(
+                () => new StaticSource({}),
+                /required option/
+            );
+        });
+
         it('Returns the exact data provided by the user, regardless of region', function () {
             const data = { a: 1, b: 2, c: 3 };
             const source = new StaticSource({ data });
@@ -168,9 +179,9 @@ describe('Data adapters', function () {
         beforeEach(function () {
             this._assoc_data = [
                 // Deliberately use several variant formats to verify normalization
-                { 'assoc.variant': '1:23_A/C', 'assoc.log_pvalue': 0.2 },
-                { 'assoc.variant': '1:24:A:C', 'assoc.log_pvalue': 125 },
-                { 'assoc.variant': '1-25-A-C', 'assoc.log_pvalue': 72 },
+                { 'assoc:variant': '1:23_A/C', 'assoc:log_pvalue': 0.2 },
+                { 'assoc:variant': '1:24:A:C', 'assoc:log_pvalue': 125 },
+                { 'assoc:variant': '1-25-A-C', 'assoc:log_pvalue': 72 },
             ];
         });
 

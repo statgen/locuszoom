@@ -41,7 +41,7 @@ describe('Toolbar widgets', function () {
     describe('Filter fields Widget', function () {
         beforeEach(function() {
             const datasources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 1, a: 12 }]]);
+                .add('d', ['StaticJSON', {data: [{ id: 1, a: 12 }] }]);
             const layout = {
                 panels: [{
                     id: 'p',
@@ -61,6 +61,7 @@ describe('Toolbar widgets', function () {
                     data_layers: [
                         {
                             id: 'd',
+                            namespace: {d: 'd'},
                             fields: ['d:id', 'd:a'],
                             id_field: 'd:id',
                             type: 'scatter',
