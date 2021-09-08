@@ -293,7 +293,7 @@ class BaseDataLayer {
         };
     }
 
-    /****** Public interface: methods for external manipulation */
+    /****** Public interface: methods for manipulating the layer from other parts of LZ */
 
     /**
      * @public
@@ -308,9 +308,11 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveForward() {
-        if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]) {
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
+        const layer_order = this.parent.data_layer_ids_by_z_index;
+        const current_index = this.layout.z_index;
+        if (layer_order[current_index + 1]) {
+            layer_order[current_index] = layer_order[current_index + 1];
+            layer_order[current_index + 1] = this.id;
             this.parent.resortDataLayers();
         }
         return this;
@@ -322,9 +324,11 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveBack() {
-        if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]) {
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
+        const layer_order = this.parent.data_layer_ids_by_z_index;
+        const current_index = this.layout.z_index;
+        if (layer_order[current_index - 1]) {
+            layer_order[current_index] = layer_order[current_index - 1];
+            layer_order[current_index - 1] = this.id;
             this.parent.resortDataLayers();
         }
         return this;
@@ -410,11 +414,11 @@ class BaseDataLayer {
     }
 
     /**
+     * Abstract method. It should be overridden by data layers that implement separate status
+     *   nodes, such as genes or intervals.
      * Fetch an ID that may bind a data element to a separate visual node for displaying status
-     * Examples of this might be separate visual nodes to show select/highlight statuses, or
-     * even a common/shared node to show status across many elements in a set.
-     * Abstract method. It should be overridden by data layers that implement seperate status
-     * nodes specifically to the use case of the data layer type.
+     * Examples of this might be highlighting a gene with a surrounding box to show select/highlight statuses, or
+     *   a group of unrelated intervals (all markings grouped within a category).
      * @private
      * @param {String|Object} element
      * @returns {String|null}
@@ -559,7 +563,6 @@ class BaseDataLayer {
      * @param {('x'|'y')} dimension
      */
     getAxisExtent (dimension) {
-
         if (!['x', 'y'].includes(dimension)) {
             throw new Error('Invalid dimension identifier');
         }
@@ -619,7 +622,6 @@ class BaseDataLayer {
 
         // No conditions met for generating a valid extent, return an empty array
         return [];
-
     }
 
     /**
