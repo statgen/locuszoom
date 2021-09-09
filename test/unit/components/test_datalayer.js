@@ -13,18 +13,32 @@ import DataSources from '../../../esm/data';
  */
 describe('LocusZoom.DataLayer', function () {
     describe('data contract parsing and validation', function () {
+        beforeEach(function () {
+            const layer = this.layer = new BaseDataLayer({ id: 'something' });
+            layer.parent_plot = { state: {} };
+            layer._data_contract = new Set(['assoc:variant', 'assoc:rsid']);
+        });
+
         after(function() {
             sinon.restore();
         });
 
         it('warns if the data received does not match the inferred fields contract', function () {
             let spy = sinon.spy(console, 'warn');
-            const layer = new BaseDataLayer({});
-            layer.parent_plot = { state: {} };
-            layer._data_contract = ['assoc:variant', 'assoc:rsid'];
-            layer.data = [{ 'assoc:variant': '1:23_A/B', 'assoc:position': 23 }];
-            layer.applyDataMethods();
+            this.layer.data = [{ 'assoc:variant': '1:23_A/B', 'assoc:position': 23 }];
+            this.layer.applyDataMethods();
             assert.ok(spy.calledOnce, 'Console.warn was called with data contract errors');
+            assert.ok(spy.firstCall.args[0].match(/Missing fields are: assoc:rsid/), 'Developer message identifies the missing fields');
+        });
+
+        it('will treat the fields contract as satisfied if the field is in at least one record of the response', function () {
+            let spy = sinon.spy(console, 'warn');
+            this.layer.data = [
+                { 'assoc:variant': '1:23_A/B', 'assoc:position': 23 },
+                { 'assoc:variant': '1:24_A/B', 'assoc:position': 24, 'assoc:rsid': 'rsYuppers' },
+            ];
+            this.layer.applyDataMethods();
+            assert.ok(spy.notCalled, 'Console.warn was not called with contract errors');
         });
     });
 

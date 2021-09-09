@@ -480,16 +480,22 @@ class BaseDataLayer {
         // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
         const field_resolver = field_to_match ? new Field(field_to_match) : null;
 
-        if (this.data.length) {
-            // Does a sample of the data satisfy the fields expected by the layout?
-            const first_item_keys = new Set(Object.keys(this.data[0]));
-            // Set diff: contract - first_item_keys
-            let _difference = new Set(this._data_contract);
-            for (let elem of first_item_keys) {
-                _difference.delete(elem);
+        // Does the data from the API satisfy the list of fields expected by this layout?
+        //   Not every record will have every possible field (example: left joins like assoc + ld). The check is "did
+        //      we see this field at least once in any record at all".
+        if (this.data.length && this._data_contract.size) {
+            const fields_unseen = new Set(this._data_contract);
+            for (let record of this.data) {
+                Object.keys(record).forEach((field) => fields_unseen.delete(field));
+                if (!fields_unseen.size) {
+                    // Once every requested field has been seen in at least one record, no need to look at more records
+                    break;
+                }
             }
-            if (_difference.size) {
-                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields based on first element of retrieved data. Missing fields are: ${[..._difference]}`);
+            if (fields_unseen.size) {
+                // Current implementation is a soft warning, so that certain "incremental enhancement" features (like rsIDs in tooltips) can fail gracefully is the API does not provide the requested info
+                //  This basically exists because of the `{{#if fieldname}}` statement in template string syntax.
+                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields from retrieved data. Missing fields are: ${[...fields_unseen]}`);
             }
         }
 
