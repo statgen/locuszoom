@@ -63,15 +63,13 @@ class BaseLZAdapter extends BaseUrlAdapter {
     constructor(config = {}) {
         super(config);
 
-        this._validate_fields = true;
         // Prefix the namespace for this source to all fieldnames: id -> assoc.id
         // This is useful for almost all layers because the layout object says where to find every field, exactly.
         // For some very complex data structure- mainly the Genes API payload- the datalayer might want to operate on
         //   that complex set of fields directly. Disable _prefix_namespace to get field names as they appear
         //   in the response. (gene_name instead of genes.gene_name)
-        const {prefix_namespace, limit_fields} = config;
+        const {prefix_namespace} = config;
         this._prefix_namespace = (typeof prefix_namespace === 'boolean') ? prefix_namespace : true;
-        this._limit_fields = limit_fields;
     }
 
     _getCacheKey(options) {
@@ -107,10 +105,8 @@ class BaseLZAdapter extends BaseUrlAdapter {
         return records.map((row) => {
             return Object.entries(row).reduce(
                 (acc, [label, value]) => {
-                    if (!this._limit_fields || this._fields_contract.has(label)) {
-                        // Rename API fields to format `namespace:fieldname`
-                        acc[`${options._provider_name}:${label}`] = value;
-                    }
+                    // Rename API fields to format `namespace:fieldname`
+                    acc[`${options._provider_name}:${label}`] = value;
                     return acc;
                 },
                 {}
@@ -197,10 +193,6 @@ class BaseUMAdapter extends BaseLZAdapter {
 
 class AssociationLZ extends BaseUMAdapter {
     constructor(config = {}) {
-        // Minimum adapter contract hard-codes fields contract based on UM PortalDev API + default assoc plot layout
-        // For layers that require more functionality, pass extra_fields to source options
-        config.fields = ['variant', 'position', 'log_pvalue', 'ref_allele'];
-
         super(config);
 
         // We don't validate the source option because a depressing number of people use AssociationLZ to serve non-dynamic JSON files
@@ -238,10 +230,6 @@ class GwasCatalogLZ extends BaseUMAdapter {
      * @param {Number} [config.params.source] The ID of the chosen catalog. Most usages should omit this parameter and
      *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
      */
-    constructor(config = {}) {
-        config.fields = ['rsid', 'trait', 'log_pvalue'];
-        super(config);
-    }
 
     /**
      * Add query parameters to the URL to construct a query for the specified region
@@ -278,7 +266,6 @@ class GeneLZ extends BaseUMAdapter {
 
         // The UM Genes API has a very complex internal format and the genes layer is written to work with it exactly as given.
         //  We will avoid transforming or modifying the payload.
-        this._validate_fields = false;
         this._prefix_namespace = false;
     }
 
@@ -319,7 +306,6 @@ class GeneConstraintLZ extends BaseLZAdapter {
      */
     constructor(config = {}) {
         super(config);
-        this._validate_fields = false;
         this._prefix_namespace = false;
     }
 
@@ -384,12 +370,6 @@ class GeneConstraintLZ extends BaseLZAdapter {
 
 
 class LDServer extends BaseUMAdapter {
-    constructor(config = {}) {
-        // item1 = refvar, item2 = othervar
-        config.fields = ['chromosome2', 'position2', 'variant2', 'correlation'];
-        super(config);
-    }
-
     __find_ld_refvar(state, assoc_data) {
         const assoc_variant_name = this._findPrefixedKey(assoc_data[0], 'variant');
         const assoc_logp_name = this._findPrefixedKey(assoc_data[0], 'log_pvalue');
@@ -537,11 +517,6 @@ class LDServer extends BaseUMAdapter {
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseUMAdapter {
-    constructor(config = {}) {
-        config.fields = ['position', 'recomb_rate'];
-        super(config);
-    }
-
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
