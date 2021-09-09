@@ -467,17 +467,9 @@ class BaseDataLayer {
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_is_match = (match_function(field_resolver.resolve(item), broadcast_value));
+                item.lz_is_match = match_function(field_resolver.resolve(item), broadcast_value);
             }
 
-            item.toHTML = () => {
-                const id_field = this.layout.id_field || 'id';
-                let html = '';
-                if (item[id_field]) {
-                    html = item[id_field].toString();
-                }
-                return html;
-            };
             // Helper methods - return a reference to various plot levels. Useful for interactive tooltips.
             item.getDataLayer = () => this;
             item.getPanel = () => this.parent || null;
@@ -485,11 +477,6 @@ class BaseDataLayer {
                 // For unit testing etc, this layer may be created without a parent.
                 const panel = this.parent;
                 return panel ? panel.parent : null;
-            };
-            // deselect() method - shortcut method to deselect the element
-            item.deselect = () => {
-                const data_layer = this.getDataLayer();
-                data_layer.unselectElement(this); // dynamically generated method name. It exists, honest.
             };
         });
         this.applyCustomDataMethods();
