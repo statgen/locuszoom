@@ -178,10 +178,6 @@ class OrthogonalLine extends BaseDataLayer {
             layout.orientation = 'horizontal';
         }
         super(...arguments);
-
-        // Vars for storing the data generated line
-        /** @member {Array} */
-        this.data = [];
     }
 
     getElementId(element) {

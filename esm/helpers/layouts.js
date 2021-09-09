@@ -139,6 +139,50 @@ function nameToSymbol(shape) {
     return d3[factory_name] || null;
 }
 
+
+/**
+ * Find all references to namespaced fields within a layout object. This is used to validate that a set of provided
+ *  data adapters will actually give all the information required to draw the plot.
+ * @param {Object} layout
+ * @param {Array|null} prefixes A list of allowed namespace prefixes. (used to differentiate between real fields,
+ *   and random sentences that match an arbitrary pattern.
+ * @param {RegExp|null} field_finder On recursive calls, pass the regexp we constructed the first time
+ * @return {Set}
+ */
+function findFields(layout, prefixes, field_finder = null) {
+    if (!field_finder) {
+        if (!prefixes.length) {
+            // A layer that doesn't ask for external data does not need to check if the provider returns expected fields
+            return [];
+        }
+        const all_ns = prefixes.join('|');
+
+        // Locates any reference within a template string to to `ns:field`, `{{ns:field}}`, or `{{#if ns:field}}`.
+        //  By knowing the list of allowed NS prefixes, we can be much more confident in avoiding spurious matches
+        field_finder = new RegExp(`(?:{{)?(?:#if *)?((?:${all_ns}):\\w+)`, 'g');
+    }
+
+    const fields = new Set();
+
+    for (const value of Object.values(layout)) {
+        const key_type = typeof value;
+        let matches;
+        if (key_type === 'string') {
+            matches = [...value.matchAll(field_finder)].map((m) => m[1]);
+        } else if (value !== null && key_type === 'object') {
+            matches = findFields(value, prefixes, field_finder);
+        } else {
+            // Only look for field names in strings or compound values
+            continue;
+        }
+        for (let m of matches) {
+            fields.add(m);
+        }
+    }
+    return fields;
+}
+
+
 /**
  * A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
  *  replaces *exact match*
@@ -222,4 +266,4 @@ function query_attrs(layout, selector) {
     return query(layout, selector);
 }
 
-export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, renameField };
+export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, findFields, renameField };

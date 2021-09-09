@@ -13,7 +13,7 @@ import * as d3 from 'd3';
 import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
-import {deepCopy, merge} from '../../helpers/layouts';
+import {deepCopy, findFields, merge} from '../../helpers/layouts';
 import MATCHERS from '../../registry/matchers';
 import SCALABLE from '../../registry/scalable';
 
@@ -291,6 +291,11 @@ class BaseDataLayer {
             'faded': false,
             'hidden': false,
         };
+
+        // On first load, track all data behaviors and options
+        this._data_contract = new Set(); // List of all fields requested by the layout
+
+        this.mutateLayout();
     }
 
     /****** Public interface: methods for manipulating the layer from other parts of LZ */
@@ -365,6 +370,19 @@ class BaseDataLayer {
     setFilter(func) {
         console.warn('The setFilter method is deprecated and will be removed in the future; please use the layout API with a custom filter function instead');
         this._filter_func = func;
+    }
+
+    /**
+     * A list of operations that should be run when the layout is mutated
+     * Typically, these are things done once when a layout is first specified, that would not automatically
+     *  update when the layout was changed.
+     */
+    mutateLayout() {
+        // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.
+        const { namespace } = this.layout;
+        if (namespace) {
+            this._data_contract = findFields(this.layout, Object.keys(namespace));
+        }
     }
 
     /********** Protected methods: useful in subclasses to manipulate data layer behaviors */
@@ -461,6 +479,20 @@ class BaseDataLayer {
         const broadcast_value = this.parent_plot.state.lz_match_value;
         // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
         const field_resolver = field_to_match ? new Field(field_to_match) : null;
+
+        if (this.data.length) {
+            // Does a sample of the data satisfy the fields expected by the layout?
+            const first_item_keys = new Set(Object.keys(this.data[0]));
+            // Set diff: contract - first_item_keys
+            let _difference = new Set(this._data_contract);
+            for (let elem of first_item_keys) {
+                _difference.delete(elem);
+            }
+            if (_difference.size) {
+                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields based on first element of retrieved data. Missing fields are: ${[..._difference]}`);
+            }
+        }
+
         this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
