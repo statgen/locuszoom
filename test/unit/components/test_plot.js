@@ -23,6 +23,7 @@ describe('LocusZoom.Plot', function() {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for adding arbitrarily many panels', function() {
             const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar' });
             assert.equal(panelA.id, 'panelA');
@@ -42,6 +43,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[1].id, 'panelB');
             assert.equal(this.plot.layout.panels[1].foo, 'baz');
         });
+
         it('should allow for removing panels', function() {
             const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar', height: 10 });
             const panelB = this.plot.addPanel({ id: 'panelB', foo: 'baz', height: 20 });
@@ -59,6 +61,7 @@ describe('LocusZoom.Plot', function() {
 
             assert.equal(this.plot._total_height, 20, 'Final height is the space requested by the remaining single panel');
         });
+
         it('should allow setting dimensions', function() {
             this.plot.setDimensions(563, 681);
             assert.equal(this.plot.layout.width, 563);
@@ -70,6 +73,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.setDimensions('q', 0);
             assert.equal(this.plot.layout.width, 563, 'Non-numeric value is ignored');
         });
+
         it('show rescale all panels equally when resizing the plot', function () {
             assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
 
@@ -83,6 +87,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelA.layout.height, 200, 'Panel A doubles in size because plot doubles in size');
             assert.equal(panelB.layout.height, 400, 'Panel B doubles in size because plot doubles in size');
         });
+
         it('should rescale all panels and the plot, but only down to the specified minimum size', function () {
             assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
 
@@ -96,6 +101,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelA.layout.height, 50, 'Panel A does not shrink below the minimum size');
             assert.equal(panelB.layout.height, 100, 'Panel B does not shrink below the minimum size');
         });
+
         it('should enforce consistent data layer widths and x-offsets across x-linked panels', function() {
             const layout = {
                 width: 1000,
@@ -105,14 +111,18 @@ describe('LocusZoom.Plot', function() {
                 ],
             };
             this.plot = populate('#plot', null, layout);
-            assert.equal(this.plot.layout.panels[0].margin.left, 200);
-            assert.equal(this.plot.layout.panels[1].margin.left, 200);
-            assert.equal(this.plot.layout.panels[0].margin.right, 300);
-            assert.equal(this.plot.layout.panels[1].margin.right, 300);
-            assert.equal(this.plot.layout.panels[0].cliparea.origin.x, 200);
-            assert.equal(this.plot.layout.panels[1].cliparea.origin.x, 200);
-            assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
+
+            const panel0 = this.plot.layout.panels[0];
+            const panel1 = this.plot.layout.panels[1];
+
+            assert.equal(panel0.margin.left, 200);
+            assert.equal(panel1.margin.left, 200, 'Adjusts second panel to match margins of first');
+            assert.equal(panel0.margin.right, 300);
+            assert.equal(panel1.margin.right, 300);
+            assert.equal(panel0.cliparea.origin.x, 200);
+            assert.equal(panel1.cliparea.origin.x, 200);
         });
+
         it('should not allow for a non-numerical / non-positive predefined dimensions', function() {
             assert.throws(() => {
                 populate('#plot', null, { width: 0 });
@@ -131,6 +141,7 @@ describe('LocusZoom.Plot', function() {
                 layout.state = { chr: '1', start: 1, end: 100000 };
                 this.plot = populate('#plot', null, layout);
             });
+
             it('first child should be a mouse guide layer group element', function() {
                 assert.equal(d3.select(this.plot.svg.node().firstChild).attr('id'), 'plot.mouse_guide');
             });
@@ -148,6 +159,7 @@ describe('LocusZoom.Plot', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
+
         it('Should allocate the space requested by the panel, even if less than plot height', function() {
             const panelA = { id: 'panelA', height: 50 };
             this.plot.addPanel(panelA);
@@ -158,6 +170,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.height, 50);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
         });
+
         it('Should extend the size of the plot if panels are added that expand it, and automatically prevent panels from overlapping vertically', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -172,6 +185,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 60);
         });
+
         it('Should resize the plot as panels are removed', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -185,6 +199,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 0);
         });
+
         it('Should resize the plot as panels are removed, when panels specify min_height', function() {
             // Small hack; resize the plot after it was created
             this.plot.layout.height = 600;
@@ -210,6 +225,7 @@ describe('LocusZoom.Plot', function() {
             //   after panel C is removed.
             assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y matches layout value');
         });
+
         it('Should resize the plot while retaining panel proportions when panel is removed, if plot min_height does not take precedence', function() {
             // When we remove a panel, we often want the plot to shrink by exactly that size. (so that the bottom
             //   section simply disappears without changing the appearance of the panels that remain) But if plot
@@ -236,6 +252,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height matches layout (after)');
             assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y appears immediately after panel A');
         });
+
         it('Should allow for inserting panels at discrete y indexes', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 61 };
@@ -254,6 +271,7 @@ describe('LocusZoom.Plot', function() {
 
             assert.deepEqual(panelA.height + panelB.height + panelC.height, this.plot._total_height, 'Plot height is equal to sum of panels');
         });
+
         it('Should allow for inserting panels at negative discrete y indexes', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -284,6 +302,7 @@ describe('LocusZoom.Plot', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
+
         it('should show/hide/update on command and track shown status', function() {
             assert.isFalse(this.plot.curtain.showing);
             assert.isNull(this.plot.curtain.selector);
@@ -300,12 +319,14 @@ describe('LocusZoom.Plot', function() {
             assert.isNull(this.plot.curtain.selector);
             assert.isNull(this.plot.curtain.content_selector);
         });
+
         it('should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors', function() {
             assert.isFalse(this.plot.loader.showing);
             assert.isNull(this.plot.loader.selector);
             assert.isNull(this.plot.loader.content_selector);
             assert.isNull(this.plot.loader.progress_selector);
         });
+
         it('should show/hide/update on command and track shown status', function() {
             assert.isFalse(this.plot.loader.showing);
             assert.isNull(this.plot.loader.selector);
@@ -325,6 +346,7 @@ describe('LocusZoom.Plot', function() {
             assert.isNull(this.plot.loader.content_selector);
             assert.isNull(this.plot.loader.progress_selector);
         });
+
         it('should allow for animating or showing discrete percentages of completion', function() {
             this.plot.loader.show('test content').animate();
             assert.isTrue(this.plot.loader.progress_selector.classed('lz-loader-progress-animated'));
@@ -361,6 +383,7 @@ describe('LocusZoom.Plot', function() {
             this.layout = null;
             d3.select('#plot').remove();
         });
+
         it('Should apply basic start/end state validation when necessary', function() {
             this.layout.state = { chr: 1, start: -60, end: 10300050 };
             this.plot = populate('#plot', this.datasources, this.layout);
@@ -369,6 +392,7 @@ describe('LocusZoom.Plot', function() {
                 assert.equal(this.plot.state.end, 10300050);
             });
         });
+
         it('Should apply minimum region scale state validation if set in the plot layout', function() {
             this.layout.min_region_scale = 2000;
             this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
@@ -378,6 +402,7 @@ describe('LocusZoom.Plot', function() {
                 assert.equal(this.plot.state.end, 10301025);
             });
         });
+
         it('Should apply maximum region scale state validation if set in the plot layout', function() {
             this.layout.max_region_scale = 4000000;
             this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
@@ -678,6 +703,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 'foo');
             assert.equal(stateB.end, 'bar');
         });
+
         it('should enforce no zeros for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 0, end: 123 };
             stateA = _updateStatePosition(stateA);
@@ -688,6 +714,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 1);
             assert.equal(stateB.end, 1);
         });
+
         it('should enforce no negative values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: -235, end: 123 };
             stateA = _updateStatePosition(stateA);
@@ -698,12 +725,14 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 1);
             assert.equal(stateB.end, 1);
         });
+
         it('should enforce no non-integer values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 1234.4, end: 4567.8 };
             stateA = _updateStatePosition(stateA);
             assert.equal(stateA.start, 1234);
             assert.equal(stateA.end, 4567);
         });
+
         it('should enforce no non-numeric values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 'foo', end: 324523 };
             stateA = _updateStatePosition(stateA);

@@ -17,6 +17,7 @@ const default_layout = {
     x_axis: { field: 'x' },
     y_axis: { field: 'y', axis: 1 },
     hitarea_width: 5,
+    tooltip: null,
 };
 
 /*********************

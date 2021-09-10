@@ -19,7 +19,7 @@ describe('LocusZoom.DataLayer', function () {
             layer._data_contract = new Set(['assoc:variant', 'assoc:rsid']);
         });
 
-        after(function() {
+        afterEach(function() {
             sinon.restore();
         });
 

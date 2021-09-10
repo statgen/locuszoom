@@ -118,6 +118,8 @@ function merge(custom_layout, default_layout) {
 }
 
 function deepCopy(item) {
+    // FIXME: initial attempt to replace this with a more efficient deep clone method caused merge() to break; revisit in future.
+    //   Replacing this with a proper clone would be the key blocker to allowing functions and non-JSON values (like infinity) in layout objects
     return JSON.parse(JSON.stringify(item));
 }
 

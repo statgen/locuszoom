@@ -2,6 +2,8 @@ import { assert } from 'chai';
 import LAYOUTS, {_LayoutRegistry} from '../../esm/registry/layouts';
 import {deepCopy, merge} from '../../esm/helpers/layouts';
 
+import clone from 'just-clone';
+
 describe('_LayoutRegistry', function() {
     describe('Provides a method to list current layouts by type', function() {
         it ('No argument: returns an object, keys are layout types and values are arrays of layout names', function() {
@@ -126,30 +128,31 @@ describe('_LayoutRegistry', function() {
             assert.deepEqual(lookup.get('test', 'test', mods), expected_layout);
         });
 
-        it('Allows for namespacing arbitrary keys and values at all nesting levels', function() {
+        it.skip('Allows for namespacing arbitrary keys and values at all nesting levels', function() {
+            //FIXME: This test references a lot of beheavior that was deprecated/ removed in modern LZ
             const lookup = new _LayoutRegistry();
             const base_layout = {
                 scalar_0: 123,
                 '{{namespace}}scalar_1': 'aardvark',
-                '{{namespace[dingo]}}scalar_2': '{{namespace[1]}}albacore',
+                'dingo:scalar_2': '1:albacore',
                 namespace_scalar: '{{namespace}}badger',
-                namespace_0_scalar: '{{namespace[0]}}crocodile',
-                namespace_dingo_scalar: '{{namespace[dingo]}}emu',
-                namespace_1_scalar: '{{namespace[1]}}ferret',
+                namespace_0_scalar: '0:crocodile',
+                namespace_dingo_scalar: 'dingo:emu',
+                namespace_1_scalar: '1:ferret',
                 array_of_scalars: [ 4, 5, 6 ],
                 nested_object: {
                     property_0: {
                         scalar_0: 0,
                         scalar_1: 'grackle',
-                        namespace_scalar: '{{{{namespace}}hog}} and {{{{namespace[1]}}yak}} and {{{{namespace[jackal]}}zebu}}',
-                        namespace_0_scalar: '{{namespace[0]}}iguana',
-                        namespace_jackal_scalar: '{{namespace[jackal]}}kangaroo',
-                        namespace_dingo_scalar: '{{namespace[dingo]}}lemur',
-                        namespace_1_scalar: '{{namespace[1]}}moose',
-                        array: ['nematoad', '{{namespace}}oryx', '{{namespace[1]}}pigeon', '{{namespace[jackal]}}quail'],
+                        namespace_scalar: '{{{{namespace}}hog}} and {{1:yak}} and {{jackal:zebu}}',
+                        namespace_0_scalar: '0:iguana',
+                        namespace_jackal_scalar: 'jackal:kangaroo',
+                        namespace_dingo_scalar: 'dingo:lemur',
+                        namespace_1_scalar: '1:moose',
+                        array: ['nematoad', 'oryx', '1:pigeon', 'jackal:quail'],
                         object: {
                             scalar: 'rhea',
-                            array: ['serpent', '{{namespace[0]}}tortoise', '{{namespace[upapa]}}vulture', '{{namespace}}xerus'],
+                            array: ['serpent', '0:tortoise', 'upapa:vulture', '{{namespace}}xerus'],
                         },
                     },
                     property_1: false,
@@ -203,7 +206,7 @@ describe('_LayoutRegistry', function() {
             assert.equal(single_namespace_layout.nested_object.property_0.object.array[3], 'ns:xerus');
 
             // Array of namespaces: replace number-indexed namespace holders,
-            // resolve {{namespace}} and any named namespaces to {{namespace[0]}}.
+            // resolve {{namespace}} and any named namespaces to 0:.
             const array_namespace_layout = lookup.get('test', 'test', { namespace: ['ns_0', 'ns_1'] });
             assert.equal(array_namespace_layout['ns_0:scalar_1'], 'aardvark');
             assert.equal(array_namespace_layout['ns_0:scalar_2'], 'ns_1:albacore');
@@ -250,35 +253,8 @@ describe('_LayoutRegistry', function() {
             assert.equal(object_namespace_layout.nested_object.property_0.object.array[3], 'ns_default:xerus');
         });
 
-        it('Allows for inheriting namespaces', function() {
-            const lookup = new _LayoutRegistry();
-
-            const layout_0 = {
-                namespace: { dingo: 'ns_dingo', jackal: 'ns_jackal', default: 'ns_0' },
-                '{{namespace[dingo]}}scalar_1': 'aardvark',
-                '{{namespace[dingo]}}scalar_2': '{{namespace[jackal]}}albacore',
-                scalar_3: '{{namespace}}badger',
-            };
-            lookup.add('test', 'layout_0', layout_0);
-
-            const layout_1 = {
-                namespace: { ferret: 'ns_ferret', default: 'ns_1' },
-                '{{namespace}}scalar_1': 'emu',
-                '{{namespace[ferret]}}scalar_2': '{{namespace}}kangaroo',
-                nested_layout: lookup.get('test', 'layout_0', { unnamespaced: true }),
-            };
-            lookup.add('test', 'layout_1', layout_1);
-            const ns_layout_1 = lookup.get('test', 'layout_1', {
-                namespace: {
-                    dingo: 'ns_dingo_mod',
-                    default: 'ns_mod',
-                },
-            });
-            assert.equal(ns_layout_1['ns_mod:scalar_1'], 'emu');
-            assert.equal(ns_layout_1['ns_ferret:scalar_2'], 'ns_mod:kangaroo');
-            assert.equal(ns_layout_1.nested_layout['ns_dingo_mod:scalar_1'], 'aardvark');
-            assert.equal(ns_layout_1.nested_layout['ns_dingo_mod:scalar_2'], 'ns_jackal:albacore');
-            assert.equal(ns_layout_1.nested_layout.scalar_3, 'ns_mod:badger');
+        it.skip('Allows for inheriting namespaces', function() {
+            assert.ok(false, 'TODO: Reimplement with new namespace behavior');
         });
     });
 });
@@ -304,18 +280,6 @@ describe('Layout helpers', function () {
                     property_3: true,
                 },
             };
-        });
-
-        it('should throw an exception if either argument is not an object', function() {
-            assert.throws(() => {
-                merge();
-            });
-            assert.throws(() => {
-                merge({});
-            });
-            assert.throws(() => {
-                merge({}, '');
-            });
         });
 
         it('should return the passed default layout if provided an empty layout', function() {

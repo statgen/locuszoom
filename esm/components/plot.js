@@ -1007,10 +1007,10 @@ class Plot {
         // Proportional heights for newly added panels default to null unless explicitly set, so determine appropriate
         // proportional heights for all panels with a null value from discretely set dimensions.
         // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
-        for (let id in this.panels) {
-            if (this.panels[id].layout.interaction.x_linked) {
-                x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
-                x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
+        for (let panel of Object.values(this.panels)) {
+            if (panel.layout.interaction.x_linked) {
+                x_linked_margins.left = Math.max(x_linked_margins.left, panel.layout.margin.left);
+                x_linked_margins.right = Math.max(x_linked_margins.right, panel.layout.margin.right);
             }
         }
 
@@ -1019,15 +1019,16 @@ class Plot {
         let y_offset = 0;
         this.panel_ids_by_y_index.forEach((panel_id) => {
             const panel = this.panels[panel_id];
+            const panel_layout = panel.layout;
             panel.setOrigin(0, y_offset);
             y_offset += this.panels[panel_id].layout.height;
-            if (panel.layout.interaction.x_linked) {
-                const delta = Math.max(x_linked_margins.left - panel.layout.margin.left, 0)
-                    + Math.max(x_linked_margins.right - panel.layout.margin.right, 0);
-                panel.layout.width += delta;
-                panel.layout.margin.left = x_linked_margins.left;
-                panel.layout.margin.right = x_linked_margins.right;
-                panel.layout.cliparea.origin.x = x_linked_margins.left;
+            if (panel_layout.interaction.x_linked) {
+                const delta = Math.max(x_linked_margins.left - panel_layout.margin.left, 0)
+                    + Math.max(x_linked_margins.right - panel_layout.margin.right, 0);
+                panel_layout.width += delta;
+                panel_layout.margin.left = x_linked_margins.left;
+                panel_layout.margin.right = x_linked_margins.right;
+                panel_layout.cliparea.origin.x = x_linked_margins.left;
             }
         });
 
@@ -1054,7 +1055,6 @@ class Plot {
      * @returns {Plot}
      */
     initialize() {
-
         // Ensure proper responsive class is present on the containing node if called for
         if (this.layout.responsive_resize) {
             d3.select(this.container).classed('lz-container-responsive', true);

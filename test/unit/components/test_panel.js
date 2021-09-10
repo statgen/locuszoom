@@ -193,20 +193,21 @@ describe('Panel', function() {
         });
 
         it('should have a method for removing data layers by id', function() {
-            this.plot.panels.panel0.addDataLayer({ id: 'layerA', type: 'line' });
-            this.plot.panels.panel0.addDataLayer({ id: 'layerB', type: 'line' });
-            this.plot.panels.panel0.addDataLayer({ id: 'layerC', type: 'line' });
-            const state_id = this.plot.panels.panel0.data_layers.layerB.state_id;
-            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, 'object');
+            const panel0 = this.plot.panels.panel0;
+            const layerA = panel0.addDataLayer({ id: 'layerA', type: 'line' });
+            const layerB = panel0.addDataLayer({ id: 'layerB', type: 'line' });
+            const layerC = panel0.addDataLayer({ id: 'layerC', type: 'line' });
+            const state_id = layerB.state_id;
+            assert.equal(typeof layerB, 'object');
             assert.equal(typeof this.plot.state[state_id], 'object');
-            this.plot.panels.panel0.removeDataLayer('layerB');
-            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, 'undefined');
+            panel0.removeDataLayer('layerB');
+            assert.equal(typeof panel0.data_layers.layerB, 'undefined');
             assert.equal(typeof this.plot.state[state_id], 'undefined');
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout_idx, 0);
-            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout_idx, 1);
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
-            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC']);
+            assert.equal(layerA.layout_idx, 0);
+            assert.equal(layerC.layout_idx, 1);
+            assert.equal(layerA.layout.z_index, 0);
+            assert.equal(layerC.layout.z_index, 1);
+            assert.deepEqual(panel0.data_layer_ids_by_z_index, ['layerA', 'layerC']);
         });
     });
 
