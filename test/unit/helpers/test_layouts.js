@@ -138,13 +138,13 @@ describe('Layout helper functions', function () {
 
         it('works with abstract layouts and namespace syntax', function () {
             let base = {
-                field: '{{namespace[family]}}old_name',
-                template: '{{{{namespace[family]}}old_name}} was here',
+                field: 'family:old_name',
+                template: '{{family:old_name}} was here',
             };
-            base = renameField(base, '{{namespace[family]}}old_name', '{{namespace[family]}}moon_unit');
+            base = renameField(base, 'family:old_name', 'family:moon_unit');
             assert.deepEqual(base, {
-                field: '{{namespace[family]}}moon_unit',
-                template: '{{{{namespace[family]}}moon_unit}} was here',
+                field: 'family:moon_unit',
+                template: '{{family:moon_unit}} was here',
             });
         });
 
