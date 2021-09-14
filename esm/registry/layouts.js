@@ -19,26 +19,21 @@ class LayoutRegistry extends RegistryBase {
             throw new Error('Must specify both the type and name for the layout desired. See .list() for available options');
         }
         // This is a registry of registries. Fetching an item may apply additional custom behaviors, such as
-        //  applying overrides or using namespaces to convert an abstract layout into a concrete one.
+        //  applying overrides or applying namespaces.
         let base = super.get(type).get(name);
-        base = merge(overrides, base);
-        if (base.unnamespaced) {
-            delete base.unnamespaced;
-            return deepCopy(base);
-        }
-        let default_namespace = '';
-        if (typeof base.namespace == 'string') {
-            default_namespace = base.namespace;
-        } else if (typeof base.namespace == 'object' && Object.keys(base.namespace).length) {
-            if (typeof base.namespace.default != 'undefined') {
-                default_namespace = base.namespace.default;
-            } else {
-                default_namespace = base.namespace[Object.keys(base.namespace)[0]].toString();
-            }
-        }
-        default_namespace += default_namespace.length ? ':' : '';
-        const result = applyNamespaces(base, base.namespace, default_namespace);
 
+        // Most keys are merged directly. Namespaces are handled a little differently, as they act like global overrides.
+        //  (eg ask for plot layout, and modify multiple nested data layers where a particular namespace is referenced)
+        const custom_namespaces = overrides.namespace;
+        if (!base.namespace) {
+            // Iff namespaces are a top level key, we'll allow them to be merged directly with the base layout
+            delete overrides.namespace;
+        }
+        let result = merge(overrides, base);
+
+        if (custom_namespaces) {
+            result = applyNamespaces(base, custom_namespaces);
+        }
         return deepCopy(result);
     }
 

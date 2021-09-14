@@ -23,7 +23,6 @@ const LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
  * Tooltip Layouts
  */
 const standard_association_tooltip = {
-    namespace: { 'assoc': 'assoc' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
@@ -66,7 +65,6 @@ const standard_genes_tooltip = {
 };
 
 const catalog_variant_tooltip = {
-    namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
@@ -79,7 +77,6 @@ const catalog_variant_tooltip = {
 };
 
 const coaccessibility_tooltip = {
-    namespace: { 'access': 'access' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
@@ -119,7 +116,6 @@ const recomb_rate_layer = {
     id: 'recombrate',
     type: 'line',
     tag: 'recombination',
-    fields: ['recomb:position', 'recomb:recomb_rate'],
     z_index: 1,
     style: {
         'stroke': '#0000FF',
@@ -142,18 +138,22 @@ const recomb_rate_layer = {
  * @type data_layer
  */
 const association_pvalues_layer = {
-    // FIXME: current design requires people to specify dependencies whenever overriding a namespace. That's a little unintuitive; alternatives?
-    namespace: { 'assoc': 'assoc', 'ld(assoc)': 'ld' },
-    join_options: [{
-        type: 'left_match',
-        name: 'combined',
-        requires: ['assoc', 'ld'],
-        params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
-    }],
+    namespace: { 'assoc': 'assoc', 'ld': 'ld' },
+    data_operations: [
+        {
+            type: 'fetch',
+            from: ['assoc', 'ld(assoc)'],
+        },
+        {
+            type: 'left_match',
+            name: 'combined',
+            requires: ['assoc', 'ld'],
+            params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
+        },
+    ],
     id: 'associationpvalues',
     type: 'scatter',
     tag: 'association',
-    fields: ['assoc:variant', 'assoc:position', 'assoc:log_pvalue', 'assoc:log_pvalue|logtoscinotation', 'assoc:ref_allele'],
     id_field: 'assoc:variant',
     coalesce: {
         active: true,
@@ -241,7 +241,6 @@ const coaccessibility_layer = {
     id: 'coaccessibility',
     type: 'arcs',
     tag: 'coaccessibility',
-    fields: ['access:start1', 'access:end1', 'access:start2', 'access:end2', 'access:id', 'access:target', 'access:score'],
     match: { send: 'access:target', receive: 'access:target' },
     id_field: 'access:id',
     filters: [
@@ -305,7 +304,7 @@ const association_pvalues_catalog_layer = function () {
     let base = deepCopy(association_pvalues_layer);
     base = merge({ id: 'associationpvaluescatalog', fill_opacity: 0.7 }, base);
 
-    base.join_options.push({
+    base.data_operations.push({
         type: 'assoc_to_gwas_catalog',
         name: 'assoc_catalog',
         requires: ['combined', 'catalog'],
@@ -314,7 +313,6 @@ const association_pvalues_catalog_layer = function () {
 
     base.tooltip.html += '{{#if catalog:rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{catalog:rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
     base.namespace.catalog = 'catalog';
-    base.fields.push('catalog:rsid', 'catalog:trait', 'catalog:log_pvalue');
     return base;
 }();
 
@@ -332,7 +330,6 @@ const phewas_pvalues_layer = {
     point_size: 70,
     tooltip_positioning: 'vertical',
     id_field: 'phewas:id',
-    fields: ['phewas:id', 'phewas:log_pvalue', 'phewas:trait_group', 'phewas:trait_label'],
     x_axis: {
         field: 'phewas:x',  // Synthetic/derived field added by `category_scatter` layer
         category_field: 'phewas:trait_group',
@@ -406,12 +403,17 @@ const phewas_pvalues_layer = {
  * @type data_layer
  */
 const genes_layer = {
-    namespace: { 'gene': 'gene', 'constraint(gene)': 'constraint' },
-    join_options: [{
-        type: 'genes_to_gnomad_constraint',
-        name: 'combined',
-        requires: ['gene', 'constraint'],
-    }],
+    namespace: { 'gene': 'gene', 'constraint': 'constraint' },
+    data_operations: [
+        {
+            type: 'fetch',
+            from: ['gene', 'constraint(gene)'],
+        },
+        {
+            type: 'genes_to_gnomad_constraint',
+            requires: ['gene', 'constraint'],
+        },
+    ],
     id: 'genes',
     type: 'genes',
     tag: 'genes',
@@ -479,11 +481,6 @@ const annotation_catalog_layer = {
         field: 'assoc:position',
     },
     color: '#0000CC',
-    fields: [
-        'assoc:variant', 'assoc:chromosome', 'assoc:position',
-        'catalog:variant', 'catalog:rsid', 'catalog:trait',
-        'catalog:log_pvalue', 'catalog:pos',
-    ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         { field: 'catalog:rsid', operator: '!=', value: null },
@@ -793,7 +790,6 @@ const association_catalog_panel = function () {
     let base = deepCopy(association_panel);
     base = merge({
         id: 'associationcatalog',
-        namespace: { 'assoc': 'assoc', 'ld(assoc)': 'ld', 'catalog': 'catalog' }, // Required to resolve display options
     }, base);
 
     base.toolbar.widgets.push({

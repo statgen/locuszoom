@@ -10,6 +10,8 @@ class JoinTask {
     }
 
     getData(options, left, right) {
+        // Future: this could support joining > 2 things in one function.
+        //  Joining three things at once is a pretty niche usage, and we won't add this complexity unless clearly needed
         return Promise.resolve(this._callable(left, right, ...this._params));
     }
 }
@@ -32,50 +34,99 @@ class Requester {
         this._sources = sources;
     }
 
-    _config_to_sources(namespace_options, join_options) {
-        // 1. Find the data sources needed for this request, and add in the joins for this layer
-        // namespaces: { assoc: assoc, ld(assoc): ld }
-        // TODO: Move this to the data layer creation step, along with contract validation
-        // Dependencies are defined as raw data + joins
-        const dependencies = [];
-        // Create a list of sources unique to this layer, including both fetch and join operations
+    /**
+     * Parse the data layer configuration when a layer is first created.
+     *  Validate config, and return entities and dependencies in a format usable for data retrieval.
+     *  This is used by data layers, and also other data-retrieval functions (like subscribeToDate).
+     *
+     *  Inherent assumptions:
+     *  1. A data layer will always know its data up front, and layout mutations will only affect what is displayed.
+     *  2. People will be able to add new data adapters (tracks), but if they are removed, the accompanying layers will be
+     *      removed at the same time. Otherwise, the pre-parsed data fetching logic could could preserve a reference to the
+     *      removed adapter.
+     * @param {Object} namespace_options
+     * @param {Array} data_operations
+     * @returns {(Map<any, any>|*[])[]}
+     */
+    config_to_sources(namespace_options = {}, data_operations = []) {
         const entities = new Map();
-        Object.entries(namespace_options)
-            .forEach(([label, source_name]) => {
-                // In layout syntax, namespace names and dependencies are written together, like ld = ld(assoc). Convert.
-                let match = label.match(/^(\w+)$|^(\w+)\(/);
-                if (!match) {
-                    throw new Error(`Invalid namespace name: '${label}'. Should be 'somename' or 'somename(somedep)'`);
-                }
-                const entity_label = match[1] || match[2];
+        const namespace_local_names = Object.keys(namespace_options);
 
-                const source = this._sources.get(source_name);
+        // 1. Specify how to coordinate data. Precedence:
+        //   a) EXPLICIT fetch logic,
+        //   b) IMPLICIT auto-generate fetch order if there is only one NS,
+        //   c) Throw "spec required" error if > 1, because 2 adapters may need to be fetched in a sequence
+        let dependency_order = data_operations.find((item) => item.type === 'fetch');  // explicit spec: {fetch, from}
+        if (!dependency_order) {
+            dependency_order = { type: 'fetch', from: namespace_local_names };
+            data_operations.unshift(dependency_order);
+        }
 
-                if (entities.has(entity_label)) {
-                    throw new Error(`Configuration error: within a layer, namespace name '${label}' must be unique`);
-                }
-
-                entities.set(entity_label, source);
-                dependencies.push(label);
-            });
-
-        join_options.forEach((config) => {
-            const {type, name, requires, params} = config;
-            if (entities.has(name)) {
-                throw new Error(`Configuration error: within a layer, join name '${name}' must be unique`);
+        // Validate that all NS items are available to the root requester in DataSources. All layers recognize a
+        //  default value, eg people copying the examples tend to have defined a datasource called "assoc"
+        const ns_pattern = /^\w+$/;
+        for (let [local_name, global_name] of Object.entries(namespace_options)) {
+            if (!ns_pattern.test(local_name)) {
+                throw new Error(`Invalid namespace name: '${local_name}'. Must contain only alphanumeric characters`);
             }
-            const task = new JoinTask(type, params);
-            entities.set(name, task);
-            dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
-        });
+
+            const source = this._sources.get(global_name);
+            if (!source) {
+                throw new Error(`A data layer has requested an item not found in DataSources: data type '${local_name}' from ${global_name}`);
+            }
+            entities.set(local_name, source);
+
+            // Note: Dependency spec checker will consider "ld(assoc)" to match a namespace called "ld"
+            if (!dependency_order.from.find((dep_spec) => dep_spec.split('(')[0] === local_name)) {
+                // Sometimes, a new piece of data (namespace) will be added to a layer. Often this doesn't have any dependencies, other than adding a new join.
+                //  To make it easier to EXTEND existing layers, by default, we'll push any unknown namespaces to data_ops.fetch
+                // Thus the default behavior is "fetch all namespaces as though they don't depend on anything.
+                //  If they depend on something, only then does "data_ops[@type=fetch].from" need to be mutated
+                dependency_order.from.push(local_name);
+            }
+        }
+
+        let dependencies = Array.from(dependency_order.from);
+
+        // Now check all joins. Are namespaces valid? Are they requesting known data?
+        const namecount = 0;
+        for (let config of data_operations) {
+            let {type, name, requires, params} = config;
+            if (!name) {
+                name = config.name = `join${namecount}`;
+            }
+            if (type !== 'fetch') {
+                if (entities.has(name)) {
+                    throw new Error(`Configuration error: within a layer, join name '${name}' must be unique`);
+                }
+                requires.forEach((require_name) => {
+                    if (!entities.has(require_name)) {
+                        throw new Error(`Data operation cannot operate on unknown provider '${require_name}'`);
+                    }
+                });
+
+                const task = new JoinTask(type, params);
+                entities.set(name, task);
+                dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
+            }
+        }
         return [entities, dependencies];
     }
 
-    getData(state, namespace_options, join_options) {
-        const [entities, dependencies] = this._config_to_sources(namespace_options, join_options);
+    /**
+     *
+     * @param {Object} state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
+     * @param {Map} entities A list of adapter and join tasks. This is created internally from data layer layouts.
+     *  Keys are layer-local namespaces for data types (like assoc), and values are adapter or join task instances
+     *  (things that implement a method getData).
+     * @param {String[]} dependencies Instructions on what adapters to fetch from, in what order
+     * @returns {Promise<*[]>|*}
+     */
+    getData(state, entities, dependencies) {
         if (!dependencies.length) {
             return Promise.resolve([]);
         }
+        // The last dependency (usually the last join operation) determines the last thing returned.
         return getLinkedData(state, entities, dependencies, true);
     }
 }

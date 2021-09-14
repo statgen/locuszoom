@@ -21,52 +21,28 @@ const triangledown = {
 };
 
 /**
- * Apply namespaces to layout, recursively
+ * Apply shared namespaces to a layout, recursively
  * @private
   */
-function applyNamespaces(element, namespace, default_namespace) {
-    if (namespace) {
-        if (typeof namespace == 'string') {
-            namespace = { default: namespace };
-        }
-    } else {
-        namespace = { default: '' };
+function applyNamespaces(layout, shared_namespaces) {
+    shared_namespaces = shared_namespaces || {};
+    if (!layout || typeof layout !== 'object' || typeof shared_namespaces !== 'object') {
+        throw new Error('Layout and shared namespaces must be provided as objects');
     }
-    if (typeof element == 'string') {
-        const re = /\{\{namespace(\[[A-Za-z_0-9]+\]|)\}\}/g;
-        let match, base, key, resolved_namespace;
-        const replace = [];
-        while ((match = re.exec(element)) !== null) {
-            base = match[0];
-            key = match[1].length ? match[1].replace(/(\[|\])/g, '') : null;
-            resolved_namespace = default_namespace;
-            if (namespace != null && typeof namespace == 'object' && typeof namespace[key] != 'undefined') {
-                resolved_namespace = namespace[key] + (namespace[key].length ? ':' : '');
-            }
-            replace.push({ base: base, namespace: resolved_namespace });
-        }
-        for (let r in replace) {
-            element = element.replace(replace[r].base, replace[r].namespace);
-        }
-    } else if (typeof element == 'object' && element != null) {
-        if (typeof element.namespace != 'undefined') {
-            const merge_namespace = (typeof element.namespace == 'string') ? { default: element.namespace } : element.namespace;
-            namespace = merge(namespace, merge_namespace);
-        }
-        let namespaced_element, namespaced_property;
-        for (let property in element) {
-            if (property === 'namespace') {
-                continue;
-            }
-            namespaced_element = applyNamespaces(element[property], namespace, default_namespace);
-            namespaced_property = applyNamespaces(property, namespace, default_namespace);
-            if (property !== namespaced_property) {
-                delete element[property];
-            }
-            element[namespaced_property] = namespaced_element;
+
+    for (let [field_name, item] of Object.entries(layout)) {
+        if (field_name === 'namespace') {
+            Object.keys(item).forEach((requested_ns) => {
+                const override = shared_namespaces[requested_ns];
+                if (override) {
+                    item[requested_ns] = override;
+                }
+            });
+        } else if (item !== null && (typeof item === 'object')) {
+            layout[field_name] = applyNamespaces(item, shared_namespaces);
         }
     }
-    return element;
+    return layout;
 }
 
 /**
@@ -167,11 +143,11 @@ function findFields(layout, prefixes, field_finder = null) {
     const fields = new Set();
 
     for (const value of Object.values(layout)) {
-        const key_type = typeof value;
+        const value_type = typeof value;
         let matches;
-        if (key_type === 'string') {
+        if (value_type === 'string') {
             matches = [...value.matchAll(field_finder)].map((m) => m[1]);
-        } else if (value !== null && key_type === 'object') {
+        } else if (value !== null && value_type === 'object') {
             matches = findFields(value, prefixes, field_finder);
         } else {
             // Only look for field names in strings or compound values

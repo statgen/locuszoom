@@ -84,7 +84,8 @@ const default_layout = {
     id: '',
     type: '',
     tag: 'custom_data_type',
-    fields: [],
+    namespace: {},
+    data_operations: [],
     id_field: 'id',
     filters: null,
     match: {},
@@ -292,10 +293,11 @@ class BaseDataLayer {
             'hidden': false,
         };
 
-        // On first load, track all data behaviors and options
+        // On first load, pre-parse the data specification once, so that it can be used for all other data retrieval
         this._data_contract = new Set(); // List of all fields requested by the layout
-
-        this.mutateLayout();
+        this._entities = new Map();
+        this._dependencies = [];
+        this.mutateLayout();  // Parse data spec and any other changes that need to reflect the layout
     }
 
     /****** Public interface: methods for manipulating the layer from other parts of LZ */
@@ -379,10 +381,11 @@ class BaseDataLayer {
      */
     mutateLayout() {
         // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.
-        const { namespace } = this.layout;
-        if (namespace) {
-            this._data_contract = findFields(this.layout, Object.keys(namespace));
-        }
+        const { namespace, data_operations } = this.layout;
+        this._data_contract = findFields(this.layout, Object.keys(namespace));
+        const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations);
+        this._entities = entities;
+        this._dependencies = dependencies;
     }
 
     /********** Protected methods: useful in subclasses to manipulate data layer behaviors */
@@ -1515,7 +1518,7 @@ class BaseDataLayer {
         // and then recreated if returning to visibility
 
         // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
-        return this.parent_plot.lzd.getData(this.state, this.layout.namespace || {}, this.layout.join_options || [])
+        return this.parent_plot.lzd.getData(this.state, this._entities, this._dependencies)
             .then((new_data) => {
                 this.data = new_data;
                 this.applyDataMethods();
