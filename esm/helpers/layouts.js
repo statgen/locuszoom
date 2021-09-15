@@ -143,9 +143,12 @@ function findFields(layout, prefixes, field_finder = null) {
 
     for (const value of Object.values(layout)) {
         const value_type = typeof value;
-        let matches;
+        let matches = [];
         if (value_type === 'string') {
-            matches = [...value.matchAll(field_finder)].map((m) => m[1]);
+            let a_match;
+            while ((a_match = field_finder.exec(value)) !== null) {
+                matches.push(a_match[1]);
+            }
         } else if (value !== null && value_type === 'object') {
             matches = findFields(value, prefixes, field_finder);
         } else {
