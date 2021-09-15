@@ -64,7 +64,7 @@ class LayoutRegistry extends RegistryBase {
         // Special behavior for datalayers: all registry data layers will attempt to identify the fields requested
         //   from external sources. This is purely a hint, because not every layout is generated through the registry.
         if (type === 'data_layer' && copy.namespace) {
-            copy._auto_fields = [...findFields(copy, Object.keys(copy.namespace))];
+            copy._auto_fields = [...findFields(copy, Object.keys(copy.namespace))].sort();
         }
 
         return super.get(type).add(name, copy, override);

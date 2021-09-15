@@ -65,6 +65,14 @@ describe('Data adapters', function () {
             ).then((result) => assert.deepEqual(result, [{'sometest:a': 1, 'sometest:b': 2}]));
         });
 
+        it('can optionally restrict final payload to a preset list of fields', function () {
+            const source = new BaseTestClass({ limit_fields: ['b'] });
+            return source.getData({
+                _provider_name: 'sometest',
+                _test_data: [{ a: 1, b: 2 }]}
+            ).then((result) => assert.deepEqual(result, [{ 'sometest:b': 2}]));
+        });
+
         it('has a helper to locate dependent fields that were already namespaced', function () {
             const source = new BaseTestClass({});
             const match = source._findPrefixedKey({'sometest:aaa': 1, 'sometest:a': 2, 'sometest:aa': 3}, 'a');

@@ -467,7 +467,7 @@ const genes_layer_filtered = merge({
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
-    join_options: [{
+    data_operations: [{
         type: 'assoc_to_gwas_catalog',
         name: 'combined',
         requires: ['assoc', 'catalog'],

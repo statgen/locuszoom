@@ -68,8 +68,9 @@ class BaseLZAdapter extends BaseUrlAdapter {
         // For some very complex data structure- mainly the Genes API payload- the datalayer might want to operate on
         //   that complex set of fields directly. Disable _prefix_namespace to get field names as they appear
         //   in the response. (gene_name instead of genes.gene_name)
-        const {prefix_namespace} = config;
-        this._prefix_namespace = (typeof prefix_namespace === 'boolean') ? prefix_namespace : true;
+        const { prefix_namespace = true, limit_fields } = config;
+        this._prefix_namespace = prefix_namespace;
+        this._limit_fields = limit_fields ? new Set(limit_fields) : false;  // Optional and typically only used for very standard datasets like LD or catalog, where API returns >> what is displayed. People want to show their own custom annos for assoc plots pretty often, so the most-often-customized adapters don't specify limit_fields
     }
 
     _getCacheKey(options) {
@@ -102,11 +103,16 @@ class BaseLZAdapter extends BaseUrlAdapter {
 
         // Transform fieldnames to include the namespace name as a prefix. For example, a data layer that asks for
         //   assoc data might see "variant" as "assoc.variant"
+        const { _limit_fields } = this;
+        const { _provider_name } = options;
+
         return records.map((row) => {
             return Object.entries(row).reduce(
                 (acc, [label, value]) => {
-                    // Rename API fields to format `namespace:fieldname`
-                    acc[`${options._provider_name}:${label}`] = value;
+                    // Rename API fields to format `namespace:fieldname`. If an adapter specifies limit_fields, then remove any unused API fields from the final payload.
+                    if (!_limit_fields || _limit_fields.has(label)) {
+                        acc[`${_provider_name}:${label}`] = value;
+                    }
                     return acc;
                 },
                 {}
@@ -222,6 +228,13 @@ class AssociationLZ extends BaseUMAdapter {
  * @see module:LocusZoom_Adapters~BaseUMAdapter
  */
 class GwasCatalogLZ extends BaseUMAdapter {
+    constructor(config) {
+        if (!config.limit_fields) {
+            config.limit_fields = ['log_pvalue', 'pos', 'rsid', 'trait', 'variant'];
+        }
+        super(config);
+    }
+
     /**
      * @param {string} config.url The base URL for the remote data.
      * @param {Object} config.params
@@ -370,6 +383,13 @@ class GeneConstraintLZ extends BaseLZAdapter {
 
 
 class LDServer extends BaseUMAdapter {
+    constructor(config) {
+        if (!config.limit_fields) {
+            config.limit_fields = ['variant2', 'position2', 'correlation'];
+        }
+        super(config);
+    }
+
     __find_ld_refvar(state, assoc_data) {
         const assoc_variant_name = this._findPrefixedKey(assoc_data[0], 'variant');
         const assoc_logp_name = this._findPrefixedKey(assoc_data[0], 'log_pvalue');
@@ -517,6 +537,13 @@ class LDServer extends BaseUMAdapter {
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseUMAdapter {
+    constructor(config) {
+        if (!config.limit_fields) {
+            config.limit_fields = ['position', 'recomb_rate'];
+        }
+        super(config);
+    }
+
     /**
      * Add query parameters to the URL to construct a query for the specified region
      */
