@@ -47,6 +47,27 @@ describe('_LayoutRegistry', function() {
             to_add.id = 2;
             assert.deepEqual(found.id, 1, 'Registry stores a copy: mutating the source object later does not propagate changes');
         });
+
+        it('annotates every new registry item with a best guess of what fields are requested from external providers', function() {
+            const lookup = new _LayoutRegistry();
+
+            const base_panel = { id: 'a_panel', red_herring: 'looks_like:a_field' };
+            lookup.add('panel', 'not_modified', base_panel);
+            let actual = lookup.get('panel', 'not_modified');
+            assert.deepEqual(actual, base_panel, 'Panel layouts are unchanged');
+
+            const base_layer = {
+                id: 'a_layer',
+                namespace: { assoc: 'assoc', ld: 'ld' },
+                x_field: 'assoc:something',
+                y_field: 'ld:correlation',
+                red_herring: 'unknown_ns:means_not_field',
+                label: 'chromosome {{chr}}',
+            };
+            lookup.add('data_layer', 'adds_autofields', base_layer);
+            actual = lookup.get('data_layer', 'adds_autofields');
+            assert.deepEqual(actual._auto_fields, ['assoc:something', 'ld:correlation'], 'Data layers in registry receive an added magic property called _auto_fields');
+        });
     });
 
     // get()

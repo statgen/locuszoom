@@ -128,10 +128,11 @@ function nameToSymbol(shape) {
  * @return {Set}
  */
 function findFields(layout, prefixes, field_finder = null) {
+    const fields = new Set();
     if (!field_finder) {
         if (!prefixes.length) {
             // A layer that doesn't ask for external data does not need to check if the provider returns expected fields
-            return [];
+            return fields;
         }
         const all_ns = prefixes.join('|');
 
@@ -139,8 +140,6 @@ function findFields(layout, prefixes, field_finder = null) {
         //  By knowing the list of allowed NS prefixes, we can be much more confident in avoiding spurious matches
         field_finder = new RegExp(`(?:{{)?(?:#if *)?((?:${all_ns}):\\w+)`, 'g');
     }
-
-    const fields = new Set();
 
     for (const value of Object.values(layout)) {
         const value_type = typeof value;
