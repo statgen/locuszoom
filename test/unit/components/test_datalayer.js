@@ -27,7 +27,7 @@ describe('LocusZoom.DataLayer', function () {
             let spy = sinon.spy(console, 'warn');
             this.layer.data = [{ 'assoc:variant': '1:23_A/B', 'assoc:position': 23 }];
             this.layer.applyDataMethods();
-            assert.ok(spy.calledOnce, 'Console.warn was called with data contract errors');
+            assert.ok(spy.calledTwice, 'Console.warn was called with data contract errors');
             assert.ok(spy.firstCall.args[0].match(/Missing fields are: assoc:rsid/), 'Developer message identifies the missing fields');
         });
 
