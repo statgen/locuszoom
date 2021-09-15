@@ -944,7 +944,7 @@ describe('LocusZoom.DataLayer', function () {
                 this.plot = null;
                 const data_sources = new DataSources()
                     .add('d', ['StaticJSON', {
-                        data: [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }]
+                        data: [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }],
                     }]);
                 const layout = {
                     panels: [

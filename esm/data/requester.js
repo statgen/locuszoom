@@ -46,7 +46,7 @@ class Requester {
      *      removed adapter.
      * @param {Object} namespace_options
      * @param {Array} data_operations
-     * @returns {(Map<any, any>|*[])[]}
+     * @returns {Array} Map of entities and list of dependencies
      */
     config_to_sources(namespace_options = {}, data_operations = []) {
         const entities = new Map();
@@ -122,7 +122,7 @@ class Requester {
      *  Keys are layer-local namespaces for data types (like assoc), and values are adapter or join task instances
      *  (things that implement a method getData).
      * @param {String[]} dependencies Instructions on what adapters to fetch from, in what order
-     * @returns {Promise<*[]>|*}
+     * @returns {Promise}
      */
     getData(state, entities, dependencies) {
         if (!dependencies.length) {

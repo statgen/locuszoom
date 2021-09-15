@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import {LAYOUTS} from '../../../esm/registry';
 import {populate} from '../../../esm/helpers/display';
 import Plot from '../../../esm/components/plot';
 import Panel from '../../../esm/components/panel';
