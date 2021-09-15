@@ -381,11 +381,13 @@ class BaseDataLayer {
      */
     mutateLayout() {
         // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.
-        const { namespace, data_operations } = this.layout;
-        this._data_contract = findFields(this.layout, Object.keys(namespace));
-        const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations);
-        this._entities = entities;
-        this._dependencies = dependencies;
+        if (this.parent_plot) { // Don't run this method if instance isn't mounted to a plot, eg unit tests that don't require requester
+            const { namespace, data_operations } = this.layout;
+            this._data_contract = findFields(this.layout, Object.keys(namespace));
+            const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations);
+            this._entities = entities;
+            this._dependencies = dependencies;
+        }
     }
 
     /********** Protected methods: useful in subclasses to manipulate data layer behaviors */

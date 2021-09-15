@@ -13,9 +13,13 @@ describe('Panel', function() {
     describe('Constructor', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = LAYOUTS.get('plot', 'standard_association');
-            layout.state = { chr: '1', start: 1, end: 100000 };
-            this.plot = populate('#plot_id', null, layout);
+            const layout = {
+                state: {},
+                width: 800,
+                panels: [],
+            };
+
+            this.plot = populate('#plot_id', new DataSources(), layout);
             this.panel = this.plot.panels.association;
         });
 
@@ -49,9 +53,18 @@ describe('Panel', function() {
     describe('Geometry Methods', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = LAYOUTS.get('plot', 'standard_association');
+
+            const layout = {
+                state: {},
+                width: 800,
+                panels: [
+                    { id: 'association', height: 225, data_layers: [] },
+                    { id: 'genes', height: 225, data_layers: [] },
+                ],
+            };
+
             layout.state = { chr: '1', start: 1, end: 100000 };
-            this.plot = populate('#plot_id', null, layout);
+            this.plot = populate('#plot_id', new DataSources(), layout);
             this.association_panel = this.plot.panels.association;
             this.genes_panel = this.plot.panels.genes;
         });

@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import Plot, {_updateStatePosition} from '../../../esm/components/plot';
 import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
-import { LAYOUTS } from '../../../esm/registry';
 
 describe('LocusZoom.Plot', function() {
     // Tests
@@ -17,7 +16,7 @@ describe('LocusZoom.Plot', function() {
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = populate('#plot', null, layout);
+            this.plot = populate('#plot', new DataSources(), layout);
         });
         afterEach(function() {
             d3.select('#plot').remove();
@@ -106,11 +105,19 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 1000,
                 panels: [
-                    LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
-                    LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } }),
+                    {
+                        id: 'association',
+                        margin: { top: 35, right: 50, bottom: 40, left: 200 },
+                        interaction: { x_linked: true },
+                    },
+                    {
+                        id: 'assoc2',
+                        margin: { top: 35, right: 300, bottom: 40, left: 50 },
+                        interaction: { x_linked: true },
+                    },
                 ],
             };
-            this.plot = populate('#plot', null, layout);
+            this.plot = populate('#plot', new DataSources(), layout);
 
             const panel0 = this.plot.layout.panels[0];
             const panel1 = this.plot.layout.panels[1];
@@ -137,9 +144,12 @@ describe('LocusZoom.Plot', function() {
         describe('Mouse Guide Layer', function() {
             beforeEach(function() {
                 d3.select('body').append('div').attr('id', 'plot');
-                const layout = LAYOUTS.get('plot', 'standard_association');
-                layout.state = { chr: '1', start: 1, end: 100000 };
-                this.plot = populate('#plot', null, layout);
+                const layout = {
+                    state: {},
+                    width: 800,
+                    panels: [],
+                };
+                this.plot = populate('#plot', new DataSources(), layout);
             });
 
             it('first child should be a mouse guide layer group element', function() {

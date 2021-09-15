@@ -27,12 +27,14 @@ class LayoutRegistry extends RegistryBase {
         const custom_namespaces = overrides.namespace;
         if (!base.namespace) {
             // Iff namespaces are a top level key, we'll allow them to be merged directly with the base layout
+            // NOTE: The "merge namespace" behavior means that data layers can add new data easily, but this method
+            //   can't be used to remove namespaces when extending something. (you'll need to layout.namespaces = {} separately).
             delete overrides.namespace;
         }
         let result = merge(overrides, base);
 
         if (custom_namespaces) {
-            result = applyNamespaces(base, custom_namespaces);
+            result = applyNamespaces(result, custom_namespaces);
         }
         return deepCopy(result);
     }

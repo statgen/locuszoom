@@ -477,7 +477,6 @@ describe('LocusZoom.DataLayer', function () {
                             {
                                 namespace: { d: 'd' },
                                 id: 'd',
-                                fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 highlighted: { onmouseover: 'toggle' },
@@ -496,7 +495,7 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('should allow for highlighting and unhighlighting a single element', function () {
-            return this.plot.lzd.getData({}, { d: 'd' }, [])
+            return this.plot.applyState()
                 .then(() => {
                     const state_id = this.plot.panels.p.data_layers.d.state_id;
                     const layer_state = this.plot.state[state_id];
@@ -530,23 +529,23 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('should allow for highlighting and unhighlighting all elements', function () {
-            return this.plot.lzd.getData({}, { d: 'd' }, [])
+            return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer.state_id;
                     const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a_id = d.getElementId(d.data[0]);
-                    const b_id = d.getElementId(d.data[1]);
-                    const c_id = d.getElementId(d.data[2]);
+                    const a_id = layer.getElementId(layer.data[0]);
+                    const b_id = layer.getElementId(layer.data[1]);
+                    const c_id = layer.getElementId(layer.data[2]);
 
-                    this.plot.panels.p.data_layers.d.highlightAllElements();
+                    layer.highlightAllElements();
                     const highlight_flags = layer_state.status_flags.highlighted;
                     assert.equal(highlight_flags.size, 3);
                     assert.ok(highlight_flags.has(a_id));
                     assert.ok(highlight_flags.has(b_id));
                     assert.ok(highlight_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unhighlightAllElements();
+                    layer.unhighlightAllElements();
                     assert.equal(layer_state.status_flags.highlighted.size, 0);
                 });
         });
@@ -584,57 +583,57 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('should allow for selecting and unselecting a single element', function () {
-            return this.plot.lzd.getData({}, { d: 'd' }, [])
+            return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer.state_id;
                     const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a = d.data[0];
-                    const a_id = d.getElementId(a);
-                    const b = d.data[1];
-                    const c = d.data[2];
-                    const c_id = d.getElementId(c);
+                    const a = layer.data[0];
+                    const a_id = layer.getElementId(a);
+                    const b = layer.data[1];
+                    const c = layer.data[2];
+                    const c_id = layer.getElementId(c);
 
                     const selected_flags = layer_state.status_flags.selected;
                     assert.equal(selected_flags.size, 0);
 
-                    this.plot.panels.p.data_layers.d.selectElement(a);
+                    layer.selectElement(a);
                     assert.equal(selected_flags.size, 1);
                     assert.ok(selected_flags.has(a_id));
 
-                    this.plot.panels.p.data_layers.d.unselectElement(a);
+                    layer.unselectElement(a);
                     assert.equal(selected_flags.size, 0);
 
-                    this.plot.panels.p.data_layers.d.selectElement(c);
+                    layer.selectElement(c);
                     assert.equal(selected_flags.size, 1);
                     assert.ok(selected_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unselectElement(b);
+                    layer.unselectElement(b);
                     assert.equal(selected_flags.size, 1);
 
-                    this.plot.panels.p.data_layers.d.unselectElement(c);
+                    layer.unselectElement(c);
                     assert.equal(selected_flags.size, 0);
                 });
         });
 
         it('should allow for selecting and unselecting all elements', function () {
-            return this.plot.lzd.getData({}, { d: 'd' }, [])
+            return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer.state_id;
                     const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a_id = d.getElementId(d.data[0]);
-                    const b_id = d.getElementId(d.data[1]);
-                    const c_id = d.getElementId(d.data[2]);
+                    const a_id = layer.getElementId(layer.data[0]);
+                    const b_id = layer.getElementId(layer.data[1]);
+                    const c_id = layer.getElementId(layer.data[2]);
 
-                    this.plot.panels.p.data_layers.d.selectAllElements();
+                    layer.selectAllElements();
                     const selected_flags = layer_state.status_flags.selected;
                     assert.equal(selected_flags.size, 3);
                     assert.ok(selected_flags.has(a_id));
                     assert.ok(selected_flags.has(b_id));
                     assert.ok(selected_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unselectAllElements();
+                    layer.unselectAllElements();
                     assert.equal(layer_state.status_flags.selected.size, 0);
                 });
         });

@@ -89,13 +89,15 @@ class Requester {
         let dependencies = Array.from(dependency_order.from);
 
         // Now check all joins. Are namespaces valid? Are they requesting known data?
-        const namecount = 0;
         for (let config of data_operations) {
             let {type, name, requires, params} = config;
-            if (!name) {
-                name = config.name = `join${namecount}`;
-            }
             if (type !== 'fetch') {
+                let namecount = 0;
+                if (!name) {
+                    name = config.name = `join${namecount}`;
+                    namecount += 1;
+                }
+
                 if (entities.has(name)) {
                     throw new Error(`Configuration error: within a layer, join name '${name}' must be unique`);
                 }

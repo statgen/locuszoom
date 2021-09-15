@@ -97,8 +97,8 @@ describe('highlight_regions data layer', function () {
                 start_field: 'intervals:start',
                 end_field: 'intervals:end',
                 regions: [],
-                fields: ['intervals:start', 'intervals:end'],
             });
+            layer.mutateLayout(); // Manually tell the layer that data rules have changed for this specific test
             return this.plot.applyState().then(() => {
                 assert.equal(layer.svg.group.selectAll('rect').size(), 1, 'Layer draws one region as pulled from the datasource');
             });

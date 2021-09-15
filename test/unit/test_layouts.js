@@ -1,8 +1,7 @@
 import { assert } from 'chai';
 import LAYOUTS, {_LayoutRegistry} from '../../esm/registry/layouts';
-import {deepCopy, merge} from '../../esm/helpers/layouts';
+import {applyNamespaces, deepCopy, merge} from '../../esm/helpers/layouts';
 
-import clone from 'just-clone';
 
 describe('_LayoutRegistry', function() {
     describe('Provides a method to list current layouts by type', function() {
@@ -125,141 +124,107 @@ describe('_LayoutRegistry', function() {
             };
 
             lookup.add('test', 'test', base_layout);
-            assert.deepEqual(lookup.get('test', 'test', mods), expected_layout);
+            const actual = lookup.get('test', 'test', mods);
+            assert.deepEqual(actual, expected_layout);
+
+            assert.notDeepEqual(actual, base_layout, 'Overriding the layout does not change the original');
         });
 
-        it.skip('Allows for namespacing arbitrary keys and values at all nesting levels', function() {
-            //FIXME: This test references a lot of beheavior that was deprecated/ removed in modern LZ
+        it('Allows for overriding namespaces', function() {
             const lookup = new _LayoutRegistry();
-            const base_layout = {
-                scalar_0: 123,
-                '{{namespace}}scalar_1': 'aardvark',
-                'dingo:scalar_2': '1:albacore',
-                namespace_scalar: '{{namespace}}badger',
-                namespace_0_scalar: '0:crocodile',
-                namespace_dingo_scalar: 'dingo:emu',
-                namespace_1_scalar: '1:ferret',
-                array_of_scalars: [ 4, 5, 6 ],
-                nested_object: {
-                    property_0: {
-                        scalar_0: 0,
-                        scalar_1: 'grackle',
-                        namespace_scalar: '{{{{namespace}}hog}} and {{1:yak}} and {{jackal:zebu}}',
-                        namespace_0_scalar: '0:iguana',
-                        namespace_jackal_scalar: 'jackal:kangaroo',
-                        namespace_dingo_scalar: 'dingo:lemur',
-                        namespace_1_scalar: '1:moose',
-                        array: ['nematoad', 'oryx', '1:pigeon', 'jackal:quail'],
-                        object: {
-                            scalar: 'rhea',
-                            array: ['serpent', '0:tortoise', 'upapa:vulture', '{{namespace}}xerus'],
-                        },
+            const layout = {
+                width: 400,
+                panels: [
+                    {
+                        data_layers: [
+                            {id: 'assoc1', namespace: {assoc: 'assoc', ld: 'ld' }},
+                            {id: 'assoc2', namespace: {assoc: 'assoc', catalog: 'catalog' }},
+                        ],
                     },
-                    property_1: false,
-                    property_2: true,
-                },
+                ],
+            };
+            lookup.add('plot', 'testfixture', layout);
+            const modified = lookup.get('plot', 'testfixture', {
+                namespace: { assoc: 'assoc12', catalog: 'ebi_cat' },
+                width: 800, // Add a property during overrides
+                new_prop: true,
+            });
+            const expected = {
+                width: 800,
+                new_prop: true,
+                panels: [
+                    {
+                        data_layers: [
+                            {id: 'assoc1', namespace: {assoc: 'assoc12', ld: 'ld' }},
+                            {id: 'assoc2', namespace: {assoc: 'assoc12', catalog: 'ebi_cat' }},
+                        ],
+                    },
+                ],
             };
 
-            lookup.add('test', 'test', base_layout);
-            // Explicit directive to NOT apply namespaces: no changes
-            const unnamespaced_layout = lookup.get('test', 'test', { unnamespaced: true });
-            assert.deepEqual(unnamespaced_layout, base_layout);
-
-            // No defined namespaces: drop all namespaces
-            const no_namespace_layout = lookup.get('test', 'test');
-            assert.equal(no_namespace_layout['scalar_1'], 'aardvark');
-            assert.equal(no_namespace_layout['scalar_2'], 'albacore');
-            assert.equal(no_namespace_layout.namespace_scalar, 'badger');
-            assert.equal(no_namespace_layout.namespace_0_scalar, 'crocodile');
-            assert.equal(no_namespace_layout.namespace_dingo_scalar, 'emu');
-            assert.equal(no_namespace_layout.namespace_1_scalar, 'ferret');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_scalar, '{{hog}} and {{yak}} and {{zebu}}');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_0_scalar, 'iguana');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_jackal_scalar, 'kangaroo');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_dingo_scalar, 'lemur');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_1_scalar, 'moose');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[1], 'oryx');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[2], 'pigeon');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[3], 'quail');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[1], 'tortoise');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[2], 'vulture');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[3], 'xerus');
-
-            // Single namespace string: use in place of all namespace placeholders
-            const single_namespace_layout = lookup.get('test', 'test', { namespace: 'ns' });
-            assert.equal(single_namespace_layout['ns:scalar_1'], 'aardvark');
-            assert.equal(single_namespace_layout['ns:scalar_2'], 'ns:albacore');
-            assert.equal(single_namespace_layout.namespace_scalar, 'ns:badger');
-            assert.equal(single_namespace_layout.namespace_0_scalar, 'ns:crocodile');
-            assert.equal(single_namespace_layout.namespace_dingo_scalar, 'ns:emu');
-            assert.equal(single_namespace_layout.namespace_1_scalar, 'ns:ferret');
-            assert.equal(single_namespace_layout.nested_object.property_0.namespace_scalar, '{{ns:hog}} and {{ns:yak}} and {{ns:zebu}}');
-            assert.equal(single_namespace_layout.nested_object.property_0.namespace_0_scalar, 'ns:iguana');
-            assert.equal(single_namespace_layout.nested_object.property_0.namespace_jackal_scalar, 'ns:kangaroo');
-            assert.equal(single_namespace_layout.nested_object.property_0.namespace_dingo_scalar, 'ns:lemur');
-            assert.equal(single_namespace_layout.nested_object.property_0.namespace_1_scalar, 'ns:moose');
-            assert.equal(single_namespace_layout.nested_object.property_0.array[1], 'ns:oryx');
-            assert.equal(single_namespace_layout.nested_object.property_0.array[2], 'ns:pigeon');
-            assert.equal(single_namespace_layout.nested_object.property_0.array[3], 'ns:quail');
-            assert.equal(single_namespace_layout.nested_object.property_0.object.array[1], 'ns:tortoise');
-            assert.equal(single_namespace_layout.nested_object.property_0.object.array[2], 'ns:vulture');
-            assert.equal(single_namespace_layout.nested_object.property_0.object.array[3], 'ns:xerus');
-
-            // Array of namespaces: replace number-indexed namespace holders,
-            // resolve {{namespace}} and any named namespaces to 0:.
-            const array_namespace_layout = lookup.get('test', 'test', { namespace: ['ns_0', 'ns_1'] });
-            assert.equal(array_namespace_layout['ns_0:scalar_1'], 'aardvark');
-            assert.equal(array_namespace_layout['ns_0:scalar_2'], 'ns_1:albacore');
-            assert.equal(array_namespace_layout.namespace_scalar, 'ns_0:badger');
-            assert.equal(array_namespace_layout.namespace_0_scalar, 'ns_0:crocodile');
-            assert.equal(array_namespace_layout.namespace_dingo_scalar, 'ns_0:emu');
-            assert.equal(array_namespace_layout.namespace_1_scalar, 'ns_1:ferret');
-            assert.equal(array_namespace_layout.nested_object.property_0.namespace_scalar, '{{ns_0:hog}} and {{ns_1:yak}} and {{ns_0:zebu}}');
-            assert.equal(array_namespace_layout.nested_object.property_0.namespace_0_scalar, 'ns_0:iguana');
-            assert.equal(array_namespace_layout.nested_object.property_0.namespace_jackal_scalar, 'ns_0:kangaroo');
-            assert.equal(array_namespace_layout.nested_object.property_0.namespace_dingo_scalar, 'ns_0:lemur');
-            assert.equal(array_namespace_layout.nested_object.property_0.namespace_1_scalar, 'ns_1:moose');
-            assert.equal(array_namespace_layout.nested_object.property_0.array[1], 'ns_0:oryx');
-            assert.equal(array_namespace_layout.nested_object.property_0.array[2], 'ns_1:pigeon');
-            assert.equal(array_namespace_layout.nested_object.property_0.array[3], 'ns_0:quail');
-            assert.equal(array_namespace_layout.nested_object.property_0.object.array[1], 'ns_0:tortoise');
-            assert.equal(array_namespace_layout.nested_object.property_0.object.array[2], 'ns_0:vulture');
-            assert.equal(array_namespace_layout.nested_object.property_0.object.array[3], 'ns_0:xerus');
-            // first defined key to any non-matching namespaces.
-            const object_namespace_layout = lookup.get('test', 'test', {
-                namespace: {
-                    dingo: 'ns_dingo',
-                    jackal: 'ns_jackal',
-                    1: 'ns_1',
-                    'default': 'ns_default',
-                },
-            });
-            assert.equal(object_namespace_layout['ns_default:scalar_1'], 'aardvark');
-            assert.equal(object_namespace_layout['ns_dingo:scalar_2'], 'ns_1:albacore');
-            assert.equal(object_namespace_layout.namespace_scalar, 'ns_default:badger');
-            assert.equal(object_namespace_layout.namespace_0_scalar, 'ns_default:crocodile');
-            assert.equal(object_namespace_layout.namespace_dingo_scalar, 'ns_dingo:emu');
-            assert.equal(object_namespace_layout.namespace_1_scalar, 'ns_1:ferret');
-            assert.equal(object_namespace_layout.nested_object.property_0.namespace_scalar, '{{ns_default:hog}} and {{ns_1:yak}} and {{ns_jackal:zebu}}');
-            assert.equal(object_namespace_layout.nested_object.property_0.namespace_0_scalar, 'ns_default:iguana');
-            assert.equal(object_namespace_layout.nested_object.property_0.namespace_jackal_scalar, 'ns_jackal:kangaroo');
-            assert.equal(object_namespace_layout.nested_object.property_0.namespace_dingo_scalar, 'ns_dingo:lemur');
-            assert.equal(object_namespace_layout.nested_object.property_0.namespace_1_scalar, 'ns_1:moose');
-            assert.equal(object_namespace_layout.nested_object.property_0.array[1], 'ns_default:oryx');
-            assert.equal(object_namespace_layout.nested_object.property_0.array[2], 'ns_1:pigeon');
-            assert.equal(object_namespace_layout.nested_object.property_0.array[3], 'ns_jackal:quail');
-            assert.equal(object_namespace_layout.nested_object.property_0.object.array[1], 'ns_default:tortoise');
-            assert.equal(object_namespace_layout.nested_object.property_0.object.array[2], 'ns_default:vulture');
-            assert.equal(object_namespace_layout.nested_object.property_0.object.array[3], 'ns_default:xerus');
-        });
-
-        it.skip('Allows for inheriting namespaces', function() {
-            assert.ok(false, 'TODO: Reimplement with new namespace behavior');
+            assert.deepEqual(modified, expected, 'Namespaces are applied to children as part of overrides');
         });
     });
 });
 
 describe('Layout helpers', function () {
+    describe('applyNamespaces', function () {
+        it('warns if layout or namespace-overrides are not objects', function () {
+            assert.throws(
+                () => applyNamespaces(null, {}),
+                /as objects/
+            );
+            assert.throws(
+                () => applyNamespaces({}, 42),
+                /as objects/
+            );
+            assert.ok(applyNamespaces({}), 'If no namespaced provided, default value is used');
+        });
+
+        it('Can override namespaces referenced in both a layout and global object', function () {
+            const base = {
+                id: 'a_layer',
+                namespace: { assoc: 'assoc', ld: 'ld', catalog: 'catalog' },
+                x_field: 'assoc:position',
+                y_field: 'ld:correlation',
+            };
+
+            const expected = {
+                id: 'a_layer',
+                namespace: { assoc: 'assoc22', ld: 'ld5', catalog: 'catalog' },
+                x_field: 'assoc:position',
+                y_field: 'ld:correlation',
+            };
+
+
+            const actual = applyNamespaces(base, { assoc: 'assoc22', ld: 'ld5', other_anno: 'mything' });
+            assert.deepEqual(actual, expected, 'Overrides as appropriate');
+        });
+
+        it('Can override namespaces in all child objects', function () {
+            const base = {
+                panels: [{
+                    data_layers: [
+                        { id: 'a', x_field: 'assoc:variant', namespace: { assoc: 'assoc', catalog: 'catalog' }},
+                        { id: 'b', x_field: 'someanno:afield', namespace: { catalog: 'catalog', ld: 'ld', other_thing: 'unused' }},
+                    ],
+                }],
+            };
+
+            const expected = {
+                panels: [{
+                    data_layers: [
+                        { id: 'a', x_field: 'assoc:variant', namespace: { assoc: 'myassoc', catalog: 'mycat' }},
+                        { id: 'b', x_field: 'someanno:afield', namespace: { catalog: 'mycat', ld: 'ld5', other_thing: 'unused' }},
+                    ],
+                }],
+            };
+
+            const actual = applyNamespaces(base, { assoc: 'myassoc', ld: 'ld5', catalog: 'mycat' });
+            assert.deepEqual(actual, expected, 'Selectively applies overrides to nested objects');
+        });
+    });
+
     describe('Provides a method to merge layout objects', function() {
         beforeEach(function() {
             this.default_layout = {
@@ -364,13 +329,11 @@ describe('Layout helpers', function () {
 
         it('can mutate a set of values based on a jsonpath selector', function () {
             const base_panel = LAYOUTS.get('panel', 'association');
-            const base_layer = LAYOUTS.get('data_layer', 'association_pvalues');
-
             const scenarios = [
                 ['set single value to a constant', '$.panels[?(@.tag === "association")].id', 'one', ['one']],
                 ['toggle a boolean false to true', '$.fake_field', true, [true]],
                 ['set many values to a constant', '$..id', 'all', ['all', 'all', 'all', 'all', 'all', 'all']],
-                ['add items to an array', '$..data_layers[?(@.tag === "association")].fields', (old_value) => old_value.concat(['field1', 'field2']), [base_layer.fields.concat(['field1', 'field2'])]],
+                ['add items to an array', '$.some_list', (old_value) => old_value.concat(['field1', 'field2']), [['field0', 'field1', 'field2']]],
                 // Two subtly different cases for nested objects (direct query, and as part of filtered list)
                 ['mutate an object inside an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 50, right: 50, top: 35, new_field: 10}]],
                 ['mutate an object inside a list', '$..panels[?(@.tag === "association")]', (old_config) => (old_config.margin.new_field = 10) && old_config, [Object.assign(base_panel, {margin: {bottom: 40, left: 50, right: 50, top: 35, new_field: 10}})]],
@@ -379,6 +342,7 @@ describe('Layout helpers', function () {
             for (let [label, selector, mutator, expected] of scenarios) {
                 const base = LAYOUTS.get('plot', 'standard_association');
                 base.fake_field = false;
+                base.some_list = ['field0'];
                 assert.deepEqual(LAYOUTS.mutate_attrs(base, selector, mutator), expected, `Scenario '${label}' passed`);
             }
         });
