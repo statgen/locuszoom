@@ -410,6 +410,7 @@ const genes_layer = {
             from: ['gene', 'constraint(gene)'],
         },
         {
+            name: 'gene_constraint',
             type: 'genes_to_gnomad_constraint',
             requires: ['gene', 'constraint'],
         },

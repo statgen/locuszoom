@@ -322,8 +322,8 @@ class GeneConstraintLZ extends BaseLZAdapter {
         this._prefix_namespace = false;
     }
 
-    _buildRequestOptions(options, genes_data) {
-        const build = options.genome_build || this._config.build;
+    _buildRequestOptions(state, genes_data) {
+        const build = state.genome_build || this._config.build;
         if (!build) {
             throw new Error(`Adapter ${this.constructor.name} must specify a 'genome_build' option`);
         }
@@ -335,14 +335,14 @@ class GeneConstraintLZ extends BaseLZAdapter {
             unique_gene_names.add(gene.gene_name);
         }
 
-        options.query = [...unique_gene_names.values()].map(function (gene_name) {
+        state.query = [...unique_gene_names.values()].map(function (gene_name) {
             // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
             const alias = `_${gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;
             // Each gene symbol is a separate graphQL query, grouped into one request using aliases
             return `${alias}: gene(gene_symbol: "${gene_name}", reference_genome: ${build}) { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } `;
         });
-        options.build = build;
-        return Object.assign({}, options);
+        state.build = build;
+        return Object.assign({}, state);
     }
 
     _performRequest(options) {

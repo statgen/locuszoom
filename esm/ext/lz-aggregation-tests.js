@@ -34,9 +34,7 @@
 import {helpers} from 'raremetal.js';
 
 function install (LocusZoom) {
-    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
-    const BaseApiAdapter = LocusZoom.Adapters.get('BaseApiAdapter');
-    const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
+    const BaseUrlAdapter = LocusZoom.Adapters.get('BaseLZAdapter');
 
     /**
      * Calculates gene or region-based tests based on provided data, using the raremetal.js library.
@@ -46,71 +44,82 @@ function install (LocusZoom) {
      * @see module:ext/lz-aggregation-tests
      * @private
      */
-    class AggregationTestSourceLZ extends BaseApiAdapter {
-        getURL(state, chain, fields) {
+    class AggregationTestSourceLZ extends BaseUrlAdapter {
+        constructor(config) {
+            config.prefix_namespace = false;
+            super(config);
+        }
+
+        _buildRequestOptions(state) {
+            const { aggregation_tests = {} } = state;
+            const {
+                // eslint-disable-next-line no-unused-vars
+                genoset_id = null, genoset_build = null, phenoset_build = null, pheno = null, calcs = {}, masks = [],
+            } = aggregation_tests;
+
+            aggregation_tests.mask_ids = masks.map((item) => item.name);
+            // Many of these params will be undefined if no tests defined
+            state.aggregation_tests = aggregation_tests;
+            return state;
+        }
+
+        _getURL(state, chain, fields) {
             // Unlike most sources, calculations may require access to plot state data even after the initial request
             // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
             //  field called `aggregation_tests` (an object {masks: [], calcs: {})
-            const required_info = state.aggregation_tests || {};
-
-            if (!chain.header) {
-                chain.header = {};
-            }
-            // All of these fields are required in order to use this datasource. TODO: Add validation?
-            chain.header.aggregation_genoset_id = required_info.genoset_id || null; // Number
-            chain.header.aggregation_genoset_build = required_info.genoset_build || null; // String
-            chain.header.aggregation_phenoset_id = required_info.phenoset_id || null;  // Number
-            chain.header.aggregation_pheno = required_info.pheno || null; // String
-            chain.header.aggregation_calcs = required_info.calcs || {};  // String[]
-            const mask_data = required_info.masks || [];
-            chain.header.aggregation_masks = mask_data;  // {name:desc}[]
-            chain.header.aggregation_mask_ids = mask_data.map(function (item) {
-                return item.name;
-            }); // Number[]
-            return this.url;
+            return this._url;
         }
 
-        getCacheKey(state, chain, fields) {
-            this.getURL(state, chain, fields);  // TODO: This just sets the chain.header fields
+        _getCacheKey(options) {
+            const { chr, start, end, aggregation_tests } = options;
+            const { genoset_id = null, genoset_build = null, phenoset_id = null, pheno = null, mask_ids } = aggregation_tests;
+
             return JSON.stringify({
-                chrom: state.chr,
-                start: state.start,
-                stop: state.end,
-                genotypeDataset: chain.header.aggregation_genoset_id,
-                phenotypeDataset: chain.header.aggregation_phenoset_id,
-                phenotype: chain.header.aggregation_pheno,
+                chrom: chr,
+                start: start,
+                stop: end,
+                genotypeDataset: genoset_id,
+                phenotypeDataset: phenoset_id,
+                phenotype: pheno,
                 samples: 'ALL',
-                genomeBuild: chain.header.aggregation_genoset_build,
-                masks: chain.header.aggregation_mask_ids,
+                genomeBuild: genoset_build,
+                masks: mask_ids,
             });
         }
 
-        fetchRequest(state, chain, fields) {
-            const url = this.getURL(state, chain, fields);
-            const body = this.getCacheKey(state, chain, fields);
+        _performRequest(options) {
+            const url = this._getURL(options);
+            const body = this._getCacheKey(options);  // cache key doubles as request body
             const headers = {
                 'Content-Type': 'application/json',
             };
 
-            return fetch(url, {method: 'POST', body: body, headers: headers}).then((response) => {
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                return response.text();
-            }).then(function (resp) {
-                const json = typeof resp == 'string' ? JSON.parse(resp) : resp;
-                if (json.error) {
-                    // RAREMETAL-server quirk: The API sometimes returns a 200 status code for failed requests,
-                    //    with a human-readable error description as a key
-                    // For now, this should be treated strictly as an error
-                    throw new Error(json.error);
-                }
-                return json;
-            });
+            return fetch(url, {method: 'POST', body: body, headers: headers})
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(response.statusText);
+                    }
+                    return response.text();
+                }).then((resp) => {
+                    const json = typeof resp == 'string' ? JSON.parse(resp) : resp;
+                    if (json.error) {
+                        // RAREMETAL-server quirk: The API sometimes returns a 200 status code for failed requests,
+                        //    with a human-readable error description as a key
+                        // For now, this should be treated strictly as an error
+                        throw new Error(json.error);
+                    }
+                    return json.data;
+                });
         }
 
-        annotateData(records, chain) {
-            // Operate on the calculated results. The result of this method will be added to chain.discrete
+        _annotateRecords(records, options) {
+            // The server response gives covariance for a set of masks, but the actual calculations are done separately.
+            //   Eg, several types of aggtests might use the same covariance matrix.
+
+            // TODO In practice, the test calculations are slow. Investigate caching full results (returning all from performRequest), not just covmat.
+            // This code is largely for demonstration purposes and does not reflect modern best practices possible in LocusZoom (eg sources + dependencies to link together requests)
+            const { aggregation_tests } = options;
+            const { calcs = [], mask_ids = [], masks = [] } = aggregation_tests;
 
             // In a page using live API data, the UI would only request the masks it needs from the API.
             // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
@@ -122,19 +131,16 @@ function install (LocusZoom) {
                 return { groups: [], variants: [] };
             }
 
-            records.groups = records.groups.filter(function (item) {
-                return item.groupType === 'GENE';
-            });
+            records.groups = records.groups.filter((item) => item.groupType === 'GENE');
 
             const parsed = helpers.parsePortalJSON(records);
             let groups = parsed[0];
             const variants = parsed[1];
             // Some APIs may return more data than we want (eg simple sites that are just serving up premade scorecov json files).
             //  Filter the response to just what the user has chosen to analyze.
-            groups = groups.byMask(chain.header.aggregation_mask_ids);
+            groups = groups.byMask(mask_ids);
 
             // Determine what calculations to run
-            const calcs = chain.header.aggregation_calcs;
             if (!calcs || Object.keys(calcs).length === 0) {
                 // If no calcs have been requested, then return a dummy placeholder immediately
                 return { variants: [], groups: [], results: [] };
@@ -145,11 +151,11 @@ function install (LocusZoom) {
                 .then(function (res) {
                     // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
                     // We will annotate each mask name (id) with a human-friendly description for later use
-                    const mask_id_to_desc = chain.header.aggregation_masks.reduce(function (acc, val) {
+                    const mask_id_to_desc = masks.reduce((acc, val) => {
                         acc[val.name] = val.description;
                         return acc;
                     }, {});
-                    res.data.groups.forEach(function (group) {
+                    res.data.groups.forEach((group) => {
                         group.mask_name = mask_id_to_desc[group.mask];
                     });
                     return res.data;
@@ -159,18 +165,6 @@ function install (LocusZoom) {
                     throw new Error('Failed to calculate aggregation test results');
                 });
         }
-
-        normalizeResponse(data) {
-            return data;
-        }
-
-        combineChainBody(records, chain) {
-            // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
-            //  other layers in different ways. The calculated result has been added to `chain.discrete`, but will not be returned
-            //  as part of the response body built up by the chain
-            return chain.body;
-        }
-
     }
 
     /**
@@ -180,40 +174,35 @@ function install (LocusZoom) {
      * @see module:LocusZoom_Adapters
      * @private
      */
-    class AssocFromAggregationLZ extends BaseAdapter {
-        constructor(config) {
-            if (!config || !config.from) {
-                throw 'Must specify the name of the source that contains association data';
+    class AssocFromAggregationLZ extends BaseUrlAdapter {
+        _buildRequestOptions(state, agg_results) {
+            // This adapter just reformats an existing payload from cache (maybe this is better as a data_operation instead of an adapter nowadays?)
+            if (!agg_results) {
+                throw new Error('Aggregation test results must be provided');
             }
-            super(...arguments);
-        }
-        parseInit(config) {
-            super.parseInit(config);
-            this._from = config.from;
+            state._agg_results = agg_results;
+            return state;
         }
 
-        getRequest(state, chain, fields) {
-            // Does not actually make a request. Just pick off the specific bundle of data from a known payload structure.
-            if (chain.discrete && !chain.discrete[this._from]) {
-                throw `${this.constructor.SOURCE_NAME} cannot be used before loading required data for: ${this._from}`;
-            }
-            // Copy the data so that mutations (like sorting) don't affect the original
-            return Promise.resolve(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
+        _performRequest(options) {
+            return Promise.resolve(options._agg_results['variants']);
         }
 
-        normalizeResponse(data) {
+        _normalizeResponse(data) {
             // The payload structure of the association source is slightly different than the one required by association
             //   plots. For example, we need to parse variant names and convert to log_pvalue
             const REGEX_EPACTS = new RegExp('(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?');  // match API variant strings
-            return data.map((one_variant) => {
-                const match = one_variant.variant.match(REGEX_EPACTS);
+            return data.map((item) => {
+                const { variant, altFreq, pvalue } = item;
+                const match = variant.match(REGEX_EPACTS);
+                const [_, chromosome, position, ref_allele] = match;
                 return {
-                    variant: one_variant.variant,
-                    chromosome: match[1],
-                    position: +match[2],
-                    ref_allele: match[3],
-                    ref_allele_freq: 1 - one_variant.altFreq,
-                    log_pvalue: -Math.log10(one_variant.pvalue),
+                    variant: variant,
+                    chromosome,
+                    position: +position,
+                    ref_allele,
+                    ref_allele_freq: 1 - altFreq,
+                    log_pvalue: -Math.log10(pvalue),
                 };
             }).sort((a, b) => {
                 a = a.variant;
@@ -230,57 +219,32 @@ function install (LocusZoom) {
         }
     }
 
-    /**
-     * A sample connector that aligns calculated aggregation test data with corresponding gene information. Returns a body
-     *   suitable for use with the genes datalayer.
-     *
-     *  To use this source, one must specify a fields array that calls first the genes source, then a dummy field from
-     *      this source. The output will be to transparently add several new fields to the genes data.
-     * @see module:ext/lz-aggregation-tests
-     * @see module:LocusZoom_Adapters
-     * @private
-     */
-    class GeneAggregationConnectorLZ extends ConnectorSource {
-        _getRequiredSources() {
-            return ['gene_ns', 'aggregation_ns'];
-        }
+    LocusZoom.JoinFunctions.add('gene_plus_aggregation', (genes_data, aggregation_data) => {
+        // Used to highlight genes with significant aggtest results. Unlike a basic left join, it chooses one specific aggtest with the most significant results
 
-        combineChainBody(data, chain) {
-            // The genes layer receives all results, and displays only the best pvalue for each gene
+        // Tie the calculated group-test results to genes with a matching name
+        const groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
 
-            // Tie the calculated group-test results to genes with a matching name
-            const aggregation_source_id = this._source_name_mapping['aggregation_ns'];
-            const gene_source_id = this._source_name_mapping['gene_ns'];
-            // This connector assumes that genes are the main body of records from the chain, and that aggregation tests are
-            //   a standalone source that has not acted on genes data yet
-            const aggregationData = chain.discrete[aggregation_source_id];
-            const genesData = chain.discrete[gene_source_id];
+        aggregation_data.groups.forEach(function (result) {
+            if (!Object.prototype.hasOwnProperty.call(groupedAggregation, result.group)) {
+                groupedAggregation[result.group] = [];
+            }
+            groupedAggregation[result.group].push(result.pvalue);
+        });
 
-            const groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
-
-            aggregationData.groups.forEach(function (result) {
-                if (!Object.prototype.hasOwnProperty.call(groupedAggregation, result.group)) {
-                    groupedAggregation[result.group] = [];
-                }
-                groupedAggregation[result.group].push(result.pvalue);
-            });
-
-            // Annotate any genes that have test results
-            genesData.forEach(function (gene) {
-                const gene_id = gene.gene_name;
-                const tests = groupedAggregation[gene_id];
-                if (tests) {
-                    gene.aggregation_best_pvalue = Math.min.apply(null, tests);
-                }
-            });
-            return genesData;
-        }
-    }
-
+        // Annotate any genes that have test results
+        genes_data.forEach((gene) => {
+            const gene_id = gene.gene_name;
+            const tests = groupedAggregation[gene_id];
+            if (tests) {
+                gene.aggregation_best_pvalue = Math.min.apply(null, tests);
+            }
+        });
+        return genes_data;
+    });
 
     LocusZoom.Adapters.add('AggregationTestSourceLZ', AggregationTestSourceLZ);
     LocusZoom.Adapters.add('AssocFromAggregationLZ', AssocFromAggregationLZ);
-    LocusZoom.Adapters.add('GeneAggregationConnectorLZ', GeneAggregationConnectorLZ);
 }
 
 

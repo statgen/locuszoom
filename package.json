@@ -42,6 +42,7 @@
     "d3": "^5.16.0",
     "deepmerge": "^4.2.2",
     "just-clone": "^3.2.1",
+    "tabix-reader": "^1.0.1",
     "undercomplicate": "^0.1.0"
   },
   "devDependencies": {

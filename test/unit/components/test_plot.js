@@ -424,7 +424,7 @@ describe('LocusZoom.Plot', function() {
         });
     });
 
-    describe.skip('subscribeToData', function() {
+    describe('subscribeToData', function() {
         beforeEach(function() {
             const layout = {
                 panels: [{ id: 'panel0' }],
