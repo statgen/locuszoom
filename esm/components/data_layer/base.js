@@ -1527,6 +1527,12 @@ class BaseDataLayer {
                 this.data = new_data;
                 this.applyDataMethods();
                 this.initialized = true;
+                // Allow listeners (like subscribeToData) to see the information associated with a layer
+                this.parent.emit(
+                    'data_from_layer',
+                    { layer: this.getBaseId(), content: deepCopy(new_data) }, // TODO: revamp event signature post layer-eventing-mixin
+                    true
+                );
             });
     }
 }

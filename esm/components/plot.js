@@ -67,6 +67,16 @@ const default_layout = {
  */
 
 /**
+ * One particular data layer has completed a request for data.
+ * // FIXME: docs should be revised once this new event is stabilized
+ * @event data_from_layer
+ * @property {object} data The data used to draw this layer: an array where each element represents one row/ datum
+ *  element. It reflects all namespaces and data operations used by that layer.
+ * @see event:any_lz_event
+ */
+
+
+/**
  * An action occurred that changed, or could change, the layout.
  *   Many rerendering operations can fire this event and it is somewhat generic: it includes resize, highlight,
  *   and rerender on new data.
@@ -614,6 +624,8 @@ class Plot {
      * @callback externalDataCallback
      * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
      *  a data layer making an equivalent request.
+     * @param {Object} plot A reference to the plot object. This can be useful for listeners that react to the
+     *   structure of the data, instead of just displaying something.
      */
 
     /**
@@ -631,30 +643,74 @@ class Plot {
      *
      * @public
      * @listens event:data_rendered
-     * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
-     *  Different data sources should be prefixed by the namespace name.
-     * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
-     *  new data is received by the plot. Receives two arguments: (data, plot).
+     * @listens event:data_from_layer
      * @param {Object} [opts] Options
+     * @param {String} [opts.from_layer=null] The ID string (`panel_id.layer_id`) of a specific data layer to be watched.
+     * @param {Object} [opts.namespace] An object specifying where to find external data. See data layer documentation for details.
+     * @param {Object} [opts.data_operations] An array of data operations. If more than one source of data is requested,
+     *  this is usually required in order to specify dependency order and join operations. See data layer documentation for details.
      * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
      *  occurs during the data request or subsequent callback operations
-     * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
-     *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
-     *  uncombined record info
+     * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
+     *  new data is received by the plot. Receives two arguments: (data, plot).
      *  @return {function} The newly created event listener, to allow for later cleanup/removal
      */
-    subscribeToData(fields, success_callback, opts) {
-        opts = opts || {};
+    subscribeToData(opts, success_callback) {
+        const { from_layer, namespace, data_operations, onerror } = opts;
 
         // Register an event listener that is notified whenever new data has been rendered
-        const error_callback = opts.onerror || function (err) {
+        const error_callback = onerror || function (err) {
             console.error('An error occurred while acting on an external callback', err);
         };
 
+        if (from_layer) {
+            // Option 1: Subscribe to a data layer. Receive a copy of the exact data it receives; no need to duplicate NS or data operations code in two places.
+            const base_prefix = `${this.getBaseId()}.`;
+            // Allow users to provide either `plot.panel.layer`, or `panel.layer`. The latter usually leads to more reusable code.
+            const layer_target = from_layer.startsWith(base_prefix) ? from_layer : `${base_prefix}${from_layer}`;
+
+            // Ensure that a valid layer exists to watch
+            let is_valid_layer = false;
+            for (let p of Object.values(this.panels)) {
+                is_valid_layer = Object.values(p.data_layers).some((d) => d.getBaseId() === layer_target);
+                if (is_valid_layer) {
+                    break;
+                }
+            }
+            if (!is_valid_layer) {
+                throw new Error(`Could not subscribe to unknown data layer ${layer_target}`);
+            }
+
+            const listener = (eventData) => {
+                if (eventData.data.layer !== layer_target) {
+                    // Same event name fires for many layers; only fire success cb for the one layer we want
+                    return;
+                }
+                try {
+                    success_callback(eventData.data.content, this);
+                } catch (error) {
+                    error_callback(error);
+                }
+            };
+
+            this.on('data_from_layer', listener);
+            return listener;
+        }
+
+        // Second option: subscribe to an explicit list of fields and namespaces. This is useful if the same piece of
+        //   data has to be displayed in multiple ways, eg if we just want an annotation (which is normally visualized
+        //   in connection to some other visualization)
+        if (!namespace) {
+            throw new Error("subscribeToData must specify the desired data: either 'from_layer' or 'namespace' option");
+        }
+
+        const [entities, dependencies] = this.lzd.config_to_sources(namespace, data_operations);
         const listener = () => {
             try {
-                this.lzd.getData(this.state, fields)
-                    .then((new_data) => success_callback(opts.discrete ? new_data.discrete : new_data.body, this))
+                // NOTE TO FUTURE SELF: since this event does something async and not tied to a returned promise, unit tests will behave strangely,
+                //  even though this method totally works. Don't spend another hour scratching your head; this is the line to blame.
+                this.lzd.getData(this.state, entities, dependencies)
+                    .then((new_data) => success_callback(new_data, this))
                     .catch(error_callback);
             } catch (error) {
                 // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up

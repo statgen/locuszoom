@@ -326,45 +326,50 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
         }
     }.bind(this));
 
-    // plot.subscribeToData(
-    //     ['aggregation:all', 'gene:all'],
-    //     function (data) {
-    //         // chain.discrete provides distinct data from each source
-    //         const gene_source_data = data.gene;
-    //         const agg_source_data = data.aggregation;
-    //
-    //         const results = agg_source_data.results;
-    //
-    //         // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
-    //         const parsed = raremetal.helpers.parsePortalJSON(agg_source_data);
-    //         const groups = parsed[0];
-    //         const variants = parsed[1];
-    //
-    //         /////////
-    //         // Post-process this data with any annotations required by data tables on this page
-    //
-    //         // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
-    //         //  that to a human-friendly gene name (as displayed in the LZ plot)
-    //         const _genes_lookup = {};
-    //         gene_source_data.forEach(function (gene) {
-    //             const gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
-    //             _genes_lookup[gene_id] = gene.gene_name;
-    //         });
-    //         groups.data.forEach(function (one_result) {
-    //             const this_group = groups.getOne(one_result.mask, one_result.group);
-    //             // Add synthetic fields that are not part of the raw calculation results
-    //             one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
-    //             one_result.variant_count = this_group.variants.length;
-    //         });
-    //
-    //         // When new data has been received (and post-processed), pass it on to any UI elements that use that data
-    //         resultStorage({
-    //             groups: groups,
-    //             variants: variants,
-    //         });
-    //     },
-    //     { discrete: true }
-    // );
+    LocusZoom.JoinFunctions.add('agg_results_table_format', (agg_data, gene_data) => {
+        // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
+        const parsed = raremetal.helpers.parsePortalJSON(agg_data);
+        const groups = parsed[0];
+        const variants = parsed[1];
+
+        /////////
+        // Post-process this data with any annotations required by data tables on this page
+
+        // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
+        //  that to a human-friendly gene name (as displayed in the LZ plot)
+        const _genes_lookup = {};
+        gene_data.forEach(function (gene) {
+            const gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
+            _genes_lookup[gene_id] = gene.gene_name;
+        });
+        groups.data.forEach(function (one_result) {
+            const this_group = groups.getOne(one_result.mask, one_result.group);
+            // Add synthetic fields that are not part of the raw calculation results
+            one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
+            one_result.variant_count = this_group.variants.length;
+        });
+        return [groups, variants];
+    });
+
+    plot.subscribeToData(
+        {
+            namespace: {'aggregation': 'aggregation', 'gene': 'gene' },
+            data_operations: [{
+                type: 'agg_results_table_format',
+                requires: ['aggregation', 'gene'],
+            }],
+        },
+        (result) => {
+            // Data ops are designed to return one consolidated stream, so the data op above returns... a tuple
+            // This is old code and we're not investing heavily in bringing it up to modern spec
+            const [groups, variants] = result;
+            // When new data has been received (and post-processed), pass it on to any UI elements that use that data
+            resultStorage({
+                groups: groups,
+                variants: variants,
+            });
+        }
+    );
 
     // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
     resultStorage.subscribe(aggregationTable.renderData.bind(aggregationTable));

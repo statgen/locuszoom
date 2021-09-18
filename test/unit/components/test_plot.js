@@ -427,12 +427,21 @@ describe('LocusZoom.Plot', function() {
     describe('subscribeToData', function() {
         beforeEach(function() {
             const layout = {
-                panels: [{ id: 'panel0' }],
+                panels: [
+                    { id: 'panel0' },
+                    {
+                        id: 'panel1',
+                        data_layers: [ { id: 'layer1', type: 'line', namespace: { 'first': 'first' } } ],
+                    },
+                ],
             };
 
             this.first_source_data = [ { x: 0, y: false  }, { x: 1, y: true } ];
             this.data_sources = new DataSources()
-                .add('first', ['StaticJSON', {data: this.first_source_data }]);
+                .add('first', ['StaticSource', {
+                    prefix_namespace: false, // Makes it easier to write tests- "data in === data out"
+                    data: this.first_source_data,
+                }]);
 
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', this.data_sources, layout);
@@ -443,67 +452,76 @@ describe('LocusZoom.Plot', function() {
             sinon.restore();
         });
 
-        it('allows subscribing to data using a standard limited fields array', function (done) {
-            const expectedData = [{ 'first:x': 0 }, { 'first:x': 1 }];
-
-            const dataCallback = sinon.spy();
-
-            this.plot.subscribeToData(
-                [ 'first:x' ],
-                dataCallback,
-                { onerror: done }
+        it('requires specifying one of two ways to subscribe', function () {
+            assert.throws(
+                () => this.plot.subscribeToData({ useless_option: 'something' }),
+                /must specify the desired data/
             );
-
-            this.plot.applyState().catch(done);
-
-            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
-            //  more than once during rerender
-            window.setTimeout(function() {
-                try {
-                    assert.ok(dataCallback.called, 'Data handler was called');
-                    assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            }, 0);
         });
 
-        it('allows subscribing to individual (not combined) sources', function (done) {
-            const expectedData = { first: [{ 'first:x': 0 }, { 'first:x': 1 }] };
+        it('allows subscribing to the data of a layer by name', function () {
+            const callbackShort = sinon.spy();
+            const callbackLong = sinon.spy();
+
+            const listener = this.plot.subscribeToData({ from_layer: 'panel1.layer1' }, callbackShort);
+            assert.ok(listener, 'Subscribes to partial path (panel.layer syntax)');
+
+            const listener2 = this.plot.subscribeToData({ from_layer: 'plot.panel1.layer1' }, callbackLong);
+            assert.ok(listener2, 'Subscribes to full path (plot.panel.layer syntax)');
+
+            return this.plot.applyState().then(() => {
+                assert.ok(callbackShort.called, 'panel.layer callback invoked');
+                assert.ok(callbackShort.calledWith(this.first_source_data), 'panel.layer callback receives expected data');
+                assert.ok(callbackLong.called, 'plot.panel.layer callback invoked');
+                assert.ok(callbackLong.calledWith(this.first_source_data), 'plot.panel.layer callback receives expected data');
+            });
+        });
+
+        it('warns when subscribing to the data of a layer that does not exist', function () {
+            assert.throws(
+                () => this.plot.subscribeToData({ from_layer: 'panel0.layer1' }, () => null),
+                /unknown data layer/,
+                'Warns if requesting an unknown layer'
+            );
+        });
+
+        it('allows subscribing to data using namespace syntax', function () {
             const dataCallback = sinon.spy();
 
-            this.plot.subscribeToData(
-                [ 'first:x' ],
-                dataCallback,
-                { onerror: done, discrete: true }
+            const listener = this.plot.subscribeToData(
+                {  namespace: { 'first': 'first' } },
+                dataCallback
             );
-            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
-            //  more than once during rerender
-            window.setTimeout(function() {
-                try {
-                    assert.ok(dataCallback.called, 'Data handler was called');
-                    assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            }, 0);
+            assert.ok(listener, 'Listener defined');
+
+            // When data is manually specified, it calls an async method inside an event hook- no problem in a real
+            //  page, but it makes writing async tests a bit tricksy.
+            // Force the callback to fire and (pretty much mostly) complete
+            this.plot.emit('data_rendered');
+
+            // Technically there's a slight chance of race condition still. Watch for random failures.
+            return this.plot.applyState().then(() => {
+                assert.ok(dataCallback.called, 'Data handler was called');
+                assert.ok(dataCallback.calledWith(this.first_source_data), 'Data handler received the expected data');
+            });
         });
 
         it('calls an error callback if a problem occurs while fetching data', function() {
-            const dataCallback = sinon.spy();
+            const dataCallback = () => {
+                throw new Error('Data callback should not be called');
+            };
             const errorCallback = sinon.spy();
 
             this.plot.subscribeToData(
-                [ 'nosource:x' ],
-                dataCallback,
-                { onerror: errorCallback }
+                {
+                    from_layer: 'plot.panel1.layer1',
+                    onerror: errorCallback,
+                },
+                dataCallback
             );
 
             return this.plot.applyState()
                 .then(function() {
-                    assert.ok(dataCallback.notCalled, 'Data callback was not called');
                     assert.ok(errorCallback.called, 'Error callback was called');
                 });
         });
@@ -513,16 +531,18 @@ describe('LocusZoom.Plot', function() {
             const errorCallback = sinon.spy();
 
             const listener = this.plot.subscribeToData(
-                ['nosource:x'],
-                dataCallback,
-                { onerror: errorCallback }
+                {
+                    from_layer: 'plot.panel1.layer1',
+                    onerror: errorCallback,
+                },
+                dataCallback
             );
 
-            this.plot.off('data_rendered', listener);
-            this.plot.emit('data_rendered');
-            assert.equal(
-                this.plot.event_hooks['data_rendered'].indexOf(listener),
-                -1,
+            this.plot.off('data_from_layer', listener);
+            this.plot.emit('data_from_layer');
+            assert.notInclude(
+                this.plot.event_hooks['data_from_layer'],
+                listener,
                 'Listener should not be registered'
             );
             assert.ok(dataCallback.notCalled, 'listener success callback was not fired');
@@ -598,7 +618,6 @@ describe('LocusZoom.Plot', function() {
                                     id_field: 's:id',
                                     type: 'scatter',
                                     namespace: { s: 's' },
-                                    fields: ['s:id', 's:x'],
                                     match: { send: 's:x', receive: 's:x' },
                                 },
                                 {
@@ -606,14 +625,12 @@ describe('LocusZoom.Plot', function() {
                                     id_field: 's:id',
                                     type: 'scatter',
                                     namespace: { s: 's' },
-                                    fields: ['s:id', 's:x', 's:y'],
                                 },
                                 {
                                     id: 'd3',
                                     id_field: 's:id',
                                     type: 'scatter',
                                     namespace: { s: 's' },
-                                    fields: ['s:id', 's:y'],
                                     match: { receive: 's:y' },
                                 },
                             ],
