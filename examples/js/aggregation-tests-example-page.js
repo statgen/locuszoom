@@ -326,7 +326,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
         }
     }.bind(this));
 
-    LocusZoom.JoinFunctions.add('agg_results_table_format', (agg_data, gene_data) => {
+    LocusZoom.DataFunctions.add('agg_results_table_format', (agg_data, gene_data) => {
         // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
         const parsed = raremetal.helpers.parsePortalJSON(agg_data);
         const groups = parsed[0];

@@ -501,8 +501,10 @@ class BaseDataLayer {
                 // Current implementation is a soft warning, so that certain "incremental enhancement" features
                 //  (like rsIDs in tooltips) can fail gracefully if the API does not provide the requested info.
                 //  Template syntax like `{{#if fieldname}}` means that throwing an Error is not always the right answer for missing data.
-                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields from retrieved data. Missing fields are: ${[...fields_unseen]}`);
-                console.warn('Common reasons for this error include API payloads with missing fields, or data layer layouts that use two kinds of data and need join logic in "data_operations"');
+                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields from retrieved data. Missing fields are: ${[...fields_unseen]}
+  Common reasons for this error include API payloads with missing fields, or data layer layouts that use two kinds of data and need join logic in "data_operations"                
+  If this field is optional, you can safely ignore this message. Examples include {{#if value}} tags or conditional color rules.
+`);
             }
         }
 

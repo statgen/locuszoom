@@ -45,7 +45,6 @@ function install (LocusZoom) {
      */
     class CredibleSetLZ extends BaseUMAdapter {
         /**
-         * @param {String} config.params.join_fields.log_pvalue The name of the field containing -log10 pvalue information
          * @param {Number} [config.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
          *  until the posterior probabilities add up to at least this fraction of the total.
          * @param {Number} [config.params.significance_threshold=7.301] Do not perform a credible set calculation for this
@@ -55,10 +54,6 @@ function install (LocusZoom) {
          */
         constructor(config) {
             super(...arguments);
-            if (!(this._config.join_fields && this._config.join_fields.log_pvalue)) {
-                throw new Error(`Source config for ${this.constructor.name} must specify how to find 'fields:log_pvalue'`);
-            }
-
             // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
             this._config = Object.assign(
                 { threshold: 0.95, significance_threshold: 7.301 },
@@ -95,7 +90,7 @@ function install (LocusZoom) {
             if (!nlogpvals.some((val) => val >= this._config.significance_threshold)) {
                 // If NO points have evidence of significance, define the credible set to be empty
                 //  (rather than make a credible set that we don't think is meaningful)
-                return Promise.resolve([]);
+                return Promise.resolve(_assoc_data);
             }
 
             try {
@@ -165,19 +160,22 @@ function install (LocusZoom) {
 
     const association_credible_set_layer = function () {
         const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
-            unnamespaced: true,
             id: 'associationcredibleset',
-            namespace: { 'assoc': 'assoc', 'credset(assoc)': 'credset', 'ld(assoc)': 'ld' },
+            namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
+            data_operations: [
+                {
+                    type: 'fetch',
+                    from: ['assoc', 'ld(assoc)', 'credset(assoc)'],
+                },
+                {
+                    type: 'left_match',
+                    name: 'combined',
+                    requires: ['credset', 'ld'],  // The credible sets demo wasn't fully moved over to the new data operations system, and as such it is a bit weird
+                    params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
+                },
+            ],
             fill_opacity: 0.7,
             tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
-            fields: [
-                'assoc:variant', 'assoc:position',
-                'assoc:log_pvalue', 'assoc:log_pvalue|logtoscinotation',
-                'assoc:ref_allele',
-                'credset:posterior_prob', 'credset:contrib_fraction',
-                'credset:is_member',
-                'ld:state', 'ld:isrefvar',
-            ],
             match: { send: 'assoc:variant', receive: 'assoc:variant' },
         });
         base.color.unshift({
@@ -199,7 +197,11 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
     const annotation_credible_set_layer = {
-        namespace: { 'assoc': 'assoc', 'credset(assoc)': 'credset' },
+        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+        data_operations: [{
+            type: 'fetch',
+            from: ['assoc', 'credset(assoc)'],
+        }],
         id: 'annotationcredibleset',
         type: 'annotation_track',
         id_field: 'assoc:variant',
@@ -217,7 +219,6 @@ function install (LocusZoom) {
             },
             '#00CC00',
         ],
-        fields: ['assoc:variant', 'assoc:position', 'assoc:log_pvalue', 'credset:posterior_prob', 'credset:contrib_fraction', 'credset:is_member'],
         match: { send: 'assoc:variant', receive: 'assoc:variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters

@@ -1,17 +1,17 @@
 import {assert} from 'chai';
 
 import Requester, {_JoinTask} from '../../../esm/data/requester';
-import {JOINS} from '../../../esm/registry';
+import {DATA_OPS} from '../../../esm/registry';
 
 
 describe('Requester object defines and parses requests', function () {
     describe('Layout parsing', function () {
         before(function () {
-            JOINS.add('sumtwo', (left, right, some_param) => left + right + some_param);
+            DATA_OPS.add('sumtwo', ([left, right], some_param) => left + right + some_param);
         });
 
         after(function () {
-            JOINS.remove('sumtwo');
+            DATA_OPS.remove('sumtwo');
         });
 
         beforeEach(function () {

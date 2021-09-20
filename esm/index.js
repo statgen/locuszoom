@@ -14,7 +14,7 @@ import { populate } from './helpers/display';
 import {
     ADAPTERS as Adapters,
     DATA_LAYERS as DataLayers,
-    JOINS as JoinFunctions,
+    DATA_OPS as DataFunctions,
     LAYOUTS as Layouts,
     MATCHERS as MatchFunctions,
     SCALABLE as ScaleFunctions,
@@ -31,7 +31,7 @@ const LocusZoom = {
     // Registries for plugin system
     Adapters,
     DataLayers,
-    JoinFunctions,
+    DataFunctions,
     Layouts,
     MatchFunctions,
     ScaleFunctions,

@@ -1,9 +1,17 @@
 /**
- * "Join" functions
+ * "Data operation" functions, with call signature ( [recordsetA, recordsetB...], ...params) => combined_results
  *
- * Connect two sets of records together according to predefined rules.
+ * These usually operate on two recordsets (joins), but can operate on one recordset (eg grouping) or > 2 (hopefully rare)
  *
- * @module LocusZoom_JoinFunctions
+ * Pieces of code designed to transform or connect well structured data, usually as returned from an API
+ *
+ * Most of these are `joins`: intended to combine two recordsets (like assoc + ld) to a single final source of truth
+ *
+ * In a few cases, the rules of how to combine datasets are very specific to those two types of data. Some,
+ *   particularly for advanced features, may carry assumptions about field names/ formatting.
+ *   (example: log_pvalue instead of pvalue, or variant specifier formats)
+ *
+ * @module LocusZoom_DataFunctions
  */
 import {joins} from 'undercomplicate';
 
@@ -11,21 +19,26 @@ import {RegistryBase} from './base';
 
 /**
  * A plugin registry that allows plots to use both pre-defined and user-provided "data join" functions.
- * @alias module:LocusZoom~JoinFunctions
+ * @alias module:LocusZoom~DataFunctions
  * @type {module:registry/base~RegistryBase}
  */
 const registry = new RegistryBase();
 
-registry.add('left_match', joins.left_match);
-
-registry.add('inner_match', joins.inner_match);
-
-registry.add('full_outer_match', joins.full_outer_match);
+function _wrap_join(handle) {
+    // Validate number of arguments and convert call signature from (deps, ...params) to (left, right, ...params).
+    // Must data operations are joins, so this wrapper is common shared code.
+    return (deps, ...params) => {
+        if (deps.length !== 2) {
+            throw new Error('Join functions must receive exactly two recordsets');
+        }
+        return handle(...deps, ...params);
+    };
+}
 
 // Highly specialized join: connect assoc data to GWAS catalog data. This isn't a simple left join, because it tries to
 //  pick the most significant claim in the catalog for a variant, rather than joining every possible match.
 // This is specifically intended for sources that obey the ASSOC and CATALOG fields contracts.
-registry.add('assoc_to_gwas_catalog', (assoc_data, catalog_data, assoc_key, catalog_key, catalog_logp_name) => {
+function assoc_to_gwas_catalog(assoc_data, catalog_data, assoc_key, catalog_key, catalog_logp_name) {
     if (!assoc_data.length) {
         return assoc_data;
     }
@@ -49,10 +62,10 @@ registry.add('assoc_to_gwas_catalog', (assoc_data, catalog_data, assoc_key, cata
         catalog_flat.push(best_variant);
     }
     return joins.left_match(assoc_data, catalog_flat, assoc_key, catalog_key);
-});
+}
 
 // Highly specialized join: connect gnomAD constraint data to genes data. These are two very nonstandard payloads and need a special function to connect them.
-registry.add('genes_to_gnomad_constraint', (genes_data, constraint_data) => {
+function genes_to_gnomad_constraint(genes_data, constraint_data) {
     genes_data.forEach(function(gene) {
         // Find payload keys that match gene names in this response
         const alias = `_${gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;  // aliases are modified gene names
@@ -71,6 +84,16 @@ registry.add('genes_to_gnomad_constraint', (genes_data, constraint_data) => {
         }
     });
     return genes_data;
-});
+}
+
+registry.add('left_match', _wrap_join(joins.left_match));
+
+registry.add('inner_match', _wrap_join(joins.inner_match));
+
+registry.add('full_outer_match', _wrap_join(joins.full_outer_match));
+
+registry.add('assoc_to_gwas_catalog', _wrap_join(assoc_to_gwas_catalog));
+
+registry.add('genes_to_gnomad_constraint', _wrap_join(genes_to_gnomad_constraint));
 
 export default registry;

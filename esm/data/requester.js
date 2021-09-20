@@ -1,18 +1,19 @@
 import {getLinkedData} from 'undercomplicate';
 
-import { JOINS } from '../registry';
+import { DATA_OPS } from '../registry';
 
 
-class JoinTask {
+class DataOperation {
     constructor(join_type, params) {
-        this._callable = JOINS.get(join_type);
+        this._callable = DATA_OPS.get(join_type);
         this._params = params || [];
     }
 
-    getData(options, left, right) {
-        // Future: this could support joining > 2 things in one function.
-        //  Joining three things at once is a pretty niche usage, and we won't add this complexity unless clearly needed
-        return Promise.resolve(this._callable(left, right, ...this._params));
+    getData(options, ...requires) {
+        // Most operations are joins: they receive two pieces of data (eg left + right)
+        //   Other ops are possible, like consolidating just one set of records to best value per key
+        // Hence all dependencies are passed as first arg: [dep1, dep2, dep3...]
+        return Promise.resolve(this._callable(requires, ...this._params));
     }
 }
 
@@ -107,7 +108,7 @@ class Requester {
                     }
                 });
 
-                const task = new JoinTask(type, params);
+                const task = new DataOperation(type, params);
                 entities.set(name, task);
                 dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
             }
@@ -136,4 +137,4 @@ class Requester {
 
 export default Requester;
 
-export {JoinTask as _JoinTask};
+export {DataOperation as _JoinTask};
