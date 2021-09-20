@@ -99,9 +99,9 @@ function install (LocusZoom) {
             const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
             // Generate confidence interval paths if fields are defined
-            if (this.layout.confidence_intervals
-                && this.layout.fields.includes(this.layout.confidence_intervals.start_field)
-                && this.layout.fields.includes(this.layout.confidence_intervals.end_field)) {
+            if (this.layout.confidence_intervals &&
+                this.layout.confidence_intervals.start_field &&
+                this.layout.confidence_intervals.end_field) {
                 // Generate a selection for all forest plot confidence intervals
                 const ci_selection = this.svg.group
                     .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')

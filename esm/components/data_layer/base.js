@@ -116,7 +116,10 @@ class BaseDataLayer {
      *  this array will be fetched. This represents the "contract" between what data is returned and what data is rendered.
      *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
      * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
-     *   events, etc. This should be unique to the specified datum.
+     *   events, etc. This should be unique to the specified datum, and persistent across re-renders (because it is
+     *   used to identify where to draw tooltips, eg, if the plot is dragged or zoomed). If no single field uniquely
+     *   identifies all items, a template expression can be used to create an ID from multiple fields instead. (it is
+     *   your job to assure that all of the expected fields are present in every element)
      * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
      *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
      *  details vary from one layer to the next. See the Interactivity Tutorial for details.
@@ -413,8 +416,12 @@ class BaseDataLayer {
     /**
      * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
      *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
+     *
+     * The ID should also be stable across re-renders, so that tooltips and highlights may be reapplied to that
+     *   element as we switch regions or drag left/right. If the element is not unique along a single field (eg PheWAS data),
+     *   a unique ID can be generated via a template expression like `{{phewas:pheno}}-{{phewas:trait_label}}`
      * @protected
-     * @param {Object} element
+     * @param {Object} element The data associated with a particular element
      * @returns {String}
      */
     getElementId (element) {
@@ -424,11 +431,19 @@ class BaseDataLayer {
             return element[id_key];
         }
 
-        const id_field = this.layout.id_field || 'id';
-        if (typeof element[id_field] == 'undefined') {
+        // Two ways to get element ID: field can specify an exact field name, or, we can parse a template expression
+        const id_field = this.layout.id_field;
+        let value  = element[id_field];
+        if (typeof value === 'undefined' && /{{[^{}]*}}/.test(id_field)) {
+            // No field value was found directly, but if it looks like a template expression, next, try parsing that
+            // WARNING: In this mode, it doesn't validate that all requested fields from the template are present. Only use this if you trust the data being given to the plot!
+            value = parseFields(id_field, element, {}); // Not allowed to use annotations b/c IDs should be stable, and annos may be transient
+        }
+        if (value === null || value === undefined) {
+            // Neither exact field nor template options produced an ID
             throw new Error('Unable to generate element ID');
         }
-        const element_id = element[id_field].toString().replace(/\W/g, '');
+        const element_id = value.toString().replace(/\W/g, '');
 
         // Cache ID value for future calls
         const key = (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');

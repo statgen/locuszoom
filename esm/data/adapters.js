@@ -376,6 +376,10 @@ class GeneConstraintLZ extends BaseLZAdapter {
      * The gnomAD API has a very complex internal data format. Bypass any record parsing or transform steps.
      */
     _normalizeResponse(response_text) {
+        if (typeof response_text !== 'string') {
+            // If the query short-circuits, we receive an empty list instead of a string
+            return response_text;
+        }
         const data = JSON.parse(response_text);
         return data.data;
     }

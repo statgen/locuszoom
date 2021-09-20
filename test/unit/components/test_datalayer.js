@@ -12,6 +12,47 @@ import DataSources from '../../../esm/data';
  Test composition of the LocusZoom.Panel object and its base classes
  */
 describe('LocusZoom.DataLayer', function () {
+    describe('getElementId generates unique IDs for elements', function () {
+        it('generates unique IDs when id_field is an exact field reference with a value', function () {
+            const layer = new BaseDataLayer({ id: 'layername', id_field: 'exact_field' });
+            let actual = layer.getElementId({ exact_field: 12 });
+            assert.equal(actual, 'layername-12', 'Generates ID from exact field value');
+
+
+            assert.throws(
+                () => layer.getElementId({ not_much_to_go_on: 12 }),
+                /Unable to generate/,
+                'Cannot generate ID field if no value is present for that field'
+            );
+        });
+
+        it('generates unique IDs when id_field is a valid template expression', function () {
+            const layer = new BaseDataLayer({ id: 'layername', id_field: 'element_{{some_field}}_{{other_field}}' });
+
+            let actual = layer.getElementId({ some_field: 'carbon', other_field: '12' });
+            assert.equal(actual, 'layername-element_carbon_12', 'Generates ID from template string');
+
+            layer.layout.id_field = 'partial_{{some_field}}_{{other_field}}';
+            actual = layer.getElementId({ some_field: 'carbon' });
+            assert.equal(actual, 'layername-partial_carbon_', 'Template values do not warn when some fields are missing (which might be awkward)');
+
+            layer.layout.id_field = 'neither-template-nor-field';
+            assert.throws(
+                () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
+                /Unable to generate/,
+                'Not using a field name in the data, and expression is not recognized as a template'
+            );
+
+            layer.layout.id_field = '';
+            assert.throws(
+                () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
+                /Unable to generate/,
+                'An empty template does not evaluate to a useful element ID'
+            );
+        });
+    });
+
+
     describe('data contract parsing and validation', function () {
         beforeEach(function () {
             const layer = this.layer = new BaseDataLayer({ id: 'something' });

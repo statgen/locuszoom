@@ -242,7 +242,8 @@ const coaccessibility_layer = {
     type: 'arcs',
     tag: 'coaccessibility',
     match: { send: 'access:target', receive: 'access:target' },
-    id_field: 'access:id',
+    // Note: in the datasets this was tested with, these fields together defined a unique loop. Other datasets might work differently and need a different ID.
+    id_field: '{{access:start1}}_{{access:end1}}_{{access:start2}}_{{access:end2}}_{{access:score}}_{{access:target}}',
     filters: [
         { field: 'access:score', operator: '!=', value: null },
     ],
@@ -316,6 +317,7 @@ const association_pvalues_catalog_layer = function () {
     return base;
 }();
 
+
 /**
  * A scatter plot of PheWAS pvalues, with preset field names matching the UM Portaldev API
  * @name phewas_pvalues
@@ -329,9 +331,9 @@ const phewas_pvalues_layer = {
     point_shape: 'circle',
     point_size: 70,
     tooltip_positioning: 'vertical',
-    id_field: 'phewas:id',
+    id_field: '{{phewas:trait_group}}_{{phewas:trait_label}}',
     x_axis: {
-        field: 'phewas:x',  // Synthetic/derived field added by `category_scatter` layer
+        field: 'lz_auto_x', // Automatically added by the category_scatter layer
         category_field: 'phewas:trait_group',
         lower_buffer: 0.025,
         upper_buffer: 0.025,

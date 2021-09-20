@@ -236,7 +236,6 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
 
         // Modify the tooltips for PheWAS result data layer points to contain more data. The fields in this sample
         //   tooltip are specific to the LZ-Portal API, and are not guaranteed to be in other PheWAS datasources.
-        LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].fields', (fields) => fields.concat(["phewas:pmid", "phewas:description", "phewas:study"]));
         LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].tooltip.html', [
             "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
             "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
