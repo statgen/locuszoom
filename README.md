@@ -42,7 +42,7 @@ Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("assoc", ["AssociationLZ", { url: "http://server.com/api/", params: {source: 1} }]);
+data_sources.add("assoc", ["AssociationLZ", { url: "http://server.com/api/", source: 1 }]);
 ```
 
 The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "assoc".
@@ -100,23 +100,22 @@ A basic example may then look like this:
     <link rel="stylesheet" type="text/css" href="locuszoom.css"/>
   </head>
   <body>
-    <div id="plot"></div>
+    <div id="lz-plot"></div>
     <script type="text/javascript">
       var data_sources = new LocusZoom.DataSources();
-      data_sources.add("assoc", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
+      data_sources.add("assoc", ["AssociationLZ", { url: "https://server.com/api/single/", source: 1 }]);
       var layout = {
-        width: 500,
+        width: 800,
         panels: [
           {
             id : "association",
-            height: 500,
+            height: 300,
             data_layers: [
               {
                 id: "association",
                 type: "scatter",
-                fields: ["assoc:position", "assoc:pvalue"],
                 x_axis: { field: "assoc:position" },
-                y_axis: { field: "assoc:pvalue" }
+                y_axis: { field: "assoc:log_pvalue" }
               }
             ]
           }
@@ -150,7 +149,7 @@ const layout = {
   width: 1000,
   height: 500,
   panels: [
-    LocusZoom.Layouts.get("panel", "gwas"),
+    LocusZoom.Layouts.get("panel", "association"),
     {
       id: "custom_panel",
       ...options
@@ -166,10 +165,7 @@ const layout = {
 The `get()` function also accepts a partial layout to be merged with the predefined layout as a third argument, providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:
 
 ```javascript
-const changes = {
-  label_font_size: 20,
-  transition: false
-};
+const changes = { label_font_size: 20 };
 LocusZoom.Layouts.get("data_layer", "genes", changes);
 ```
 
