@@ -605,7 +605,6 @@ describe('LocusZoom.DataLayer', function () {
                             {
                                 id: 'd',
                                 namespace: { d: 'd' },
-                                fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 selected: { onclick: 'toggle' },
@@ -821,7 +820,6 @@ describe('LocusZoom.DataLayer', function () {
                                 id: 'd',
                                 namespace: { d: 'd'},
                                 type: 'scatter',
-                                fields: ['d:id', 'd:x', 'd:y'],
                                 id_field: 'd:id',
                                 x_axis: { field:  'd:x' },
                                 y_axis: { field: 'd:y'},
@@ -995,7 +993,6 @@ describe('LocusZoom.DataLayer', function () {
                                 {
                                     id: 'd',
                                     namespace: { d: 'd'},
-                                    fields: ['d:id', 'd:a'],
                                     id_field: 'd:id',
                                     type: 'scatter',
                                     filters: null,
@@ -1082,7 +1079,6 @@ describe('LocusZoom.DataLayer', function () {
                             {
                                 id: 'd',
                                 namespace: { d: 'd'},
-                                fields: ['d:id', 'd:some_field'],
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 selected: { onclick: 'toggle' },

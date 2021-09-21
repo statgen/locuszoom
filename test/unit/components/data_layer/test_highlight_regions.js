@@ -11,7 +11,7 @@ describe('highlight_regions data layer', function () {
         it('must choose to specify data from regions or fields, but not both', function () {
             const layout = {
                 regions: [{start: 1, end: 12}],
-                fields: ['mydata:start', 'mydata:end'],
+                namespace: { 'mydata': 'mydata' },
             };
             assert.throws(
                 () => DATA_LAYERS.create('highlight_regions', layout),

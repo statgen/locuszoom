@@ -210,12 +210,10 @@ function install (LocusZoom) {
     class CategoryForest extends Forest {
         _getDataExtent(data, axis_config) {
             // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
-            const ci_config = this.layout.confidence_intervals;
-            if (ci_config
-                && this.layout.fields.includes(ci_config.start_field)
-                && this.layout.fields.includes(ci_config.end_field)) {
-                const min = (d) => +d[ci_config.start_field];
-                const max = (d) => +d[ci_config.end_field];
+            const { confidence_intervals } = this.layout;
+            if (confidence_intervals && confidence_intervals.start_field && confidence_intervals.end_field) {
+                const min = (d) => +d[confidence_intervals.start_field];
+                const max = (d) => +d[confidence_intervals.end_field];
                 return [d3.min(data, min), d3.max(data, max)];
             }
 

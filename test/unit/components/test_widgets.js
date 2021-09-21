@@ -62,7 +62,6 @@ describe('Toolbar widgets', function () {
                         {
                             id: 'd',
                             namespace: {d: 'd'},
-                            fields: ['d:id', 'd:a'],
                             id_field: 'd:id',
                             type: 'scatter',
                         },

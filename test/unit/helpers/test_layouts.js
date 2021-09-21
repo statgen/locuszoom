@@ -33,7 +33,7 @@ describe('Layout helper functions', function () {
         it('finds values inside template syntax', function () {
             const namespaces = ['assoc'];
             const layout = {
-                y_field: 'ld:correlation', // Not listed in namespace = not in fields contract
+                y_field: 'ld:correlation',
                 text: '{{assoc:nearest_gene}} - {{#if assoc:rsid}} <a href="url.com/{{assoc:rsid|htmlescape}}" {/if}}',
                 color: 'red',
                 spurious: 'X:2500_A/C',
@@ -82,7 +82,6 @@ describe('Layout helper functions', function () {
                 x_axis: { field: 'old_name' },
                 y_axis: { field: 'unrelated_thing' },
                 category_field_name: 'old_name',
-                fields: ['old_name'],
                 no_value: null,
             };
             base = renameField(base, 'old_name', 'moon_unit');
@@ -91,7 +90,6 @@ describe('Layout helper functions', function () {
                 x_axis: { field: 'moon_unit' },
                 y_axis: { field: 'unrelated_thing' },
                 category_field_name: 'moon_unit',
-                fields: ['moon_unit'],
                 no_value: null,
             });
         });

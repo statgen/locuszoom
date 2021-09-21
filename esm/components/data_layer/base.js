@@ -78,7 +78,6 @@ import SCALABLE from '../../registry/scalable';
  * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
  * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
- * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 const default_layout = {
     id: '',
@@ -111,10 +110,6 @@ class BaseDataLayer {
      *   layer that shows association scatter plots, anywhere": even if the IDs are different, the tag can be the same.
      *   Most built-in data layers will contain a tag that describes, in human-readable terms, what kind of data is being shown.
      *   (see: {@link LayoutRegistry.mutate_attrs})
-     * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only
-     *  these fields will be made available to the data layer, and only data sources (namespaces) referred to in
-     *  this array will be fetched. This represents the "contract" between what data is returned and what data is rendered.
-     *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
      * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
      *   events, etc. This should be unique to the specified datum, and persistent across re-renders (because it is
      *   used to identify where to draw tooltips, eg, if the plot is dragged or zoomed). If no single field uniquely

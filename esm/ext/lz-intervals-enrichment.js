@@ -172,12 +172,11 @@ function install(LocusZoom) {
      * @see {@link module:ext/lz-intervals-enrichment} for required extension and installation instructions
      */
     const intervals_layer_layout = {
-        namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
         type: 'intervals_enrichment',
         tag: 'intervals_enrichment',
+        namespace: { 'intervals': 'intervals' },
         match: { send: 'intervals:tissueId' },
-        fields: ['intervals:chromosome', 'intervals:start', 'intervals:end', 'intervals:pValue', 'intervals:fold', 'intervals:tissueId', 'intervals:ancestry'],
         id_field: 'intervals:start', // not a good ID field for overlapping intervals
         start_field: 'intervals:start',
         end_field: 'intervals:end',
@@ -228,7 +227,6 @@ function install(LocusZoom) {
         type: 'highlight_regions',
         namespace: { intervals: 'intervals' },
         match: { receive: 'intervals:tissueId' },
-        fields: ['intervals:start', 'intervals:end', 'intervals:tissueId', 'intervals:ancestry', 'intervals:pValue', 'intervals:fold'],
         start_field: 'intervals:start',
         end_field: 'intervals:end',
         merge_field: 'intervals:tissueId',

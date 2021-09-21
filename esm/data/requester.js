@@ -20,13 +20,15 @@ class DataOperation {
 
 /**
  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
- *   It passes state information and ensures that data is formatted in the manner expected by the plot.
+ *   It passes plot.state information to each adapter, and ensures that a series of requests can be performed in a
+ *   designated order.
+ *
+ * Each data layer calls the requester object directly, and as such, each data layer has a private view of data: it can
+ *   perform its own calculations, filter results, and apply transforms without influencing other layers.
+ *  (while still respecting a shared cache where appropriate)
  *
  * This object is not part of the public interface. It should almost **never** be replaced or modified directly.
  *
- * It is also responsible for constructing a "chain" of dependent requests, by requesting each datasource
- *   sequentially in the order specified in the datalayer `fields` array. Data sources are only chained within a
- *   data layer, and only if that layer requests more than one source of data.
  * @param {DataSources} sources A set of data sources used specifically by this plot instance
  * @private
  */

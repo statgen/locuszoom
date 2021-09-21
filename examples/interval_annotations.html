@@ -94,10 +94,6 @@
         }
     });
 
-    // Remove the itemRgb field from the default layout, because our demo api does not have this information
-    //  (the base layout was defined for the T2D Portal API, which does provide this field)
-    LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "intervals")].fields', (old_fields) => old_fields.pop() && old_fields);
-
     // This demo is focused on one track (not many), so show the legend. (the intervals track has additional
     //  expand/collapse behavior, so this is controlled in two places instead of one)
     LocusZoom.Layouts.mutate_attrs(layout, '$..panels[?(@.tag === "intervals")].legend.hidden', false);

@@ -63,7 +63,7 @@ function install (LocusZoom) {
             return state;
         }
 
-        _getURL(state, chain, fields) {
+        _getURL(options) {
             // Unlike most sources, calculations may require access to plot state data even after the initial request
             // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
             //  field called `aggregation_tests` (an object {masks: [], calcs: {})
@@ -219,7 +219,7 @@ function install (LocusZoom) {
         }
     }
 
-    LocusZoom.DataFunctions.add('gene_plus_aggregation', (genes_data, aggregation_data) => {
+    LocusZoom.DataFunctions.add('gene_plus_aggregation', ([genes_data, aggregation_data]) => {
         // Used to highlight genes with significant aggtest results. Unlike a basic left join, it chooses one specific aggtest with the most significant results
 
         // Tie the calculated group-test results to genes with a matching name

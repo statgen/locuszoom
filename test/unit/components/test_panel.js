@@ -342,7 +342,6 @@ describe('Panel', function() {
                                 id: 'd',
                                 type: 'scatter',
                                 namespace: { static: 'static' },
-                                fields: ['static:id', 'static:x', 'static:y'],
                                 id_field: 'static:id',
                                 z_index: 0,
                                 x_axis: {

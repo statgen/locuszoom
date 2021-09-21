@@ -69,7 +69,7 @@
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
       // There's no special transformation being done to intervals data- just fetch from a URL
-      .add("intervals", ["BaseApiAdapter", { url: 'data/intervals_enrichment_simplified.json' }])
+      .add("intervals", ["BaseLZAdapter", { url: 'data/intervals_enrichment_simplified.json' }])
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts

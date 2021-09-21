@@ -622,8 +622,7 @@ function install (LocusZoom) {
         id: 'intervals',
         type: 'intervals',
         tag: 'intervals',
-        fields: ['intervals:start', 'intervals:end', 'intervals:state_id', 'intervals:state_name', 'intervals:itemRgb'],
-        id_field: 'intervals:start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
+        id_field: '{{intervals:start}}_{{intervals:end}}_{{intervals:state_name}}',
         start_field: 'intervals:start',
         end_field: 'intervals:end',
         track_split_field: 'intervals:state_name',
