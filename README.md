@@ -4,7 +4,7 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 ![Build Status](https://github.com/statgen/locuszoom/workflows/Unit%20tests/badge.svg?branch=develop)
 
-See [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki) for full documentation and API reference.
+See [https://statgen.github.io/locuszoom/docs/](https://statgen.github.io/locuszoom/docs/) for full documentation and API reference.
 
 To see functional examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
 
@@ -32,7 +32,7 @@ Instead of copying the files to your project, **we recommend using CDN links are
 ```javascript
 import LocusZoom from 'locuszoom';
 import 'locuszoom/dist/locuszoom.css';
-```` 
+```
 
 ### 2. Define Data Sources
 
