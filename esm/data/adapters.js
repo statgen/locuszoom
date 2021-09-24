@@ -437,6 +437,16 @@ class LDServer extends BaseUMAdapter {
             refvar += `_${ref}/${alt}`;
         }
 
+        const coord = +pos;
+        // Last step: sanity check the proposed reference variant. Is it inside the view region? If not, we're probably
+        //  remembering a user choice from before drag/view change. LD should be relative to something nearby.
+        if ((coord && state.ldrefvar && state.chr) && (chrom !== state.chr || coord < state.start || coord > state.end)) {
+            // Rerun this method, after clearing out the proposed reference variant. NOTE: Adapter call receives a
+            //   *copy* of plot.state, so wiping here doesn't remove the original value.
+            state.ldrefvar = null;
+            return this.__find_ld_refvar(state, assoc_data);
+        }
+
         // Return the reference variant, in a normalized format suitable for LDServer queries
         return refvar;
     }

@@ -189,14 +189,21 @@ describe('Data adapters', function () {
             const provider = new LDServer({});
             const refvar = provider.__find_ld_refvar({}, this._assoc_data);
             assert.equal(refvar, '1:24_A/C', 'Finds variant with max log_pvalue and normalizes spec');
-            assert.equal(this._assoc_data[1].lz_is_ld_refvar, true, 'Annotates refvar');
+            assert.equal(this._assoc_data[1].lz_is_ld_refvar, true, 'Annotates refvar (best match)');
         });
 
         it('prefers a refvar from plot.state if one is provided', function () {
             const provider = new LDServer({});
             const refvar = provider.__find_ld_refvar({ ldrefvar: '1-25-A-C' }, this._assoc_data);
             assert.equal(refvar, '1:25_A/C', 'Uses refvar in plot.state and normalizes spec');
-            assert.equal(this._assoc_data[2].lz_is_ld_refvar, true, 'Annotates refvar');
+            assert.equal(this._assoc_data[2].lz_is_ld_refvar, true, 'Annotates refvar (requested variant)');
+        });
+
+        it('ignores state.ldrefvar if it refers to a region outside the current view window', function () {
+            const provider = new LDServer({});
+            const refvar = provider.__find_ld_refvar({ chr: 'X', start: 100, end: 200, ldrefvar: 'X-99-A-C' }, this._assoc_data);
+            assert.equal(refvar, '1:24_A/C', 'Ignores state.ldrefvar because out of range; chooses best refvar instead');
+            assert.equal(this._assoc_data[1].lz_is_ld_refvar, true, 'Annotates refvar (best match)');
         });
 
         it('skips the request if no assoc data was present', function () {
