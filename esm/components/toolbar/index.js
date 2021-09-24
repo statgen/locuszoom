@@ -108,7 +108,7 @@ class Toolbar {
             persist = persist || widget.shouldPersist();
         });
         // Persist if in a parent drag event
-        persist = persist || (this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.dragging);
+        persist = persist || (this.parent_plot.panel_boundaries.dragging || this.parent_plot._interaction.dragging);
         return !!persist;
     }
 

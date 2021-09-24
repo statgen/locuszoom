@@ -114,12 +114,12 @@ class Line extends BaseDataLayer {
         }
 
         // Update global status flag
-        this.global_statuses[status] = toggle;
+        this._global_statuses[status] = toggle;
 
         // Apply class to path based on global status flags
         let path_class = 'lz-data_layer-line';
-        Object.keys(this.global_statuses).forEach((global_status) => {
-            if (this.global_statuses[global_status]) {
+        Object.keys(this._global_statuses).forEach((global_status) => {
+            if (this._global_statuses[global_status]) {
                 path_class += ` lz-data_layer-line-${global_status}`;
             }
         });

@@ -110,24 +110,24 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('should have a chainable method for moving layers up that stops at the top', function () {
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward().moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
@@ -135,24 +135,24 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('should have a chainable method for moving layers down that stops at the bottom', function () {
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack().moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
@@ -484,7 +484,7 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd2', type: 'line', z_index: 0 },
             ];
             this.plot = populate('#plot', null, this.layout);
-            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d2', 'd1']);
+            assert.deepEqual(this.plot.panels.p1._data_layer_ids_by_z_index, ['d2', 'd1']);
             assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 1);
             assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 0);
         });
@@ -497,7 +497,7 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd4', type: 'line', z_index: -1 },
             ];
             this.plot = populate('#plot', null, this.layout);
-            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
+            assert.deepEqual(this.plot.panels.p1._data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
             assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 0);
             assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 1);
             assert.equal(this.plot.panels.p1.data_layers.d3.layout.z_index, 3);

@@ -28,7 +28,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelA.id, 'panelA');
             assert.equal(this.plot.panels[panelA.id], panelA);
             assert.equal(this.plot.panels[panelA.id].parent, this.plot);
-            assert.equal(this.plot.panels[panelA.id].layout_idx, 0);
+            assert.equal(this.plot.panels[panelA.id]._layout_idx, 0);
             assert.equal(this.plot.layout.panels.length, 1);
             assert.equal(this.plot.layout.panels[0].id, panelA.id);
             assert.equal(this.plot.layout.panels[0].foo, 'bar');
@@ -37,7 +37,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelB.id, 'panelB');
             assert.equal(this.plot.panels[panelB.id], panelB);
             assert.equal(this.plot.panels[panelB.id].parent, this.plot);
-            assert.equal(this.plot.panels[panelB.id].layout_idx, 1);
+            assert.equal(this.plot.panels[panelB.id]._layout_idx, 1);
             assert.equal(this.plot.layout.panels.length, 2);
             assert.equal(this.plot.layout.panels[1].id, 'panelB');
             assert.equal(this.plot.layout.panels[1].foo, 'baz');
@@ -56,7 +56,7 @@ describe('LocusZoom.Plot', function() {
             assert.doesNotHaveAnyKeys(this.plot.panels, ['panelA']);
             assert.equal(this.plot.layout.panels.length, 1);
             assert.equal(this.plot.layout.panels[0].id, 'panelB');
-            assert.equal(this.plot.panels[panelB.id].layout_idx, 0);
+            assert.equal(this.plot.panels[panelB.id]._layout_idx, 0);
 
             assert.equal(this.plot._total_height, 20, 'Final height is the space requested by the remaining single panel');
         });
@@ -273,7 +273,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.y_index, 0);
             assert.equal(this.plot.panels.panelB.layout.y_index, 2);
             assert.equal(this.plot.panels.panelC.layout.y_index, 1);
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['panelA', 'panelC', 'panelB']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['panelA', 'panelC', 'panelB']);
 
             assert.deepEqual(panelA.height, 60, 'panel A height matches layout value');
             assert.deepEqual(panelB.height, 61, 'panel B height matches layout value');
@@ -298,7 +298,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelC.layout.y_index, 2);
             assert.equal(this.plot.panels.panelD.layout.y_index, 4);
             assert.equal(this.plot.panels.panelE.layout.y_index, 3);
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['panelA', 'panelB', 'panelC', 'panelE', 'panelD']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['panelA', 'panelB', 'panelC', 'panelE', 'panelD']);
         });
     });
 
@@ -397,7 +397,7 @@ describe('LocusZoom.Plot', function() {
         it('Should apply basic start/end state validation when necessary', function() {
             this.layout.state = { chr: 1, start: -60, end: 10300050 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
             });
@@ -407,7 +407,7 @@ describe('LocusZoom.Plot', function() {
             this.layout.min_region_scale = 2000;
             this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
             });
@@ -417,7 +417,7 @@ describe('LocusZoom.Plot', function() {
             this.layout.max_region_scale = 4000000;
             this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
             });
@@ -541,7 +541,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.off('data_from_layer', listener);
             this.plot.emit('data_from_layer');
             assert.notInclude(
-                this.plot.event_hooks['data_from_layer'],
+                this.plot._event_hooks['data_from_layer'],
                 listener,
                 'Listener should not be registered'
             );

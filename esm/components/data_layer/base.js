@@ -166,12 +166,12 @@ class BaseDataLayer {
          * @private
          * @member {Boolean}
          */
-        this.initialized = false;
+        this._initialized = false;
         /**
          * @private
          * @member {Number}
          */
-        this.layout_idx = null;
+        this._layout_idx = null;
 
         /**
          * The unique identifier for this layer. Should be unique within this panel.
@@ -284,7 +284,7 @@ class BaseDataLayer {
         }
 
         // Initialize flags for tracking global statuses
-        this.global_statuses = {
+        this._global_statuses = {
             'highlighted': false,
             'selected': false,
             'faded': false,
@@ -313,7 +313,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveForward() {
-        const layer_order = this.parent.data_layer_ids_by_z_index;
+        const layer_order = this.parent._data_layer_ids_by_z_index;
         const current_index = this.layout.z_index;
         if (layer_order[current_index + 1]) {
             layer_order[current_index] = layer_order[current_index + 1];
@@ -329,7 +329,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveBack() {
-        const layer_order = this.parent.data_layer_ids_by_z_index;
+        const layer_order = this.parent._data_layer_ids_by_z_index;
         const current_index = this.layout.z_index;
         if (layer_order[current_index - 1]) {
             layer_order[current_index] = layer_order[current_index - 1];
@@ -1362,7 +1362,7 @@ class BaseDataLayer {
         }
 
         // Update global status flag
-        this.global_statuses[status] = toggle;
+        this._global_statuses[status] = toggle;
 
         return this;
     }
@@ -1538,7 +1538,7 @@ class BaseDataLayer {
             .then((new_data) => {
                 this.data = new_data;
                 this.applyDataMethods();
-                this.initialized = true;
+                this._initialized = true;
                 // Allow listeners (like subscribeToData) to see the information associated with a layer
                 this.parent.emit(
                     'data_from_layer',

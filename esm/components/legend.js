@@ -99,7 +99,7 @@ class Legend {
         let x = padding;
         let y = padding;
         let line_height = 0;
-        this.parent.data_layer_ids_by_z_index.slice().reverse().forEach((id) => {
+        this.parent._data_layer_ids_by_z_index.slice().reverse().forEach((id) => {
             if (Array.isArray(this.parent.data_layers[id].layout.legend)) {
                 this.parent.data_layers[id].layout.legend.forEach((element) => {
                     const selector = this.elements_group.append('g')
