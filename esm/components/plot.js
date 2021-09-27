@@ -568,7 +568,7 @@ class Plot {
         }
 
         // Hide all panel boundaries
-        this.panel_boundaries.hide();
+        this._panel_boundaries.hide();
 
         // Destroy all tooltips and state vars for all data layers on the panel
         this.clearPanelData(id);
@@ -1039,7 +1039,7 @@ class Plot {
 
         // If the plot has been initialized then trigger some necessary render functions
         if (this._initialized) {
-            this.panel_boundaries.position();
+            this._panel_boundaries.position();
             this.toolbar.update();
             this.curtain.update();
             this.loader.update();
@@ -1140,7 +1140,7 @@ class Plot {
         this.loader = generateLoader.call(this);
 
         // Create the panel_boundaries object with show/position/hide methods
-        this.panel_boundaries = {
+        this._panel_boundaries = {
             parent: this,
             hide_timeout: null,
             showing: false,
@@ -1185,7 +1185,7 @@ class Plot {
                             this.position();
                         });
                         selector.call(panel_resize_drag);
-                        this.parent.panel_boundaries.selectors.push(selector);
+                        this.parent._panel_boundaries.selectors.push(selector);
                     });
                     // Create a corner boundary / resize element on the bottom-most panel that resizes the entire plot
                     const corner_selector = d3.select(this.parent.svg.node().parentNode)
@@ -1211,7 +1211,7 @@ class Plot {
                         this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent._total_height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
-                    this.parent.panel_boundaries.corner_selector = corner_selector;
+                    this.parent._panel_boundaries.corner_selector = corner_selector;
                 }
                 return this.position();
             },
@@ -1263,12 +1263,12 @@ class Plot {
         if (this.layout.panel_boundaries) {
             d3.select(this.svg.node().parentNode)
                 .on(`mouseover.${this.id}.panel_boundaries`, () => {
-                    clearTimeout(this.panel_boundaries.hide_timeout);
-                    this.panel_boundaries.show();
+                    clearTimeout(this._panel_boundaries.hide_timeout);
+                    this._panel_boundaries.show();
                 })
                 .on(`mouseout.${this.id}.panel_boundaries`, () => {
-                    this.panel_boundaries.hide_timeout = setTimeout(() => {
-                        this.panel_boundaries.hide();
+                    this._panel_boundaries.hide_timeout = setTimeout(() => {
+                        this._panel_boundaries.hide();
                     }, 300);
                 });
         }

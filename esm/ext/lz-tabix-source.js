@@ -57,6 +57,9 @@ function install(LocusZoom) {
      *  structured object of data fields
      * @param {string} config.url_data The URL for the bgzipped and tabix-indexed file
      * @param {string} [config.url_tbi] The URL for the tabix index. Defaults to `url_data` + '.tbi'
+     * @param {Promise<Reader>} [config.reader] The URL for tabix-reader instance that provides the data. Mutually exclusive with providing a URL.
+     *  Most LocusZoom usages will not pass an external reader. This option exists for websites like LocalZoom that accept
+     *  many file formats and want to perform input validation before creating the plot: "select parser options", etc.
      * @param {number} [config.overfetch = 0] Optionally fetch more data than is required to satisfy the
      *  region query. (specified as a fraction of the region size, 0-1).
      *  Useful for sources where interesting features might lie near the edges of the plot, eg BED track intervals.
@@ -64,12 +67,10 @@ function install(LocusZoom) {
     class TabixUrlSource extends BaseLZAdapter {
         constructor(config) {
             super(config);
-            if (!config.parser_func || !config.url_data) {
+            if (!config.parser_func || !(config.url_data || config.reader)) {
                 throw new Error('Tabix source is missing required configuration options');
             }
             this.parser = config.parser_func;
-            // TODO: In the future, accept a pre-configured reader instance (as an alternative to the URL). Most useful
-            //   for UIs that want to validate the tabix file before adding it to the plot, like LocalZoom.
             this.url_data = config.url_data;
             this.url_tbi = config.url_tbi || `${this.url_data}.tbi`;
 
@@ -85,9 +86,13 @@ function install(LocusZoom) {
 
             // Assuming that the `tabix-reader` library has been loaded via a CDN, this will create the reader
             // Since fetching the index is a remote operation, all reader usages will be via an async interface.
-            this._reader_promise = tabix.urlReader(this.url_data, this.url_tbi).catch(function () {
-                throw new Error('Failed to create a tabix reader from the provided URL');
-            });
+            if (this.url_data) {
+                this._reader_promise = config.reader;
+            } else {
+                this._reader_promise = tabix.urlReader(this.url_data, this.url_tbi).catch(function () {
+                    throw new Error('Failed to create a tabix reader from the provided URL');
+                });
+            }
         }
 
         _performRequest(options) {
