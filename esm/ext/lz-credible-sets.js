@@ -80,12 +80,12 @@ function install (LocusZoom) {
                 return Promise.resolve([]);
             }
 
+            const assoc_logp_name = this._findPrefixedKey(_assoc_data[0], 'log_pvalue');
+
             const threshold = this._config.threshold;
+
             // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-            if (typeof _assoc_data[0][this._config.join_fields.log_pvalue] === 'undefined') {
-                throw new Error('Credible set source could not locate the required fields from a previous request.');
-            }
-            const nlogpvals = _assoc_data.map((item) => item[this._config.join_fields.log_pvalue]);
+            const nlogpvals = _assoc_data.map((item) => item[assoc_logp_name]);
 
             if (!nlogpvals.some((val) => val >= this._config.significance_threshold)) {
                 // If NO points have evidence of significance, define the credible set to be empty
@@ -103,7 +103,8 @@ function install (LocusZoom) {
                 const credSetScaled = marking.rescaleCredibleSet(credibleSet);
                 const credSetBool = marking.markBoolean(credibleSet);
 
-                // Annotate each response record based on credible set membership
+                // Annotate each response record based on credible set membership. This has the effect of joining
+                //   credset results to assoc data directly within the adapter (no separate join needed)
                 for (let i = 0; i < _assoc_data.length; i++) {
                     _assoc_data[i][`${options._provider_name}:posterior_prob`] = posteriorProbabilities[i];
                     _assoc_data[i][`${options._provider_name}:contrib_fraction`] = credSetScaled[i];

@@ -137,21 +137,8 @@ class Panel {
          */
         this.parent_plot = parent;
 
-        // Ensure a valid ID is present. If there is no valid ID then generate one
-        // FIXME: change spec so that layouts always need an ID and remove autogeneration
-        if (typeof layout.id !== 'string' || !layout.id.length) {
-            if (!this.parent) {
-                layout.id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
-            } else {
-                const generateID = () => {
-                    let id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
-                    if (id === null || typeof this.parent.panels[id] != 'undefined') {
-                        id = generateID();
-                    }
-                    return id;
-                };
-                layout.id = generateID();
-            }
+        if (typeof layout.id !== 'string' || !layout.id) {
+            throw new Error('Panel layouts must specify "id"');
         } else if (this.parent) {
             if (typeof this.parent.panels[layout.id] !== 'undefined') {
                 throw new Error(`Cannot create panel with id [${layout.id}]; panel with that id already exists`);

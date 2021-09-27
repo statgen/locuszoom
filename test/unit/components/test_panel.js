@@ -28,17 +28,11 @@ describe('Panel', function() {
             this.panel = null;
         });
 
-        it('should generate an ID if passed a layout that does not define one', function() {
-            this.plot.addPanel({ 'foo': 'bar' });
-            const panel_idx = this.plot.layout.panels.length - 1;
-            assert.equal(this.plot.layout.panels[panel_idx].foo, 'bar');
-
-            const panel_layout = this.plot.layout.panels[panel_idx];
-            assert.equal(panel_layout.foo, 'bar', 'Layout has the property provided');
-            assert.ok(panel_layout.id, 'A panel ID was created');
-
-            const panel_instance = this.plot.panels[panel_layout.id];
-            assert.equal(panel_instance.layout.foo, 'bar', 'Panel instance can access fields on layout object');
+        it('should fail if panel layout does not specify an ID', function() {
+            assert.throws(
+                () => this.plot.addPanel({ 'foo': 'bar' }),
+                /must specify "id"/
+            );
         });
 
         it('should throw an error if adding a panel with an ID that is already used', function() {
