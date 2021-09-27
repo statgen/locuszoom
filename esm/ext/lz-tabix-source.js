@@ -77,8 +77,7 @@ function install(LocusZoom) {
             // In tabix mode, sometimes we want to fetch a slightly larger region than is displayed, in case a
             //    feature is on the edge of what the tabix query would return.
             //    Specify overfetch in units of % of total region size. ("fetch 10% extra before and after")
-            const params = config.params || {};
-            this._overfetch = params.overfetch || 0;
+            this._overfetch = config.overfetch || 0;
 
             if (this._overfetch < 0 || this._overfetch > 1) {
                 throw new Error('Overfetch must be specified as a fraction (0-1) of the requested region size');
@@ -87,11 +86,11 @@ function install(LocusZoom) {
             // Assuming that the `tabix-reader` library has been loaded via a CDN, this will create the reader
             // Since fetching the index is a remote operation, all reader usages will be via an async interface.
             if (this.url_data) {
-                this._reader_promise = config.reader;
-            } else {
                 this._reader_promise = tabix.urlReader(this.url_data, this.url_tbi).catch(function () {
                     throw new Error('Failed to create a tabix reader from the provided URL');
                 });
+            } else {
+                this._reader_promise = Promise.resolve(config.reader);
             }
         }
 
