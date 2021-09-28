@@ -297,13 +297,13 @@ function install(LocusZoom) {
     }
 
     const covariates_model_tooltip = function () {
-        const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association');
         covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
         return covariates_model_association;
     }();
 
     const covariates_model_plot = function () {
-        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true });
+        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association');
         covariates_model_plot_toolbar.widgets.push({
             type: 'covariates_model',
             button_html: 'Model',

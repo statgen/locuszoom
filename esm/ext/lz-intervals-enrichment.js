@@ -296,10 +296,10 @@ function install(LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
             function () {
-                const base = LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true });
+                const base = LocusZoom.Layouts.get('panel', 'association');
                 base.data_layers.unshift(intervals_highlight_layout);
                 return base;
             }(),

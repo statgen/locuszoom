@@ -112,8 +112,11 @@ const significance_layer = {
  * @type data_layer
  */
 const recomb_rate_layer = {
-    namespace: { 'recomb': 'recomb' },
     id: 'recombrate',
+    namespace: { 'recomb': 'recomb' },
+    data_operations: [
+        { type: 'fetch', from: ['recomb'] },
+    ],
     type: 'line',
     tag: 'recombination',
     z_index: 1,
@@ -237,10 +240,13 @@ const association_pvalues_layer = {
  * @type data_layer
  */
 const coaccessibility_layer = {
-    namespace: { 'access': 'access' },
     id: 'coaccessibility',
     type: 'arcs',
     tag: 'coaccessibility',
+    namespace: { 'access': 'access' },
+    data_operations: [
+        { type: 'fetch', from: ['access'] },
+    ],
     match: { send: 'access:target', receive: 'access:target' },
     // Note: in the datasets this was tested with, these fields together defined a unique loop. Other datasets might work differently and need a different ID.
     id_field: '{{access:start1}}_{{access:end1}}_{{access:start2}}_{{access:end2}}_{{access:score}}_{{access:target}}',
@@ -324,10 +330,13 @@ const association_pvalues_catalog_layer = function () {
  * @type data_layer
  */
 const phewas_pvalues_layer = {
-    namespace: { 'phewas': 'phewas' },
     id: 'phewaspvalues',
     type: 'category_scatter',
     tag: 'phewas',
+    namespace: { 'phewas': 'phewas' },
+    data_operations: [
+        { type: 'fetch', from: ['phewas'] },
+    ],
     point_shape: 'circle',
     point_size: 70,
     tooltip_positioning: 'vertical',
@@ -470,12 +479,17 @@ const genes_layer_filtered = merge({
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
-    data_operations: [{
-        type: 'assoc_to_gwas_catalog',
-        name: 'combined',
-        requires: ['assoc', 'catalog'],
-        params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
-    }],
+    data_operations: [
+        {
+            type: 'fetch', from: ['assoc', 'catalog'],
+        },
+        {
+            type: 'assoc_to_gwas_catalog',
+            name: 'combined',
+            requires: ['assoc', 'catalog'],
+            params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
+        },
+    ],
     id: 'annotation_catalog',
     type: 'annotation_track',
     tag: 'gwascatalog',

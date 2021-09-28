@@ -678,7 +678,7 @@ function install (LocusZoom) {
         height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
-            const l = LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true });
+            const l = LocusZoom.Layouts.get('toolbar', 'standard_panel');
             l.widgets.push({
                 type: 'toggle_split_tracks',
                 data_layer_id: 'intervals',
@@ -714,10 +714,11 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
             LocusZoom.Layouts.get('panel', 'association'),
-            LocusZoom.Layouts.merge({ unnamespaced: true, min_height: 120, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.get('panel', 'association'),
+            LocusZoom.Layouts.merge({ min_height: 120, height: 120 }, intervals_panel_layout),
             LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };

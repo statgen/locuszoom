@@ -129,7 +129,7 @@ function install (LocusZoom) {
      */
     const association_credible_set_tooltip = function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
-        const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        const l = LocusZoom.Layouts.get('tooltip', 'standard_association');
         l.html += '{{#if credset:posterior_prob}}<br>Posterior probability: <strong>{{credset:posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
         return l;
     }();
@@ -176,7 +176,7 @@ function install (LocusZoom) {
                 },
             ],
             fill_opacity: 0.7,
-            tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
+            tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set'),
             match: { send: 'assoc:variant', receive: 'assoc:variant' },
         });
         base.color.unshift({
@@ -239,7 +239,7 @@ function install (LocusZoom) {
                 { action: 'toggle', status: 'selected' },
             ],
         },
-        tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
+        tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set'),
         tooltip_positioning: 'top',
     };
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', annotation_credible_set_layer);
@@ -257,7 +257,7 @@ function install (LocusZoom) {
         height: 50,
         margin: { top: 25, right: 50, bottom: 10, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel'),
         axes: {
             x: { extent: 'state', render: false },
         },
@@ -267,7 +267,7 @@ function install (LocusZoom) {
             x_linked: true,
         },
         data_layers: [
-            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true }),
+            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set'),
         ],
     };
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', annotation_credible_set);
@@ -280,12 +280,11 @@ function install (LocusZoom) {
      */
     const association_credible_set_panel = function () {
         const l = LocusZoom.Layouts.get('panel', 'association', {
-            unnamespaced: true,
             id: 'associationcrediblesets',
             data_layers: [
-                LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-                LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-                LocusZoom.Layouts.get('data_layer', 'association_credible_set', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'significance'),
+                LocusZoom.Layouts.get('data_layer', 'recomb_rate'),
+                LocusZoom.Layouts.get('data_layer', 'association_credible_set'),
             ],
         });
         // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
@@ -403,11 +402,11 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
-            LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true }),
+            LocusZoom.Layouts.get('panel', 'association_credible_set'),
+            LocusZoom.Layouts.get('panel', 'annotation_credible_set'),
+            LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
     LocusZoom.Layouts.add('plot', 'association_credible_set', association_credible_set_plot);
