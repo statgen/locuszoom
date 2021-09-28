@@ -27,12 +27,12 @@ describe('Interval annotation track', function () {
             const layout = LAYOUTS.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
-                track_split_field: '{{namespace[intervals]}}state_id',
+                track_split_field: 'intervals:state_id',
             });
             const instance = DATA_LAYERS.create('intervals', layout);
             this.instance = instance;
             this.color_config = find_color_options(instance._base_layout);
-            this.color_config.field = '{{namespace[intervals]}}state_id';
+            this.color_config.field = 'intervals:state_id';
             this.legend_config = instance._base_layout.legend;
         });
 
@@ -131,9 +131,11 @@ describe('Interval annotation track', function () {
         beforeEach(function() {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('intervals', ['StaticJSON', [
-                    { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
-                ]]);
+                .add('intervals', ['StaticJSON', {
+                    data: [
+                        { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
+                    ],
+                }]);
 
             const layout = {
                 panels: [ LAYOUTS.get('panel', 'intervals') ],

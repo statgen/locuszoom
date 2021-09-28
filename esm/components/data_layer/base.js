@@ -13,7 +13,7 @@ import * as d3 from 'd3';
 import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
-import {deepCopy, merge} from '../../helpers/layouts';
+import {deepCopy, findFields, merge} from '../../helpers/layouts';
 import MATCHERS from '../../registry/matchers';
 import SCALABLE from '../../registry/scalable';
 
@@ -78,13 +78,13 @@ import SCALABLE from '../../registry/scalable';
  * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
  * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
- * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 const default_layout = {
     id: '',
     type: '',
     tag: 'custom_data_type',
-    fields: [],
+    namespace: {},
+    data_operations: [],
     id_field: 'id',
     filters: null,
     match: {},
@@ -110,12 +110,11 @@ class BaseDataLayer {
      *   layer that shows association scatter plots, anywhere": even if the IDs are different, the tag can be the same.
      *   Most built-in data layers will contain a tag that describes, in human-readable terms, what kind of data is being shown.
      *   (see: {@link LayoutRegistry.mutate_attrs})
-     * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only
-     *  these fields will be made available to the data layer, and only data sources (namespaces) referred to in
-     *  this array will be fetched. This represents the "contract" between what data is returned and what data is rendered.
-     *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
      * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
-     *   events, etc. This should be unique to the specified datum.
+     *   events, etc. This should be unique to the specified datum, and persistent across re-renders (because it is
+     *   used to identify where to draw tooltips, eg, if the plot is dragged or zoomed). If no single field uniquely
+     *   identifies all items, a template expression can be used to create an ID from multiple fields instead. (it is
+     *   your job to assure that all of the expected fields are present in every element)
      * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
      *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
      *  details vary from one layer to the next. See the Interactivity Tutorial for details.
@@ -167,12 +166,12 @@ class BaseDataLayer {
          * @private
          * @member {Boolean}
          */
-        this.initialized = false;
+        this._initialized = false;
         /**
          * @private
          * @member {Number}
          */
-        this.layout_idx = null;
+        this._layout_idx = null;
 
         /**
          * The unique identifier for this layer. Should be unique within this panel.
@@ -257,13 +256,13 @@ class BaseDataLayer {
          * @private
          * @member {String}
          */
-        this.state_id = null;
+        this._state_id = null;
 
         /**
          * @private
          * @member {Object}
          * */
-        this.layer_state = null;
+        this._layer_state = null;
         // Create a default state (and set any references to the parent as appropriate)
         this._setDefaultState();
 
@@ -281,19 +280,25 @@ class BaseDataLayer {
              * @private
              * @member {Object}
              */
-            this.tooltips = {};
+            this._tooltips = {};
         }
 
         // Initialize flags for tracking global statuses
-        this.global_statuses = {
+        this._global_statuses = {
             'highlighted': false,
             'selected': false,
             'faded': false,
             'hidden': false,
         };
+
+        // On first load, pre-parse the data specification once, so that it can be used for all other data retrieval
+        this._data_contract = new Set(); // List of all fields requested by the layout
+        this._entities = new Map();
+        this._dependencies = [];
+        this.mutateLayout();  // Parse data spec and any other changes that need to reflect the layout
     }
 
-    /****** Public interface: methods for external manipulation */
+    /****** Public interface: methods for manipulating the layer from other parts of LZ */
 
     /**
      * @public
@@ -308,9 +313,11 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveForward() {
-        if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]) {
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
+        const layer_order = this.parent._data_layer_ids_by_z_index;
+        const current_index = this.layout.z_index;
+        if (layer_order[current_index + 1]) {
+            layer_order[current_index] = layer_order[current_index + 1];
+            layer_order[current_index + 1] = this.id;
             this.parent.resortDataLayers();
         }
         return this;
@@ -322,9 +329,11 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     moveBack() {
-        if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]) {
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
-            this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
+        const layer_order = this.parent._data_layer_ids_by_z_index;
+        const current_index = this.layout.z_index;
+        if (layer_order[current_index - 1]) {
+            layer_order[current_index] = layer_order[current_index - 1];
+            layer_order[current_index - 1] = this.id;
             this.parent.resortDataLayers();
         }
         return this;
@@ -345,10 +354,10 @@ class BaseDataLayer {
      */
     setElementAnnotation (element, key, value) {
         const id = this.getElementId(element);
-        if (!this.layer_state.extra_fields[id]) {
-            this.layer_state.extra_fields[id] = {};
+        if (!this._layer_state.extra_fields[id]) {
+            this._layer_state.extra_fields[id] = {};
         }
-        this.layer_state.extra_fields[id][key] = value;
+        this._layer_state.extra_fields[id][key] = value;
         return this;
     }
 
@@ -361,6 +370,22 @@ class BaseDataLayer {
     setFilter(func) {
         console.warn('The setFilter method is deprecated and will be removed in the future; please use the layout API with a custom filter function instead');
         this._filter_func = func;
+    }
+
+    /**
+     * A list of operations that should be run when the layout is mutated
+     * Typically, these are things done once when a layout is first specified, that would not automatically
+     *  update when the layout was changed.
+     */
+    mutateLayout() {
+        // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.
+        if (this.parent_plot) { // Don't run this method if instance isn't mounted to a plot, eg unit tests that don't require requester
+            const { namespace, data_operations } = this.layout;
+            this._data_contract = findFields(this.layout, Object.keys(namespace));
+            const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations);
+            this._entities = entities;
+            this._dependencies = dependencies;
+        }
     }
 
     /********** Protected methods: useful in subclasses to manipulate data layer behaviors */
@@ -386,8 +411,12 @@ class BaseDataLayer {
     /**
      * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
      *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
+     *
+     * The ID should also be stable across re-renders, so that tooltips and highlights may be reapplied to that
+     *   element as we switch regions or drag left/right. If the element is not unique along a single field (eg PheWAS data),
+     *   a unique ID can be generated via a template expression like `{{phewas:pheno}}-{{phewas:trait_label}}`
      * @protected
-     * @param {Object} element
+     * @param {Object} element The data associated with a particular element
      * @returns {String}
      */
     getElementId (element) {
@@ -397,11 +426,19 @@ class BaseDataLayer {
             return element[id_key];
         }
 
-        const id_field = this.layout.id_field || 'id';
-        if (typeof element[id_field] == 'undefined') {
+        // Two ways to get element ID: field can specify an exact field name, or, we can parse a template expression
+        const id_field = this.layout.id_field;
+        let value  = element[id_field];
+        if (typeof value === 'undefined' && /{{[^{}]*}}/.test(id_field)) {
+            // No field value was found directly, but if it looks like a template expression, next, try parsing that
+            // WARNING: In this mode, it doesn't validate that all requested fields from the template are present. Only use this if you trust the data being given to the plot!
+            value = parseFields(id_field, element, {}); // Not allowed to use annotations b/c IDs should be stable, and annos may be transient
+        }
+        if (value === null || value === undefined) {
+            // Neither exact field nor template options produced an ID
             throw new Error('Unable to generate element ID');
         }
-        const element_id = element[id_field].toString().replace(/\W/g, '');
+        const element_id = value.toString().replace(/\W/g, '');
 
         // Cache ID value for future calls
         const key = (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
@@ -410,11 +447,11 @@ class BaseDataLayer {
     }
 
     /**
+     * Abstract method. It should be overridden by data layers that implement separate status
+     *   nodes, such as genes or intervals.
      * Fetch an ID that may bind a data element to a separate visual node for displaying status
-     * Examples of this might be separate visual nodes to show select/highlight statuses, or
-     * even a common/shared node to show status across many elements in a set.
-     * Abstract method. It should be overridden by data layers that implement seperate status
-     * nodes specifically to the use case of the data layer type.
+     * Examples of this might be highlighting a gene with a surrounding box to show select/highlight statuses, or
+     *   a group of unrelated intervals (all markings grouped within a category).
      * @private
      * @param {String|Object} element
      * @returns {String|null}
@@ -457,23 +494,39 @@ class BaseDataLayer {
         const broadcast_value = this.parent_plot.state.lz_match_value;
         // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
         const field_resolver = field_to_match ? new Field(field_to_match) : null;
+
+        // Does the data from the API satisfy the list of fields expected by this layout?
+        //   Not every record will have every possible field (example: left joins like assoc + ld). The check is "did
+        //      we see this field at least once in any record at all".
+        if (this.data.length && this._data_contract.size) {
+            const fields_unseen = new Set(this._data_contract);
+            for (let record of this.data) {
+                Object.keys(record).forEach((field) => fields_unseen.delete(field));
+                if (!fields_unseen.size) {
+                    // Once every requested field has been seen in at least one record, no need to look at more records
+                    break;
+                }
+            }
+            if (fields_unseen.size) {
+                // Current implementation is a soft warning, so that certain "incremental enhancement" features
+                //  (like rsIDs in tooltips) can fail gracefully if the API does not provide the requested info.
+                //  Template syntax like `{{#if fieldname}}` means that throwing an Error is not always the right answer for missing data.
+                console.warn(`Data layer '${this.getBaseId()}' did not receive all expected fields from retrieved data. Missing fields are: ${[...fields_unseen]}
+  Common reasons for this error include API payloads with missing fields, or data layer layouts that use two kinds of data and need join logic in "data_operations"                
+  If this field is optional, you can safely ignore this message. Examples include {{#if value}} tags or conditional color rules.
+`);
+            }
+        }
+
         this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_is_match = (match_function(field_resolver.resolve(item), broadcast_value));
+                item.lz_is_match = match_function(field_resolver.resolve(item), broadcast_value);
             }
 
-            item.toHTML = () => {
-                const id_field = this.layout.id_field || 'id';
-                let html = '';
-                if (item[id_field]) {
-                    html = item[id_field].toString();
-                }
-                return html;
-            };
             // Helper methods - return a reference to various plot levels. Useful for interactive tooltips.
             item.getDataLayer = () => this;
             item.getPanel = () => this.parent || null;
@@ -481,11 +534,6 @@ class BaseDataLayer {
                 // For unit testing etc, this layer may be created without a parent.
                 const panel = this.parent;
                 return panel ? panel.parent : null;
-            };
-            // deselect() method - shortcut method to deselect the element
-            item.deselect = () => {
-                const data_layer = this.getDataLayer();
-                data_layer.unselectElement(this); // dynamically generated method name. It exists, honest.
             };
         });
         this.applyCustomDataMethods();
@@ -559,7 +607,6 @@ class BaseDataLayer {
      * @param {('x'|'y')} dimension
      */
     getAxisExtent (dimension) {
-
         if (!['x', 'y'].includes(dimension)) {
             throw new Error('Invalid dimension identifier');
         }
@@ -619,7 +666,6 @@ class BaseDataLayer {
 
         // No conditions met for generating a valid extent, return an empty array
         return [];
-
     }
 
     /**
@@ -838,7 +884,7 @@ class BaseDataLayer {
      */
     getElementAnnotation (element, key) {
         const id = this.getElementId(element);
-        const extra = this.layer_state.extra_fields[id];
+        const extra = this._layer_state.extra_fields[id];
         return key ? (extra && extra[key]) : extra;
     }
 
@@ -877,8 +923,8 @@ class BaseDataLayer {
         // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
         //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
         //  persist across re-render)
-        const layer_state = { status_flags: {}, extra_fields: {} };
-        const status_flags = layer_state.status_flags;
+        const _layer_state = { status_flags: {}, extra_fields: {} };
+        const status_flags = _layer_state.status_flags;
         STATUSES.adjectives.forEach((status) => {
             status_flags[status] = status_flags[status] || new Set();
         });
@@ -887,11 +933,11 @@ class BaseDataLayer {
 
         if (this.parent) {
             // If layer has a parent, store a reference in the overarching plot.state object
-            this.state_id = `${this.parent.id}.${this.id}`;
+            this._state_id = `${this.parent.id}.${this.id}`;
             this.state = this.parent.state;
-            this.state[this.state_id] = layer_state;
+            this.state[this._state_id] = _layer_state;
         }
-        this.layer_state = layer_state;
+        this._layer_state = _layer_state;
     }
 
     /**
@@ -963,18 +1009,18 @@ class BaseDataLayer {
             throw new Error(`DataLayer [${this.id}] layout does not define a tooltip`);
         }
         const id = this.getElementId(data);
-        if (this.tooltips[id]) {
+        if (this._tooltips[id]) {
             this.positionTooltip(id);
             return;
         }
-        this.tooltips[id] = {
+        this._tooltips[id] = {
             data: data,
             arrow: null,
             selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
                 .attr('class', 'lz-data_layer-tooltip')
                 .attr('id', `${id}-tooltip`),
         };
-        this.layer_state.status_flags['has_tooltip'].add(id);
+        this._layer_state.status_flags['has_tooltip'].add(id);
         this.updateTooltip(data);
         return this;
     }
@@ -991,16 +1037,16 @@ class BaseDataLayer {
             id = this.getElementId(d);
         }
         // Empty the tooltip of all HTML (including its arrow!)
-        this.tooltips[id].selector.html('');
-        this.tooltips[id].arrow = null;
+        this._tooltips[id].selector.html('');
+        this._tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html) {
-            this.tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
+            this._tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
         }
         // If the layout allows tool tips on this data layer to be closable then add the close button
         // and add padding to the tooltip to accommodate it
         if (this.layout.tooltip.closable) {
-            this.tooltips[id].selector.insert('button', ':first-child')
+            this._tooltips[id].selector.insert('button', ':first-child')
                 .attr('class', 'lz-tooltip-close-button')
                 .attr('title', 'Close')
                 .text('×')
@@ -1009,7 +1055,7 @@ class BaseDataLayer {
                 });
         }
         // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
-        this.tooltips[id].selector.data([d]);
+        this._tooltips[id].selector.data([d]);
         // Reposition and draw a new arrow
         this.positionTooltip(id);
         return this;
@@ -1031,15 +1077,15 @@ class BaseDataLayer {
         } else {
             id = this.getElementId(element_or_id);
         }
-        if (this.tooltips[id]) {
-            if (typeof this.tooltips[id].selector == 'object') {
-                this.tooltips[id].selector.remove();
+        if (this._tooltips[id]) {
+            if (typeof this._tooltips[id].selector == 'object') {
+                this._tooltips[id].selector.remove();
             }
-            delete this.tooltips[id];
+            delete this._tooltips[id];
         }
         // When a tooltip is removed, also remove the reference from the state
         if (!temporary) {
-            const tooltip_state = this.layer_state.status_flags['has_tooltip'];
+            const tooltip_state = this._layer_state.status_flags['has_tooltip'];
             tooltip_state.delete(id);
         }
         return this;
@@ -1052,7 +1098,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     destroyAllTooltips(temporary = true) {
-        for (let id in this.tooltips) {
+        for (let id in this._tooltips) {
             this.destroyTooltip(id, temporary);
         }
         return this;
@@ -1073,10 +1119,10 @@ class BaseDataLayer {
         if (typeof id != 'string') {
             throw new Error('Unable to position tooltip: id is not a string');
         }
-        if (!this.tooltips[id]) {
+        if (!this._tooltips[id]) {
             throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
-        const tooltip = this.tooltips[id];
+        const tooltip = this._tooltips[id];
         const coords = this._getTooltipPosition(tooltip);
 
         if (!coords) {
@@ -1095,7 +1141,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     positionAllTooltips() {
-        for (let id in this.tooltips) {
+        for (let id in this._tooltips) {
             this.positionTooltip(id);
         }
         return this;
@@ -1176,11 +1222,11 @@ class BaseDataLayer {
         }
 
         // Find all the statuses that apply to just this single element
-        const layer_state = this.layer_state;
+        const _layer_state = this._layer_state;
         var status_flags = {};  // {status_name: bool}
         STATUSES.adjectives.forEach((status) => {
             const antistatus = `un${status}`;
-            status_flags[status] = (layer_state.status_flags[status].has(id));
+            status_flags[status] = (_layer_state.status_flags[status].has(id));
             status_flags[antistatus] = !status_flags[status];
         });
 
@@ -1191,7 +1237,7 @@ class BaseDataLayer {
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
         //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-        const has_tooltip = (layer_state.status_flags['has_tooltip'].has(id));
+        const has_tooltip = (_layer_state.status_flags['has_tooltip'].has(id));
         const tooltip_was_closed = first_time ? false : !has_tooltip;
         if (show_resolved && !tooltip_was_closed && !hide_resolved) {
             this.createTooltip(element);
@@ -1246,12 +1292,12 @@ class BaseDataLayer {
         }
 
         // Track element ID in the proper status state array
-        const added_status = !this.layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
+        const added_status = !this._layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
         if (active && added_status) {
-            this.layer_state.status_flags[status].add(element_id);
+            this._layer_state.status_flags[status].add(element_id);
         }
         if (!active && !added_status) {
-            this.layer_state.status_flags[status].delete(element_id);
+            this._layer_state.status_flags[status].delete(element_id);
         }
 
         // Trigger tool tip show/hide logic
@@ -1294,7 +1340,7 @@ class BaseDataLayer {
         if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
             throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+        if (typeof this._layer_state.status_flags[status] == 'undefined') {
             return this;
         }
         if (typeof toggle == 'undefined') {
@@ -1305,18 +1351,18 @@ class BaseDataLayer {
         if (toggle) {
             this.data.forEach((element) => this.setElementStatus(status, element, true));
         } else {
-            const status_ids = new Set(this.layer_state.status_flags[status]); // copy so that we don't mutate while iterating
+            const status_ids = new Set(this._layer_state.status_flags[status]); // copy so that we don't mutate while iterating
             status_ids.forEach((id) => {
                 const element = this.getElementById(id);
                 if (typeof element == 'object' && element !== null) {
                     this.setElementStatus(status, element, false);
                 }
             });
-            this.layer_state.status_flags[status] = new Set();
+            this._layer_state.status_flags[status] = new Set();
         }
 
         // Update global status flag
-        this.global_statuses[status] = toggle;
+        this._global_statuses[status] = toggle;
 
         return this;
     }
@@ -1395,7 +1441,7 @@ class BaseDataLayer {
 
                 // Toggle a status
                 case 'toggle':
-                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].has(self.getElementId(element)));
+                    var current_status_boolean = (self._layer_state.status_flags[behavior.status].has(self.getElementId(element)));
                     var exclusive = behavior.exclusive && !current_status_boolean;
 
                     self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
@@ -1442,7 +1488,7 @@ class BaseDataLayer {
      *  @private
      */
     applyAllElementStatus () {
-        const status_flags = this.layer_state.status_flags;
+        const status_flags = this._layer_state.status_flags;
         const self = this;
         for (let property in status_flags) {
             if (!Object.prototype.hasOwnProperty.call(status_flags, property)) {
@@ -1452,7 +1498,7 @@ class BaseDataLayer {
                 try {
                     this.setElementStatus(property, this.getElementById(element_id), true);
                 } catch (e) {
-                    console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
+                    console.warn(`Unable to apply state: ${self._state_id}, ${property}`);
                     console.error(e);
                 }
             });
@@ -1488,11 +1534,17 @@ class BaseDataLayer {
         // and then recreated if returning to visibility
 
         // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
-        return this.parent_plot.lzd.getData(this.state, this.layout.fields)
+        return this.parent_plot.lzd.getData(this.state, this._entities, this._dependencies)
             .then((new_data) => {
-                this.data = new_data.body;  // chain.body from datasources
+                this.data = new_data;
                 this.applyDataMethods();
-                this.initialized = true;
+                this._initialized = true;
+                // Allow listeners (like subscribeToData) to see the information associated with a layer
+                this.parent.emit(
+                    'data_from_layer',
+                    { layer: this.getBaseId(), content: deepCopy(new_data) }, // TODO: revamp event signature post layer-eventing-mixin
+                    true
+                );
             });
     }
 }

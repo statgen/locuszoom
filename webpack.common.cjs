@@ -49,6 +49,7 @@ module.exports = {
         new ESLintPlugin(),
     ],
     resolve: {
+        symlinks: false,
         modules: [
             'node_modules',
         ],

@@ -231,7 +231,7 @@
 
             window.aggregationBuilder.$on('run', function (options) {
                 // One time only: Create the plot and table widgets if they don't already exist
-                if (!window.plot || !(window.plot instanceof LocusZoom.Plot)) {
+                if (!window.plot) {
                     $("#section-results").css("display", "inherit"); // Hide results section until first use
                     createDisplayWidgets(window.selected_group);  // Hack: func binds widget references to global scope
                     setupWidgetListeners(

@@ -43,7 +43,7 @@ const YCE = Symbol.for('lzYCE');
 
 
 function install (LocusZoom) {
-    const BaseApiAdapter = LocusZoom.Adapters.get('BaseApiAdapter');
+    const BaseUMAdapter = LocusZoom.Adapters.get('BaseUMAdapter');
     const _Button = LocusZoom.Widgets.get('_Button');
     const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
@@ -55,11 +55,13 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      * @param {number} config.params.source The numeric ID for a specific dataset as assigned by the API server
      */
-    class IntervalLZ extends BaseApiAdapter {
-        getURL(state, chain, fields) {
-            const source = chain.header.bedtracksource || this.params.source;
-            const query = `?filter=id in ${source} and chromosome eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
-            return `${this.url}${query}`;
+    class IntervalLZ extends BaseUMAdapter {
+        _getURL(request_options) {
+            const source = this._config.source;
+            const query = `?filter=id in ${source} and chromosome eq '${request_options.chr}' and start le ${request_options.end} and end ge ${request_options.start}`;
+
+            const base = super._getURL(request_options);
+            return `${base}${query}`;
         }
     }
 
@@ -605,7 +607,7 @@ function install (LocusZoom) {
         closable: false,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}',
+        html: '{{intervals:state_name|htmlescape}}<br>{{intervals:start|htmlescape}}-{{intervals:end|htmlescape}}',
     };
 
     /**
@@ -620,23 +622,22 @@ function install (LocusZoom) {
         id: 'intervals',
         type: 'intervals',
         tag: 'intervals',
-        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name', '{{namespace[intervals]}}itemRgb'],
-        id_field: '{{namespace[intervals]}}start',  // FIXME: This is not a good D3 "are these datums redundant" ID for datasets with multiple intervals heavily overlapping
-        start_field: '{{namespace[intervals]}}start',
-        end_field: '{{namespace[intervals]}}end',
-        track_split_field: '{{namespace[intervals]}}state_name',
-        track_label_field: '{{namespace[intervals]}}state_name',
+        id_field: '{{intervals:start}}_{{intervals:end}}_{{intervals:state_name}}',
+        start_field: 'intervals:start',
+        end_field: 'intervals:end',
+        track_split_field: 'intervals:state_name',
+        track_label_field: 'intervals:state_name',
         split_tracks: false,
         always_hide_legend: true,
         color: [
             {
                 // If present, an explicit color field will override any other option (and be used to auto-generate legend)
-                field: '{{namespace[intervals]}}itemRgb',
+                field: 'intervals:itemRgb',
                 scale_function: 'to_rgb',
             },
             {
                 // TODO: Consider changing this to stable_choice in the future, for more stable coloring
-                field: '{{namespace[intervals]}}state_name',
+                field: 'intervals:state_name',
                 scale_function: 'categorical_bin',
                 parameters: {
                     // Placeholder. Empty categories and values will automatically be filled in when new data loads.
@@ -677,7 +678,7 @@ function install (LocusZoom) {
         height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
-            const l = LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true });
+            const l = LocusZoom.Layouts.get('toolbar', 'standard_panel');
             l.widgets.push({
                 type: 'toggle_split_tracks',
                 data_layer_id: 'intervals',
@@ -713,10 +714,11 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
             LocusZoom.Layouts.get('panel', 'association'),
-            LocusZoom.Layouts.merge({ unnamespaced: true, min_height: 120, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.get('panel', 'association'),
+            LocusZoom.Layouts.merge({ min_height: 120, height: 120 }, intervals_panel_layout),
             LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };

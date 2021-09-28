@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import Plot, {_updateStatePosition} from '../../../esm/components/plot';
 import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
-import { LAYOUTS } from '../../../esm/registry';
 
 describe('LocusZoom.Plot', function() {
     // Tests
@@ -17,18 +16,19 @@ describe('LocusZoom.Plot', function() {
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = populate('#plot', null, layout);
+            this.plot = populate('#plot', new DataSources(), layout);
         });
         afterEach(function() {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for adding arbitrarily many panels', function() {
             const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar' });
             assert.equal(panelA.id, 'panelA');
             assert.equal(this.plot.panels[panelA.id], panelA);
             assert.equal(this.plot.panels[panelA.id].parent, this.plot);
-            assert.equal(this.plot.panels[panelA.id].layout_idx, 0);
+            assert.equal(this.plot.panels[panelA.id]._layout_idx, 0);
             assert.equal(this.plot.layout.panels.length, 1);
             assert.equal(this.plot.layout.panels[0].id, panelA.id);
             assert.equal(this.plot.layout.panels[0].foo, 'bar');
@@ -37,11 +37,12 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelB.id, 'panelB');
             assert.equal(this.plot.panels[panelB.id], panelB);
             assert.equal(this.plot.panels[panelB.id].parent, this.plot);
-            assert.equal(this.plot.panels[panelB.id].layout_idx, 1);
+            assert.equal(this.plot.panels[panelB.id]._layout_idx, 1);
             assert.equal(this.plot.layout.panels.length, 2);
             assert.equal(this.plot.layout.panels[1].id, 'panelB');
             assert.equal(this.plot.layout.panels[1].foo, 'baz');
         });
+
         it('should allow for removing panels', function() {
             const panelA = this.plot.addPanel({ id: 'panelA', foo: 'bar', height: 10 });
             const panelB = this.plot.addPanel({ id: 'panelB', foo: 'baz', height: 20 });
@@ -55,10 +56,11 @@ describe('LocusZoom.Plot', function() {
             assert.doesNotHaveAnyKeys(this.plot.panels, ['panelA']);
             assert.equal(this.plot.layout.panels.length, 1);
             assert.equal(this.plot.layout.panels[0].id, 'panelB');
-            assert.equal(this.plot.panels[panelB.id].layout_idx, 0);
+            assert.equal(this.plot.panels[panelB.id]._layout_idx, 0);
 
             assert.equal(this.plot._total_height, 20, 'Final height is the space requested by the remaining single panel');
         });
+
         it('should allow setting dimensions', function() {
             this.plot.setDimensions(563, 681);
             assert.equal(this.plot.layout.width, 563);
@@ -70,6 +72,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.setDimensions('q', 0);
             assert.equal(this.plot.layout.width, 563, 'Non-numeric value is ignored');
         });
+
         it('show rescale all panels equally when resizing the plot', function () {
             assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
 
@@ -83,6 +86,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelA.layout.height, 200, 'Panel A doubles in size because plot doubles in size');
             assert.equal(panelB.layout.height, 400, 'Panel B doubles in size because plot doubles in size');
         });
+
         it('should rescale all panels and the plot, but only down to the specified minimum size', function () {
             assert.equal(this.plot._total_height, 0, 'Empty plot has no height');
 
@@ -96,23 +100,36 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelA.layout.height, 50, 'Panel A does not shrink below the minimum size');
             assert.equal(panelB.layout.height, 100, 'Panel B does not shrink below the minimum size');
         });
+
         it('should enforce consistent data layer widths and x-offsets across x-linked panels', function() {
             const layout = {
                 width: 1000,
                 panels: [
-                    LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
-                    LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } }),
+                    {
+                        id: 'association',
+                        margin: { top: 35, right: 50, bottom: 40, left: 200 },
+                        interaction: { x_linked: true },
+                    },
+                    {
+                        id: 'assoc2',
+                        margin: { top: 35, right: 300, bottom: 40, left: 50 },
+                        interaction: { x_linked: true },
+                    },
                 ],
             };
-            this.plot = populate('#plot', null, layout);
-            assert.equal(this.plot.layout.panels[0].margin.left, 200);
-            assert.equal(this.plot.layout.panels[1].margin.left, 200);
-            assert.equal(this.plot.layout.panels[0].margin.right, 300);
-            assert.equal(this.plot.layout.panels[1].margin.right, 300);
-            assert.equal(this.plot.layout.panels[0].cliparea.origin.x, 200);
-            assert.equal(this.plot.layout.panels[1].cliparea.origin.x, 200);
-            assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
+            this.plot = populate('#plot', new DataSources(), layout);
+
+            const panel0 = this.plot.layout.panels[0];
+            const panel1 = this.plot.layout.panels[1];
+
+            assert.equal(panel0.margin.left, 200);
+            assert.equal(panel1.margin.left, 200, 'Adjusts second panel to match margins of first');
+            assert.equal(panel0.margin.right, 300);
+            assert.equal(panel1.margin.right, 300);
+            assert.equal(panel0.cliparea.origin.x, 200);
+            assert.equal(panel1.cliparea.origin.x, 200);
         });
+
         it('should not allow for a non-numerical / non-positive predefined dimensions', function() {
             assert.throws(() => {
                 populate('#plot', null, { width: 0 });
@@ -127,10 +144,14 @@ describe('LocusZoom.Plot', function() {
         describe('Mouse Guide Layer', function() {
             beforeEach(function() {
                 d3.select('body').append('div').attr('id', 'plot');
-                const layout = LAYOUTS.get('plot', 'standard_association');
-                layout.state = { chr: '1', start: 1, end: 100000 };
-                this.plot = populate('#plot', null, layout);
+                const layout = {
+                    state: {},
+                    width: 800,
+                    panels: [],
+                };
+                this.plot = populate('#plot', new DataSources(), layout);
             });
+
             it('first child should be a mouse guide layer group element', function() {
                 assert.equal(d3.select(this.plot.svg.node().firstChild).attr('id'), 'plot.mouse_guide');
             });
@@ -148,6 +169,7 @@ describe('LocusZoom.Plot', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
+
         it('Should allocate the space requested by the panel, even if less than plot height', function() {
             const panelA = { id: 'panelA', height: 50 };
             this.plot.addPanel(panelA);
@@ -158,6 +180,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.height, 50);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
         });
+
         it('Should extend the size of the plot if panels are added that expand it, and automatically prevent panels from overlapping vertically', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -172,6 +195,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 60);
         });
+
         it('Should resize the plot as panels are removed', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -185,6 +209,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 0);
         });
+
         it('Should resize the plot as panels are removed, when panels specify min_height', function() {
             // Small hack; resize the plot after it was created
             this.plot.layout.height = 600;
@@ -210,6 +235,7 @@ describe('LocusZoom.Plot', function() {
             //   after panel C is removed.
             assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y matches layout value');
         });
+
         it('Should resize the plot while retaining panel proportions when panel is removed, if plot min_height does not take precedence', function() {
             // When we remove a panel, we often want the plot to shrink by exactly that size. (so that the bottom
             //   section simply disappears without changing the appearance of the panels that remain) But if plot
@@ -236,6 +262,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height matches layout (after)');
             assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y appears immediately after panel A');
         });
+
         it('Should allow for inserting panels at discrete y indexes', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 61 };
@@ -246,7 +273,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.y_index, 0);
             assert.equal(this.plot.panels.panelB.layout.y_index, 2);
             assert.equal(this.plot.panels.panelC.layout.y_index, 1);
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['panelA', 'panelC', 'panelB']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['panelA', 'panelC', 'panelB']);
 
             assert.deepEqual(panelA.height, 60, 'panel A height matches layout value');
             assert.deepEqual(panelB.height, 61, 'panel B height matches layout value');
@@ -254,6 +281,7 @@ describe('LocusZoom.Plot', function() {
 
             assert.deepEqual(panelA.height + panelB.height + panelC.height, this.plot._total_height, 'Plot height is equal to sum of panels');
         });
+
         it('Should allow for inserting panels at negative discrete y indexes', function() {
             const panelA = { id: 'panelA', height: 60 };
             const panelB = { id: 'panelB', height: 60 };
@@ -270,7 +298,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelC.layout.y_index, 2);
             assert.equal(this.plot.panels.panelD.layout.y_index, 4);
             assert.equal(this.plot.panels.panelE.layout.y_index, 3);
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['panelA', 'panelB', 'panelC', 'panelE', 'panelD']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['panelA', 'panelB', 'panelC', 'panelE', 'panelD']);
         });
     });
 
@@ -284,6 +312,7 @@ describe('LocusZoom.Plot', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
+
         it('should show/hide/update on command and track shown status', function() {
             assert.isFalse(this.plot.curtain.showing);
             assert.isNull(this.plot.curtain.selector);
@@ -300,12 +329,14 @@ describe('LocusZoom.Plot', function() {
             assert.isNull(this.plot.curtain.selector);
             assert.isNull(this.plot.curtain.content_selector);
         });
+
         it('should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors', function() {
             assert.isFalse(this.plot.loader.showing);
             assert.isNull(this.plot.loader.selector);
             assert.isNull(this.plot.loader.content_selector);
             assert.isNull(this.plot.loader.progress_selector);
         });
+
         it('should show/hide/update on command and track shown status', function() {
             assert.isFalse(this.plot.loader.showing);
             assert.isNull(this.plot.loader.selector);
@@ -325,6 +356,7 @@ describe('LocusZoom.Plot', function() {
             assert.isNull(this.plot.loader.content_selector);
             assert.isNull(this.plot.loader.progress_selector);
         });
+
         it('should allow for animating or showing discrete percentages of completion', function() {
             this.plot.loader.show('test content').animate();
             assert.isTrue(this.plot.loader.progress_selector.classed('lz-loader-progress-animated'));
@@ -361,28 +393,31 @@ describe('LocusZoom.Plot', function() {
             this.layout = null;
             d3.select('#plot').remove();
         });
+
         it('Should apply basic start/end state validation when necessary', function() {
             this.layout.state = { chr: 1, start: -60, end: 10300050 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
             });
         });
+
         it('Should apply minimum region scale state validation if set in the plot layout', function() {
             this.layout.min_region_scale = 2000;
             this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
             });
         });
+
         it('Should apply maximum region scale state validation if set in the plot layout', function() {
             this.layout.max_region_scale = 4000000;
             this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
             });
@@ -392,12 +427,21 @@ describe('LocusZoom.Plot', function() {
     describe('subscribeToData', function() {
         beforeEach(function() {
             const layout = {
-                panels: [{ id: 'panel0' }],
+                panels: [
+                    { id: 'panel0' },
+                    {
+                        id: 'panel1',
+                        data_layers: [ { id: 'layer1', type: 'line', namespace: { 'first': 'first' } } ],
+                    },
+                ],
             };
 
             this.first_source_data = [ { x: 0, y: false  }, { x: 1, y: true } ];
             this.data_sources = new DataSources()
-                .add('first', ['StaticJSON', this.first_source_data ]);
+                .add('first', ['StaticSource', {
+                    prefix_namespace: false, // Makes it easier to write tests- "data in === data out"
+                    data: this.first_source_data,
+                }]);
 
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', this.data_sources, layout);
@@ -408,67 +452,76 @@ describe('LocusZoom.Plot', function() {
             sinon.restore();
         });
 
-        it('allows subscribing to data using a standard limited fields array', function (done) {
-            const expectedData = [{ 'first:x': 0 }, { 'first:x': 1 }];
-
-            const dataCallback = sinon.spy();
-
-            this.plot.subscribeToData(
-                [ 'first:x' ],
-                dataCallback,
-                { onerror: done }
+        it('requires specifying one of two ways to subscribe', function () {
+            assert.throws(
+                () => this.plot.subscribeToData({ useless_option: 'something' }),
+                /must specify the desired data/
             );
-
-            this.plot.applyState().catch(done);
-
-            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
-            //  more than once during rerender
-            window.setTimeout(function() {
-                try {
-                    assert.ok(dataCallback.called, 'Data handler was called');
-                    assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            }, 0);
         });
 
-        it('allows subscribing to individual (not combined) sources', function (done) {
-            const expectedData = { first: [{ 'first:x': 0 }, { 'first:x': 1 }] };
+        it('allows subscribing to the data of a layer by name', function () {
+            const callbackShort = sinon.spy();
+            const callbackLong = sinon.spy();
+
+            const listener = this.plot.subscribeToData({ from_layer: 'panel1.layer1' }, callbackShort);
+            assert.ok(listener, 'Subscribes to partial path (panel.layer syntax)');
+
+            const listener2 = this.plot.subscribeToData({ from_layer: 'plot.panel1.layer1' }, callbackLong);
+            assert.ok(listener2, 'Subscribes to full path (plot.panel.layer syntax)');
+
+            return this.plot.applyState().then(() => {
+                assert.ok(callbackShort.called, 'panel.layer callback invoked');
+                assert.ok(callbackShort.calledWith(this.first_source_data), 'panel.layer callback receives expected data');
+                assert.ok(callbackLong.called, 'plot.panel.layer callback invoked');
+                assert.ok(callbackLong.calledWith(this.first_source_data), 'plot.panel.layer callback receives expected data');
+            });
+        });
+
+        it('warns when subscribing to the data of a layer that does not exist', function () {
+            assert.throws(
+                () => this.plot.subscribeToData({ from_layer: 'panel0.layer1' }, () => null),
+                /unknown data layer/,
+                'Warns if requesting an unknown layer'
+            );
+        });
+
+        it('allows subscribing to data using namespace syntax', function () {
             const dataCallback = sinon.spy();
 
-            this.plot.subscribeToData(
-                [ 'first:x' ],
-                dataCallback,
-                { onerror: done, discrete: true }
+            const listener = this.plot.subscribeToData(
+                {  namespace: { 'first': 'first' } },
+                dataCallback
             );
-            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
-            //  more than once during rerender
-            window.setTimeout(function() {
-                try {
-                    assert.ok(dataCallback.called, 'Data handler was called');
-                    assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            }, 0);
+            assert.ok(listener, 'Listener defined');
+
+            // When data is manually specified, it calls an async method inside an event hook- no problem in a real
+            //  page, but it makes writing async tests a bit tricksy.
+            // Force the callback to fire and (pretty much mostly) complete
+            this.plot.emit('data_rendered');
+
+            // Technically there's a slight chance of race condition still. Watch for random failures.
+            return this.plot.applyState().then(() => {
+                assert.ok(dataCallback.called, 'Data handler was called');
+                assert.ok(dataCallback.calledWith(this.first_source_data), 'Data handler received the expected data');
+            });
         });
 
         it('calls an error callback if a problem occurs while fetching data', function() {
-            const dataCallback = sinon.spy();
+            const dataCallback = () => {
+                throw new Error('Data callback should not be called');
+            };
             const errorCallback = sinon.spy();
 
             this.plot.subscribeToData(
-                [ 'nosource:x' ],
-                dataCallback,
-                { onerror: errorCallback }
+                {
+                    from_layer: 'plot.panel1.layer1',
+                    onerror: errorCallback,
+                },
+                dataCallback
             );
 
             return this.plot.applyState()
                 .then(function() {
-                    assert.ok(dataCallback.notCalled, 'Data callback was not called');
                     assert.ok(errorCallback.called, 'Error callback was called');
                 });
         });
@@ -478,16 +531,18 @@ describe('LocusZoom.Plot', function() {
             const errorCallback = sinon.spy();
 
             const listener = this.plot.subscribeToData(
-                ['nosource:x'],
-                dataCallback,
-                { onerror: errorCallback }
+                {
+                    from_layer: 'plot.panel1.layer1',
+                    onerror: errorCallback,
+                },
+                dataCallback
             );
 
-            this.plot.off('data_rendered', listener);
-            this.plot.emit('data_rendered');
-            assert.equal(
-                this.plot.event_hooks['data_rendered'].indexOf(listener),
-                -1,
+            this.plot.off('data_from_layer', listener);
+            this.plot.emit('data_from_layer');
+            assert.notInclude(
+                this.plot._event_hooks['data_from_layer'],
+                listener,
                 'Listener should not be registered'
             );
             assert.ok(dataCallback.notCalled, 'listener success callback was not fired');
@@ -552,7 +607,7 @@ describe('LocusZoom.Plot', function() {
                 this.plot = null;
                 const first_source_data = [{ id: 'a', x: 0, y: false }, { id: 'b', x: 1, y: true }];
                 const data_sources = new DataSources()
-                    .add('s', ['StaticJSON', first_source_data]);
+                    .add('s', ['StaticJSON', { data: first_source_data }]);
                 this.layout = {
                     panels: [
                         {
@@ -562,20 +617,20 @@ describe('LocusZoom.Plot', function() {
                                     id: 'd1',
                                     id_field: 's:id',
                                     type: 'scatter',
-                                    fields: ['s:id', 's:x'],
+                                    namespace: { s: 's' },
                                     match: { send: 's:x', receive: 's:x' },
                                 },
                                 {
                                     id: 'd2',
                                     id_field: 's:id',
                                     type: 'scatter',
-                                    fields: ['s:id', 's:x', 's:y'],
+                                    namespace: { s: 's' },
                                 },
                                 {
                                     id: 'd3',
                                     id_field: 's:id',
                                     type: 'scatter',
-                                    fields: ['s:id', 's:y'],
+                                    namespace: { s: 's' },
                                     match: { receive: 's:y' },
                                 },
                             ],
@@ -675,6 +730,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 'foo');
             assert.equal(stateB.end, 'bar');
         });
+
         it('should enforce no zeros for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 0, end: 123 };
             stateA = _updateStatePosition(stateA);
@@ -685,6 +741,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 1);
             assert.equal(stateB.end, 1);
         });
+
         it('should enforce no negative values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: -235, end: 123 };
             stateA = _updateStatePosition(stateA);
@@ -695,12 +752,14 @@ describe('LocusZoom.Plot', function() {
             assert.equal(stateB.start, 1);
             assert.equal(stateB.end, 1);
         });
+
         it('should enforce no non-integer values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 1234.4, end: 4567.8 };
             stateA = _updateStatePosition(stateA);
             assert.equal(stateA.start, 1234);
             assert.equal(stateA.end, 4567);
         });
+
         it('should enforce no non-numeric values for start and end (if present with chr)', function() {
             let stateA = { chr: 1, start: 'foo', end: 324523 };
             stateA = _updateStatePosition(stateA);

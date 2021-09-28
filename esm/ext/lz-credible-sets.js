@@ -34,7 +34,7 @@
 import {marking, scoring} from 'gwas-credible-sets';
 
 function install (LocusZoom) {
-    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+    const BaseUMAdapter = LocusZoom.Adapters.get('BaseUMAdapter');
 
     /**
      * (**extension**) Custom data adapter that calculates the 95% credible set based on provided association data.
@@ -43,9 +43,8 @@ function install (LocusZoom) {
      * @alias module:LocusZoom_Adapters~CredibleSetLZ
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
-    class CredibleSetLZ extends BaseAdapter {
+    class CredibleSetLZ extends BaseUMAdapter {
         /**
-         * @param {String} config.params.fields.log_pvalue The name of the field containing -log10 pvalue information
          * @param {Number} [config.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
          *  until the posterior probabilities add up to at least this fraction of the total.
          * @param {Number} [config.params.significance_threshold=7.301] Do not perform a credible set calculation for this
@@ -55,49 +54,45 @@ function install (LocusZoom) {
          */
         constructor(config) {
             super(...arguments);
-            this.dependentSource = true; // Don't do calcs for a region with no assoc data
-        }
-
-        parseInit(config) {
-            super.parseInit(...arguments);
-            if (!(this.params.fields && this.params.fields.log_pvalue)) {
-                throw new Error(`Source config for ${this.constructor.SOURCE_NAME} must specify how to find 'fields.log_pvalue'`);
-            }
-
             // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
-            this.params = Object.assign(
+            this._config = Object.assign(
                 { threshold: 0.95, significance_threshold: 7.301 },
-                this.params
+                this._config
             );
+            this._prefix_namespace = false;
         }
 
-        getCacheKey (state, chain, fields) {
-            const threshold = state.credible_set_threshold || this.params.threshold;
+        _getCacheKey (state) {
+            const threshold = state.credible_set_threshold || this._config.threshold;
             return [threshold, state.chr, state.start, state.end].join('_');
         }
 
-        fetchRequest(state, chain) {
-            if (!chain.body.length) {
+        _buildRequestOptions(options, assoc_data) {
+            const base = super._buildRequestOptions(...arguments);
+            base._assoc_data = assoc_data;
+            return base;
+        }
+
+        _performRequest(options) {
+            const {_assoc_data} = options;
+            if (!_assoc_data.length) {
                 // No credible set can be calculated because there is no association data for this region
                 return Promise.resolve([]);
             }
 
-            const self = this;
-            // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
-            const threshold = state.credible_set_threshold || this.params.threshold;
-            // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-            if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
-                throw new Error('Credible set source could not locate the required fields from a previous request.');
-            }
-            const nlogpvals = chain.body.map((item) => item[self.params.fields.log_pvalue]);
+            const assoc_logp_name = this._findPrefixedKey(_assoc_data[0], 'log_pvalue');
 
-            if (!nlogpvals.some((val) => val >= self.params.significance_threshold)) {
+            const threshold = this._config.threshold;
+
+            // Calculate raw bayes factors and posterior probabilities based on information returned from the API
+            const nlogpvals = _assoc_data.map((item) => item[assoc_logp_name]);
+
+            if (!nlogpvals.some((val) => val >= this._config.significance_threshold)) {
                 // If NO points have evidence of significance, define the credible set to be empty
                 //  (rather than make a credible set that we don't think is meaningful)
-                return Promise.resolve([]);
+                return Promise.resolve(_assoc_data);
             }
 
-            const credset_data = [];
             try {
                 const scores = scoring.bayesFactors(nlogpvals);
                 const posteriorProbabilities = scoring.normalizeProbabilities(scores);
@@ -108,33 +103,18 @@ function install (LocusZoom) {
                 const credSetScaled = marking.rescaleCredibleSet(credibleSet);
                 const credSetBool = marking.markBoolean(credibleSet);
 
-                // Annotate each response record based on credible set membership
-                for (let i = 0; i < chain.body.length; i++) {
-                    credset_data.push({
-                        posterior_prob: posteriorProbabilities[i],
-                        contrib_fraction: credSetScaled[i],
-                        is_member: credSetBool[i],
-                    });
+                // Annotate each response record based on credible set membership. This has the effect of joining
+                //   credset results to assoc data directly within the adapter (no separate join needed)
+                for (let i = 0; i < _assoc_data.length; i++) {
+                    _assoc_data[i][`${options._provider_name}:posterior_prob`] = posteriorProbabilities[i];
+                    _assoc_data[i][`${options._provider_name}:contrib_fraction`] = credSetScaled[i];
+                    _assoc_data[i][`${options._provider_name}:is_member`] = credSetBool[i];
                 }
             } catch (e) {
                 // If the calculation cannot be completed, return the data without annotation fields
                 console.error(e);
             }
-            return Promise.resolve(credset_data);
-        }
-
-        combineChainBody(data, chain, fields, outnames, trans) {
-            // At this point namespacing has been applied; add the calculated fields for this source to the chain
-            if (chain.body.length && data.length) {
-                for (let i = 0; i < data.length; i++) {
-                    const src = data[i];
-                    const dest = chain.body[i];
-                    Object.keys(src).forEach(function (attr) {
-                        dest[attr] = src[attr];
-                    });
-                }
-            }
-            return chain.body;
+            return Promise.resolve(_assoc_data);
         }
     }
 
@@ -149,8 +129,8 @@ function install (LocusZoom) {
      */
     const association_credible_set_tooltip = function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
-        const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '{{#if {{namespace[credset]}}posterior_prob}}<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
+        const l = LocusZoom.Layouts.get('tooltip', 'standard_association');
+        l.html += '{{#if credset:posterior_prob}}<br>Posterior probability: <strong>{{credset:posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
         return l;
     }();
 
@@ -163,13 +143,12 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-credible-sets} for required extension and installation instructions
      */
     const annotation_credible_set_tooltip = {
-        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
         closable: true,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
-            + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
-            '{{#if {{namespace[credset]}}posterior_prob}}<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>{{/if}}',
+        html: '<strong>{{assoc:variant|htmlescape}}</strong><br>'
+            + 'P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
+            '{{#if credset:posterior_prob}}<br>Posterior probability: <strong>{{credset:posterior_prob|scinotation|htmlescape}}</strong>{{/if}}',
     };
     LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', annotation_credible_set_tooltip);
 
@@ -182,20 +161,23 @@ function install (LocusZoom) {
 
     const association_credible_set_layer = function () {
         const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
-            unnamespaced: true,
             id: 'associationcredibleset',
             namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
-            fill_opacity: 0.7,
-            tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
-            fields: [
-                '{{namespace[assoc]}}variant', '{{namespace[assoc]}}position',
-                '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation',
-                '{{namespace[assoc]}}ref_allele',
-                '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
-                '{{namespace[credset]}}is_member',
-                '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar',
+            data_operations: [
+                {
+                    type: 'fetch',
+                    from: ['assoc', 'ld(assoc)', 'credset(assoc)'],
+                },
+                {
+                    type: 'left_match',
+                    name: 'combined',
+                    requires: ['credset', 'ld'],  // The credible sets demo wasn't fully moved over to the new data operations system, and as such it is a bit weird
+                    params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
+                },
             ],
-            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
+            fill_opacity: 0.7,
+            tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set'),
+            match: { send: 'assoc:variant', receive: 'assoc:variant' },
         });
         base.color.unshift({
             field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
@@ -217,11 +199,15 @@ function install (LocusZoom) {
      */
     const annotation_credible_set_layer = {
         namespace: { 'assoc': 'assoc', 'credset': 'credset' },
+        data_operations: [{
+            type: 'fetch',
+            from: ['assoc', 'credset(assoc)'],
+        }],
         id: 'annotationcredibleset',
         type: 'annotation_track',
-        id_field: '{{namespace[assoc]}}variant',
+        id_field: 'assoc:variant',
         x_axis: {
-            field: '{{namespace[assoc]}}position',
+            field: 'assoc:position',
         },
         color: [
             {
@@ -234,11 +220,10 @@ function install (LocusZoom) {
             },
             '#00CC00',
         ],
-        fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
-        match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
+        match: { send: 'assoc:variant', receive: 'assoc:variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
-            { field: '{{namespace[credset]}}is_member', operator: '=', value: true },
+            { field: 'credset:is_member', operator: '=', value: true },
         ],
         behaviors: {
             onmouseover: [
@@ -254,7 +239,7 @@ function install (LocusZoom) {
                 { action: 'toggle', status: 'selected' },
             ],
         },
-        tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
+        tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set'),
         tooltip_positioning: 'top',
     };
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', annotation_credible_set_layer);
@@ -272,7 +257,7 @@ function install (LocusZoom) {
         height: 50,
         margin: { top: 25, right: 50, bottom: 10, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel'),
         axes: {
             x: { extent: 'state', render: false },
         },
@@ -282,7 +267,7 @@ function install (LocusZoom) {
             x_linked: true,
         },
         data_layers: [
-            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true }),
+            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set'),
         ],
     };
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', annotation_credible_set);
@@ -295,13 +280,11 @@ function install (LocusZoom) {
      */
     const association_credible_set_panel = function () {
         const l = LocusZoom.Layouts.get('panel', 'association', {
-            unnamespaced: true,
             id: 'associationcrediblesets',
-            namespace: { 'assoc': 'assoc', 'credset': 'credset' },
             data_layers: [
-                LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-                LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-                LocusZoom.Layouts.get('data_layer', 'association_credible_set', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'significance'),
+                LocusZoom.Layouts.get('data_layer', 'recomb_rate'),
+                LocusZoom.Layouts.get('data_layer', 'association_credible_set'),
             ],
         });
         // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
@@ -324,7 +307,7 @@ function install (LocusZoom) {
                             point_shape: 'circle',
                             point_size: 40,
                             color: {
-                                field: '{{namespace[credset]}}is_member',
+                                field: 'credset:is_member',
                                 scale_function: 'if',
                                 parameters: {
                                     field_value: true,
@@ -358,7 +341,7 @@ function install (LocusZoom) {
                             point_size: 40,
                             color: [
                                 {
-                                    field: '{{namespace[credset]}}contrib_fraction',
+                                    field: 'credset:contrib_fraction',
                                     scale_function: 'if',
                                     parameters: {
                                         field_value: 0,
@@ -367,7 +350,7 @@ function install (LocusZoom) {
                                 },
                                 {
                                     scale_function: 'interpolate',
-                                    field: '{{namespace[credset]}}contrib_fraction',
+                                    field: 'credset:contrib_fraction',
                                     parameters: {
                                         breaks: [0, 1],
                                         values: ['#fafe87', '#9c0000'],
@@ -419,11 +402,11 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
-            LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true }),
+            LocusZoom.Layouts.get('panel', 'association_credible_set'),
+            LocusZoom.Layouts.get('panel', 'annotation_credible_set'),
+            LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
     LocusZoom.Layouts.add('plot', 'association_credible_set', association_credible_set_plot);

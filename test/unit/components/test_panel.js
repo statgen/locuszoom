@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import {LAYOUTS} from '../../../esm/registry';
 import {populate} from '../../../esm/helpers/display';
 import Plot from '../../../esm/components/plot';
 import Panel from '../../../esm/components/panel';
@@ -13,9 +12,13 @@ describe('Panel', function() {
     describe('Constructor', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = LAYOUTS.get('plot', 'standard_association');
-            layout.state = { chr: '1', start: 1, end: 100000 };
-            this.plot = populate('#plot_id', null, layout);
+            const layout = {
+                state: {},
+                width: 800,
+                panels: [],
+            };
+
+            this.plot = populate('#plot_id', new DataSources(), layout);
             this.panel = this.plot.panels.association;
         });
 
@@ -25,17 +28,11 @@ describe('Panel', function() {
             this.panel = null;
         });
 
-        it('should generate an ID if passed a layout that does not define one', function() {
-            this.plot.addPanel({ 'foo': 'bar' });
-            const panel_idx = this.plot.layout.panels.length - 1;
-            assert.equal(this.plot.layout.panels[panel_idx].foo, 'bar');
-
-            const panel_layout = this.plot.layout.panels[panel_idx];
-            assert.equal(panel_layout.foo, 'bar', 'Layout has the property provided');
-            assert.ok(panel_layout.id, 'A panel ID was created');
-
-            const panel_instance = this.plot.panels[panel_layout.id];
-            assert.equal(panel_instance.layout.foo, 'bar', 'Panel instance can access fields on layout object');
+        it('should fail if panel layout does not specify an ID', function() {
+            assert.throws(
+                () => this.plot.addPanel({ 'foo': 'bar' }),
+                /must specify "id"/
+            );
         });
 
         it('should throw an error if adding a panel with an ID that is already used', function() {
@@ -49,9 +46,18 @@ describe('Panel', function() {
     describe('Geometry Methods', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = LAYOUTS.get('plot', 'standard_association');
+
+            const layout = {
+                state: {},
+                width: 800,
+                panels: [
+                    { id: 'association', height: 225, data_layers: [] },
+                    { id: 'genes', height: 225, data_layers: [] },
+                ],
+            };
+
             layout.state = { chr: '1', start: 1, end: 100000 };
-            this.plot = populate('#plot_id', null, layout);
+            this.plot = populate('#plot_id', new DataSources(), layout);
             this.association_panel = this.plot.panels.association;
             this.genes_panel = this.plot.panels.genes;
         });
@@ -97,25 +103,26 @@ describe('Panel', function() {
 
         it('should allow setting margin, which sets cliparea origin and dimensions', function() {
             this.association_panel.setMargin(1, 2, 3, 4);
-            assert.equal(this.association_panel.layout.margin.top, 1);
-            assert.equal(this.association_panel.layout.margin.right, 2);
-            assert.equal(this.association_panel.layout.margin.bottom, 3);
-            assert.equal(this.association_panel.layout.margin.left, 4);
-            assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
-            assert.equal(this.association_panel.layout.cliparea.origin.y, 1);
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.parent.layout.width - (2 + 4));
-            assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (1 + 3));
+            const layout = this.association_panel.layout;
+            assert.equal(layout.margin.top, 1);
+            assert.equal(layout.margin.right, 2);
+            assert.equal(layout.margin.bottom, 3);
+            assert.equal(layout.margin.left, 4);
+            assert.equal(layout.cliparea.origin.x, 4);
+            assert.equal(layout.cliparea.origin.y, 1);
+            assert.equal(layout.cliparea.width, this.association_panel.parent.layout.width - (2 + 4));
+            assert.equal(layout.cliparea.height, layout.height - (1 + 3));
 
             this.association_panel.setMargin(0, '12', -17, {foo: 'bar'});
-            assert.equal(this.association_panel.layout.margin.top, 0);
-            assert.equal(this.association_panel.layout.margin.right, 12);
-            assert.equal(this.association_panel.layout.margin.bottom, 3);
-            assert.equal(this.association_panel.layout.margin.left, 4);
-            assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
-            assert.equal(this.association_panel.layout.cliparea.origin.y, 0);
+            assert.equal(layout.margin.top, 0);
+            assert.equal(layout.margin.right, 12);
+            assert.equal(layout.margin.bottom, 3);
+            assert.equal(layout.margin.left, 4);
+            assert.equal(layout.cliparea.origin.x, 4);
+            assert.equal(layout.cliparea.origin.y, 0);
 
-            assert.equal(this.association_panel.layout.cliparea.width, this.plot.layout.width - (12 + 4));
-            assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (0 + 3));
+            assert.equal(layout.cliparea.width, this.plot.layout.width - (12 + 4));
+            assert.equal(layout.cliparea.height, layout.height - (0 + 3));
         });
 
         it('should prevent margins from overlapping', function() {
@@ -128,33 +135,33 @@ describe('Panel', function() {
         });
 
         it('should have a method for moving panels up that stops at the top', function() {
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['association', 'genes']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['association', 'genes']);
             assert.equal(this.association_panel.layout.y_index, 0);
             assert.equal(this.genes_panel.layout.y_index, 1);
 
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['genes', 'association']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['genes', 'association']);
             assert.equal(this.association_panel.layout.y_index, 1);
             assert.equal(this.genes_panel.layout.y_index, 0);
 
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['genes', 'association']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['genes', 'association']);
             assert.equal(this.association_panel.layout.y_index, 1);
             assert.equal(this.genes_panel.layout.y_index, 0);
         });
 
         it('should have a method for moving panels down that stops at the bottom', function() {
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['association', 'genes']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['association', 'genes']);
             assert.equal(this.association_panel.layout.y_index, 0);
             assert.equal(this.genes_panel.layout.y_index, 1);
 
             this.association_panel.moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['genes', 'association']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['genes', 'association']);
             assert.equal(this.association_panel.layout.y_index, 1);
             assert.equal(this.genes_panel.layout.y_index, 0);
 
             this.association_panel.moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ['genes', 'association']);
+            assert.deepEqual(this.plot._panel_ids_by_y_index, ['genes', 'association']);
             assert.equal(this.association_panel.layout.y_index, 1);
             assert.equal(this.genes_panel.layout.y_index, 0);
         });
@@ -178,35 +185,39 @@ describe('Panel', function() {
         });
 
         it('should have a method for adding data layers', function() {
-            this.plot.panels.panel0.addDataLayer({ id: 'layerA', type: 'line' });
-            this.plot.panels.panel0.addDataLayer({ id: 'layerB', type: 'line' });
+            const panel0 = this.plot.panels.panel0;
+            panel0.addDataLayer({ id: 'layerA', type: 'line' });
+            panel0.addDataLayer({ id: 'layerB', type: 'line' });
 
-            assert.isObject(this.plot.panels.panel0.data_layers.layerA);
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.id, 'layerA');
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout_idx, 0);
-            assert.isObject(this.plot.panels.panel0.data_layers.layerB);
-            assert.equal(this.plot.panels.panel0.data_layers.layerB.id, 'layerB');
-            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout_idx, 1);
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB']);
-            assert.equal(typeof this.plot.state[this.plot.panels.panel0.data_layers.layerA.state_id], 'object');
-            assert.equal(typeof this.plot.state[this.plot.panels.panel0.data_layers.layerB.state_id], 'object');
+            const layerA = panel0.data_layers.layerA;
+            assert.isObject(layerA);
+            assert.equal(layerA.id, 'layerA');
+            assert.equal(layerA._layout_idx, 0);
+            const layerB = panel0.data_layers.layerB;
+            assert.isObject(layerB);
+            assert.equal(layerB.id, 'layerB');
+            assert.equal(layerB._layout_idx, 1);
+            assert.deepEqual(panel0._data_layer_ids_by_z_index, ['layerA', 'layerB']);
+            assert.equal(typeof this.plot.state[layerA._state_id], 'object');
+            assert.equal(typeof this.plot.state[layerB._state_id], 'object');
         });
 
         it('should have a method for removing data layers by id', function() {
-            this.plot.panels.panel0.addDataLayer({ id: 'layerA', type: 'line' });
-            this.plot.panels.panel0.addDataLayer({ id: 'layerB', type: 'line' });
-            this.plot.panels.panel0.addDataLayer({ id: 'layerC', type: 'line' });
-            const state_id = this.plot.panels.panel0.data_layers.layerB.state_id;
-            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, 'object');
+            const panel0 = this.plot.panels.panel0;
+            const layerA = panel0.addDataLayer({ id: 'layerA', type: 'line' });
+            const layerB = panel0.addDataLayer({ id: 'layerB', type: 'line' });
+            const layerC = panel0.addDataLayer({ id: 'layerC', type: 'line' });
+            const state_id = layerB._state_id;
+            assert.equal(typeof layerB, 'object');
             assert.equal(typeof this.plot.state[state_id], 'object');
-            this.plot.panels.panel0.removeDataLayer('layerB');
-            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, 'undefined');
+            panel0.removeDataLayer('layerB');
+            assert.equal(typeof panel0.data_layers.layerB, 'undefined');
             assert.equal(typeof this.plot.state[state_id], 'undefined');
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout_idx, 0);
-            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout_idx, 1);
-            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
-            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC']);
+            assert.equal(layerA._layout_idx, 0);
+            assert.equal(layerC._layout_idx, 1);
+            assert.equal(layerA.layout.z_index, 0);
+            assert.equal(layerC.layout.z_index, 1);
+            assert.deepEqual(panel0._data_layer_ids_by_z_index, ['layerA', 'layerC']);
         });
     });
 
@@ -310,7 +321,9 @@ describe('Panel', function() {
         beforeEach(function() {
             this.plot = null;
             this.datasources = new DataSources()
-                .add('static', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }] ]);
+                .add('static', ['StaticJSON', {
+                    data: [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }],
+                }]);
             this.layout = {
                 width: 100,
                 panels: [
@@ -326,7 +339,7 @@ describe('Panel', function() {
                             {
                                 id: 'd',
                                 type: 'scatter',
-                                fields: ['static:id', 'static:x', 'static:y'],
+                                namespace: { static: 'static' },
                                 id_field: 'static:id',
                                 z_index: 0,
                                 x_axis: {
@@ -388,7 +401,7 @@ describe('Panel', function() {
         it('should establish background drag interaction handlers when the layout directive is present', function() {
             this.layout.panels[0].interaction.drag_background_to_pan = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.isDefined(this.plot.panels.p.svg.container.select('.lz-panel-background').node().__on
                     .find((item) => item.type === 'mousedown' && item.name === 'plot.p.interaction.drag.background' ));
                 assert.isDefined(this.plot.svg.node().__on
@@ -401,7 +414,7 @@ describe('Panel', function() {
         it('should establish x tick drag interaction handlers when the layout directives are present', function() {
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.isDefined(this.plot.svg.node().__on
                     .find((item) => item.type === 'mouseup' && item.name === 'plot'));
                 assert.isDefined(this.plot.svg.node().__on
@@ -414,7 +427,7 @@ describe('Panel', function() {
         it('should establish y1 tick drag interaction handlers when the layout directives are present', function() {
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.isDefined(typeof this.plot.svg.node().__on
                     .find((item) => item.type === 'mouseup' && item.name === 'plot'));
                 assert.isDefined(this.plot.svg.node().__on
@@ -427,85 +440,90 @@ describe('Panel', function() {
         it('should establish a zoom interaction handler on the panel when the layout directive is present', function() {
             this.layout.panels[0].interaction.scroll_to_zoom = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 assert.isDefined(this.plot.panels.p.svg.container.node().__on
                     .find((item) => item.type === 'wheel' && item.name === 'zoom'));
             });
         });
 
         it.skip('should pan along the x axis when dragging the background', function() {
-            this.layout.panels[0].interaction.drag_background_to_pan = true;
+            this.layout.panels[0]._interaction.drag_background_to_pan = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 50 ]
                 sinon.stub(d3, 'mouse').callsFake(() => [50, 50]);
                 this.plot.loading_data = false; // TODO: Why isn't this already the case?
                 this.plot.panels.p.svg.container.select('.lz-panel-background')
                     .dispatch('mousedown');
 
-                assert.isObject(this.plot.interaction);
-                assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
-                assert.isObject(this.plot.interaction.dragging);
-                assert.equal(this.plot.interaction.dragging.method, 'background');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 50);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                const interaction = this.plot._interaction;
+                assert.isObject(interaction);
+                assert.equal(interaction.panel_id, this.plot.panels.p.id);
+
+                const dragging = interaction.dragging;
+                assert.isObject(dragging);
+                assert.equal(dragging.method, 'background');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 50);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 0);
 
                 // Simulate drag (mousemove) to [ 25, 50 ] (x -25)
                 sinon.stub(d3, 'mouse').callsFake(() => [25, 50]);
                 this.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
-                assert.equal(this.plot.interaction.dragging.method, 'background');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 50);
-                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.equal(interaction.panel_id, this.plot.panels.p.id);
+                assert.equal(dragging.method, 'background');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 50);
+                assert.equal(dragging.dragged_x, -25);
+                assert.equal(dragging.dragged_y, 0);
                 assert.deepEqual(this.plot.panels.p.x_extent, [2, 6]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(this.plot.interaction, {});
+                assert.deepEqual(interaction, {});
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
             });
         });
 
         it.skip('should scale along the x axis when dragging an x tick', function() {
-            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.layout.panels[0]._interaction.drag_x_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 sinon.stub(d3, 'mouse').callsFake(() => [50, 0]);
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text')
                     .dispatch('mousedown');
-                assert.isObject(this.plot.interaction);
-                assert.isObject(this.plot.interaction.dragging);
-                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                const interaction = this.plot._interaction;
+                assert.isObject(interaction);
+                const dragging = interaction.dragging;
+                assert.isObject(dragging);
+                assert.equal(dragging.method, 'x_tick');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 0);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
                 sinon.stub(d3, 'mouse').callsFake(() => [25, 50]);
                 this.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.equal(dragging.method, 'x_tick');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 0);
+                assert.equal(dragging.dragged_x, -25);
+                assert.equal(dragging.dragged_y, 0);
                 assert.deepEqual(this.plot.panels.p.x_extent, [1, 9]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(this.plot.interaction, {});
+                assert.deepEqual(interaction, {});
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 1);
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 9);
             });
         });
 
         it.skip('should pan along the x axis when shift+dragging an x tick', function() {
-            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.layout.panels[0]._interaction.drag_x_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
@@ -515,59 +533,65 @@ describe('Panel', function() {
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 sinon.stub(d3, 'mouse').callsFake(() => [50, 0]);
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
-                assert.isObject(this.plot.interaction);
-                assert.isObject(this.plot.interaction.dragging);
-                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+
+                const { _interaction } = this.plot;
+                assert.isObject(_interaction);
+                const { dragging } = _interaction;
+                assert.isObject(dragging);
+                assert.equal(dragging.method, 'x_tick');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 0);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 0);
 
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
                 sinon.stub(d3, 'mouse').callsFake(() => [25, 0]);
                 this.plot.svg.node()['__onmousemove.plot'](event);
-                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 50);
-                assert.equal(this.plot.interaction.dragging.start_y, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.equal(dragging.method, 'x_tick');
+                assert.equal(dragging.start_x, 50);
+                assert.equal(dragging.start_y, 0);
+                assert.equal(dragging.dragged_x, -25);
+                assert.equal(dragging.dragged_y, 0);
                 assert.deepEqual(this.plot.panels.p.x_extent, [2, 6]);
 
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot'](event);
-                assert.deepEqual(this.plot.interaction, {});
+                assert.deepEqual(_interaction, {});
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
                 assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
             });
         });
 
         it.skip('should scale along the y1 axis when dragging a y1 tick', function() {
-            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.layout.panels[0]._interaction.drag_y1_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 sinon.stub(d3, 'mouse').callsFake(() => [0, 25]);
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag']();
-                assert.isObject(this.plot.interaction);
-                assert.isObject(this.plot.interaction.dragging);
-                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 0);
-                assert.equal(this.plot.interaction.dragging.start_y, 25);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                const { interaction } = this.plot;
+                assert.isObject(interaction);
+
+                const { dragging } = interaction;
+                assert.isObject(dragging);
+                assert.equal(dragging.method, 'y1_tick');
+                assert.equal(dragging.start_x, 0);
+                assert.equal(dragging.start_y, 25);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
                 sinon.stub(d3, 'mouse').callsFake(() => [0, 75]);
 
                 this.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 0);
-                assert.equal(this.plot.interaction.dragging.start_y, 25);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 50);
+                assert.equal(dragging.method, 'y1_tick');
+                assert.equal(dragging.start_x, 0);
+                assert.equal(dragging.start_y, 25);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 50);
                 assert.deepEqual(this.plot.panels.p.y1_extent, [2, 14.000000000000004]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(this.plot.interaction, {});
+                assert.deepEqual(interaction, {});
                 assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.floor, 2);
                 assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 14.000000000000004);
             });
@@ -576,7 +600,7 @@ describe('Panel', function() {
         it.skip('should pan along the y axis when shift+dragging a y tick', function() {
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = populate('#plot', this.datasources, this.layout);
-            return Promise.all(this.plot.remap_promises).then(() => {
+            return Promise.all(this.plot._remap_promises).then(() => {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
@@ -586,26 +610,28 @@ describe('Panel', function() {
                 sinon.stub(d3, 'mouse').callsFake(() => [0, 25]);
 
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
-                assert.isObject(this.plot.interaction);
-                assert.isObject(this.plot.interaction.dragging);
-                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 0);
-                assert.equal(this.plot.interaction.dragging.start_y, 25);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                const interaction = this.plot.interaction;
+                assert.isObject(interaction);
+                const dragging = interaction.dragging;
+                assert.isObject(dragging);
+                assert.equal(dragging.method, 'y1_tick');
+                assert.equal(dragging.start_x, 0);
+                assert.equal(dragging.start_y, 25);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
                 sinon.stub(d3, 'mouse').callsFake(() => [0, 75]);
 
                 this.plot.svg.node()['__onmousemove.plot'](event);
-                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(this.plot.interaction.dragging.start_x, 0);
-                assert.equal(this.plot.interaction.dragging.start_y, 25);
-                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(this.plot.interaction.dragging.dragged_y, 50);
+                assert.equal(dragging.method, 'y1_tick');
+                assert.equal(dragging.start_x, 0);
+                assert.equal(dragging.start_y, 25);
+                assert.equal(dragging.dragged_x, 0);
+                assert.equal(dragging.dragged_y, 50);
                 assert.deepEqual(this.plot.panels.p.y1_extent, [4, 8]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot'](event);
-                assert.deepEqual(this.plot.interaction, {});
+                assert.deepEqual(interaction, {});
                 assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.floor, 4);
                 assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 8);
             });
@@ -664,9 +690,9 @@ describe('Panel', function() {
             this.plot.on('element_clicked', plot_spy);
             this.panel.emit('element_clicked', {something: 1}, true);
 
-            assert.isUndefined(this.panel.event_hooks['element_clicked'], 'Panel listener is not defined');
-            assert.isDefined(this.plot.event_hooks['element_clicked'], 'Plot listener is defined');
-            assert.equal(this.plot.event_hooks['element_clicked'].length, 1, 'Plot listener is defined and attached');
+            assert.isUndefined(this.panel._event_hooks['element_clicked'], 'Panel listener is not defined');
+            assert.isDefined(this.plot._event_hooks['element_clicked'], 'Plot listener is defined');
+            assert.equal(this.plot._event_hooks['element_clicked'].length, 1, 'Plot listener is defined and attached');
 
             assert.ok(plot_spy.calledOnce, 'Plot event was bubbled up even though there is no listener on the panel');
         });
@@ -721,20 +747,20 @@ describe('Panel', function() {
         it('allows event listeners to be removed / cleaned up individually', function() {
             const listener_handle = this.panel.on('element_clicked', function () {
             });
-            assert.equal(this.panel.event_hooks['element_clicked'].length, 1, 'Registered event listener');
+            assert.equal(this.panel._event_hooks['element_clicked'].length, 1, 'Registered event listener');
 
             this.panel.off('element_clicked', listener_handle);
-            assert.equal(this.panel.event_hooks['element_clicked'].length, 0, 'De-registered event listener');
+            assert.equal(this.panel._event_hooks['element_clicked'].length, 0, 'De-registered event listener');
         });
 
         it('allows event listeners to be removed / cleaned up all at once', function() {
             // Register two events!
             this.panel.on('element_clicked', function() {});
             this.panel.on('element_clicked', function() {});
-            assert.equal(this.panel.event_hooks['element_clicked'].length, 2, 'Registered event listeners');
+            assert.equal(this.panel._event_hooks['element_clicked'].length, 2, 'Registered event listeners');
 
             this.panel.off('element_clicked');
-            assert.equal(this.panel.event_hooks['element_clicked'].length, 0, 'De-registered event listener');
+            assert.equal(this.panel._event_hooks['element_clicked'].length, 0, 'De-registered event listener');
         });
 
         it('should scope the value of this to wherever the listener was attached, unless overridden', function() {

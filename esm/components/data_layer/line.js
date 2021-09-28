@@ -17,6 +17,7 @@ const default_layout = {
     x_axis: { field: 'x' },
     y_axis: { field: 'y', axis: 1 },
     hitarea_width: 5,
+    tooltip: null,
 };
 
 /*********************
@@ -105,7 +106,7 @@ class Line extends BaseDataLayer {
         if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
             throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+        if (typeof this._layer_state.status_flags[status] == 'undefined') {
             return this;
         }
         if (typeof toggle == 'undefined') {
@@ -113,12 +114,12 @@ class Line extends BaseDataLayer {
         }
 
         // Update global status flag
-        this.global_statuses[status] = toggle;
+        this._global_statuses[status] = toggle;
 
         // Apply class to path based on global status flags
         let path_class = 'lz-data_layer-line';
-        Object.keys(this.global_statuses).forEach((global_status) => {
-            if (this.global_statuses[global_status]) {
+        Object.keys(this._global_statuses).forEach((global_status) => {
+            if (this._global_statuses[global_status]) {
                 path_class += ` lz-data_layer-line-${global_status}`;
             }
         });
@@ -178,10 +179,6 @@ class OrthogonalLine extends BaseDataLayer {
             layout.orientation = 'horizontal';
         }
         super(...arguments);
-
-        // Vars for storing the data generated line
-        /** @member {Array} */
-        this.data = [];
     }
 
     getElementId(element) {
