@@ -25,9 +25,9 @@ import {RegistryBase} from './base';
 const registry = new RegistryBase();
 
 function _wrap_join(handle) {
-    // Validate number of arguments and convert call signature from (deps, ...params) to (left, right, ...params).
+    // Validate number of arguments and convert call signature from (plot_state, deps, ...params) to (left, right, ...params).
     // Must data operations are joins, so this wrapper is common shared code.
-    return (deps, ...params) => {
+    return (plot_state, deps, ...params) => {
         if (deps.length !== 2) {
             throw new Error('Join functions must receive exactly two recordsets');
         }

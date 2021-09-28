@@ -7,7 +7,7 @@ import {DATA_OPS} from '../../../esm/registry';
 describe('Requester object defines and parses requests', function () {
     describe('Layout parsing', function () {
         before(function () {
-            DATA_OPS.add('sumtwo', ([left, right], some_param) => left + right + some_param);
+            DATA_OPS.add('sumtwo', ({ state_field = 0 }, [left, right], some_param) => left + right + some_param + state_field);
         });
 
         after(function () {
@@ -106,6 +106,26 @@ describe('Requester object defines and parses requests', function () {
             return this._requester.getData({}, entities, dependencies)
                 .then((res) => {
                     assert.equal(res, 6);  // 1 + 2 + 3
+                });
+        });
+
+        it('passes a copy of plot.state to each data op, and can act on the parameters', function () {
+            const namespace_options = {'assoc': 'assoc1', 'ld': 'someld'};
+            const data_operations = [
+                { type: 'fetch', from: ['assoc', 'ld(assoc)'] },
+                {
+                    type: 'sumtwo',
+                    name: 'combined',
+                    requires: ['assoc', 'ld'],
+                    params: [3], // tests that params get passed, and can be whatever a join function needs
+                },
+            ];
+
+            const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations);
+
+            return this._requester.getData({ state_field: 20 }, entities, dependencies)
+                .then((res) => {
+                    assert.equal(res, 26);  // 1 + 2 + 3 + 20
                 });
         });
 

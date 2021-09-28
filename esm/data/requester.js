@@ -9,11 +9,13 @@ class DataOperation {
         this._params = params || [];
     }
 
-    getData(options, ...requires) {
+    getData(plot_state, ...dependent_recordsets) {
         // Most operations are joins: they receive two pieces of data (eg left + right)
         //   Other ops are possible, like consolidating just one set of records to best value per key
         // Hence all dependencies are passed as first arg: [dep1, dep2, dep3...]
-        return Promise.resolve(this._callable(requires, ...this._params));
+
+        // Every data operation receives plot_state, the input data, + any additional options
+        return Promise.resolve(this._callable(plot_state, dependent_recordsets, ...this._params));
     }
 }
 

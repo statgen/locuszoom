@@ -40,6 +40,7 @@ describe('Data operations', function() {
             it('aligns records based on loose position match', function () {
                 const { func, assoc_data, catalog_data } = this;
                 const res = func(
+                    {},
                     [assoc_data, catalog_data],
                     'assoc:position',
                     'catalog:pos',
@@ -81,6 +82,7 @@ describe('Data operations', function() {
                 ];
 
                 const res = func(
+                    {},
                     [assoc_data, catalog_data],
                     'assoc:position',
                     'catalog:pos',
@@ -115,6 +117,7 @@ describe('Data operations', function() {
             it('gracefully handles no catalog entries in region', function () {
                 const { func, assoc_data } = this;
                 const res = func(
+                    {},
                     [assoc_data, []],
                     'assoc:position',
                     'catalog:pos',
