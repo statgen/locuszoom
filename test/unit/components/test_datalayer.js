@@ -538,7 +538,7 @@ describe('LocusZoom.DataLayer', function () {
         it('should allow for highlighting and unhighlighting a single element', function () {
             return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const state_id = this.plot.panels.p.data_layers.d._state_id;
                     const layer_state = this.plot.state[state_id];
                     const d = this.plot.panels.p.data_layers.d;
                     const a = d.data[0];
@@ -573,7 +573,7 @@ describe('LocusZoom.DataLayer', function () {
             return this.plot.applyState()
                 .then(() => {
                     const layer = this.plot.panels.p.data_layers.d;
-                    const state_id = layer.state_id;
+                    const state_id = layer._state_id;
                     const layer_state = this.plot.state[state_id];
                     const a_id = layer.getElementId(layer.data[0]);
                     const b_id = layer.getElementId(layer.data[1]);
@@ -626,7 +626,7 @@ describe('LocusZoom.DataLayer', function () {
             return this.plot.applyState()
                 .then(() => {
                     const layer = this.plot.panels.p.data_layers.d;
-                    const state_id = layer.state_id;
+                    const state_id = layer._state_id;
                     const layer_state = this.plot.state[state_id];
                     const a = layer.data[0];
                     const a_id = layer.getElementId(a);
@@ -660,7 +660,7 @@ describe('LocusZoom.DataLayer', function () {
             return this.plot.applyState()
                 .then(() => {
                     const layer = this.plot.panels.p.data_layers.d;
-                    const state_id = layer.state_id;
+                    const state_id = layer._state_id;
                     const layer_state = this.plot.state[state_id];
                     const a_id = layer.getElementId(layer.data[0]);
                     const b_id = layer.getElementId(layer.data[1]);
@@ -718,16 +718,16 @@ describe('LocusZoom.DataLayer', function () {
             const a = this.plot.panels.p.data_layers.d.data[0];
             const a_id = this.plot.panels.p.data_layers.d.getElementId(a);
             const a_id_q = `#${  (`${a_id  }-tooltip`).replace(/(:|\.|\[|\]|,)/g, '\\$1')}`;
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 0);
 
             this.plot.panels.p.data_layers.d.createTooltip(a);
-            assert.isObject(this.plot.panels.p.data_layers.d.tooltips[a_id]);
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 1);
+            assert.isObject(this.plot.panels.p.data_layers.d._tooltips[a_id]);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 1);
             assert.equal(d3.select(a_id_q).empty(), false);
 
             this.plot.panels.p.data_layers.d.destroyTooltip(a_id);
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
-            assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], 'undefined');
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 0);
+            assert.equal(typeof this.plot.panels.p.data_layers.d._tooltips[a_id], 'undefined');
             assert.equal(d3.select(a_id_q).empty(), true);
         });
 
@@ -742,37 +742,37 @@ describe('LocusZoom.DataLayer', function () {
             const b = d.data[1];
             const b_id = d.getElementId(b);
             // Make sure the tooltips object is there
-            assert.isObject(d.tooltips);
+            assert.isObject(d._tooltips);
             // Test highlighted OR selected
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
 
             d.highlightElement(a);
-            assert.isObject(d.tooltips[a_id]);
+            assert.isObject(d._tooltips[a_id]);
 
             d.unhighlightElement(a);
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
 
             d.selectElement(a);
-            assert.isObject(d.tooltips[a_id]);
+            assert.isObject(d._tooltips[a_id]);
 
             d.unselectElement(a);
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
             // Test highlight AND selected
-            assert.isUndefined(d.tooltips[b_id]);
+            assert.isUndefined(d._tooltips[b_id]);
 
             d.highlightElement(b);
             d.selectElement(b);
-            assert.isObject(d.tooltips[b_id]);
+            assert.isObject(d._tooltips[b_id]);
 
             d.unhighlightElement(b);
             d.unselectElement(b);
-            assert.isUndefined(d.tooltips[b_id]);
+            assert.isUndefined(d._tooltips[b_id]);
         });
 
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
             const layer = this.plot.panels.p.data_layers.d;
-            const status_flags = layer.layer_state.status_flags;
+            const status_flags = layer._layer_state.status_flags;
 
             const item_a = { id: 'a' };
             const internal_id = layer.getElementId(item_a);
@@ -789,11 +789,11 @@ describe('LocusZoom.DataLayer', function () {
                 layer.setElementStatus('selected', item_a, true, true);
                 const internal_id = layer.getElementId(item_a);
 
-                assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
+                assert.ok(layer._tooltips[internal_id], 'Tooltip created on selection');
                 assert.ok(status_flags['selected'].has(internal_id), 'Item was initially selected');
 
                 layer.destroyTooltip(item_a);
-                assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
+                assert.ok(!layer._tooltips[internal_id], 'Tooltip was destroyed by user close event');
 
                 assert.ok(status_flags['selected'].has(internal_id), 'Point remains selected after closing tooltip');
                 assert.ok(!status_flags['has_tooltip'].has(internal_id), 'Tooltip was destroyed by user close event');
@@ -1102,7 +1102,7 @@ describe('LocusZoom.DataLayer', function () {
             data_layer.setElementAnnotation(datum, 'custom_field', 'some_value');
 
             // Find the element annotation for this point via several different ways
-            assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
+            assert.equal(data_layer._layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
             assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
             assert.equal(data_layer.getElementAnnotation({'d:id': 'b'}, 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
             assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
@@ -1119,16 +1119,16 @@ describe('LocusZoom.DataLayer', function () {
         it('can use custom markings in layout directives', function () {
             const self = this;
             const data_layer = this.plot.panels.p.data_layers.d;
-            assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
+            assert.equal(data_layer._label_groups, undefined, 'No labels on first render');
             data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', true);
 
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn because of annotations');
+                assert.equal(data_layer._label_groups.size(), 1, 'Labels are drawn because of annotations');
                 // After turning labels on, confirm that we can cycle them off and influence rendering
                 data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups.size(), 0, 'Labels are removed because of annotations');
+                assert.equal(data_layer._label_groups.size(), 0, 'Labels are removed because of annotations');
             });
         });
 
@@ -1139,12 +1139,12 @@ describe('LocusZoom.DataLayer', function () {
 
             // Rerender once so the modified layout takes effect
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
+                assert.equal(data_layer._label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
                 // Introduce an annotation that conflicts with the data field from the API
                 data_layer.setElementAnnotation({'d:id': 'b'}, 'd:some_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');
+                assert.equal(data_layer._label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');
             });
         });
     });

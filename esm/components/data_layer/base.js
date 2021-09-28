@@ -256,13 +256,13 @@ class BaseDataLayer {
          * @private
          * @member {String}
          */
-        this.state_id = null;
+        this._state_id = null;
 
         /**
          * @private
          * @member {Object}
          * */
-        this.layer_state = null;
+        this._layer_state = null;
         // Create a default state (and set any references to the parent as appropriate)
         this._setDefaultState();
 
@@ -280,7 +280,7 @@ class BaseDataLayer {
              * @private
              * @member {Object}
              */
-            this.tooltips = {};
+            this._tooltips = {};
         }
 
         // Initialize flags for tracking global statuses
@@ -354,10 +354,10 @@ class BaseDataLayer {
      */
     setElementAnnotation (element, key, value) {
         const id = this.getElementId(element);
-        if (!this.layer_state.extra_fields[id]) {
-            this.layer_state.extra_fields[id] = {};
+        if (!this._layer_state.extra_fields[id]) {
+            this._layer_state.extra_fields[id] = {};
         }
-        this.layer_state.extra_fields[id][key] = value;
+        this._layer_state.extra_fields[id][key] = value;
         return this;
     }
 
@@ -884,7 +884,7 @@ class BaseDataLayer {
      */
     getElementAnnotation (element, key) {
         const id = this.getElementId(element);
-        const extra = this.layer_state.extra_fields[id];
+        const extra = this._layer_state.extra_fields[id];
         return key ? (extra && extra[key]) : extra;
     }
 
@@ -923,8 +923,8 @@ class BaseDataLayer {
         // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
         //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
         //  persist across re-render)
-        const layer_state = { status_flags: {}, extra_fields: {} };
-        const status_flags = layer_state.status_flags;
+        const _layer_state = { status_flags: {}, extra_fields: {} };
+        const status_flags = _layer_state.status_flags;
         STATUSES.adjectives.forEach((status) => {
             status_flags[status] = status_flags[status] || new Set();
         });
@@ -933,11 +933,11 @@ class BaseDataLayer {
 
         if (this.parent) {
             // If layer has a parent, store a reference in the overarching plot.state object
-            this.state_id = `${this.parent.id}.${this.id}`;
+            this._state_id = `${this.parent.id}.${this.id}`;
             this.state = this.parent.state;
-            this.state[this.state_id] = layer_state;
+            this.state[this._state_id] = _layer_state;
         }
-        this.layer_state = layer_state;
+        this._layer_state = _layer_state;
     }
 
     /**
@@ -1009,18 +1009,18 @@ class BaseDataLayer {
             throw new Error(`DataLayer [${this.id}] layout does not define a tooltip`);
         }
         const id = this.getElementId(data);
-        if (this.tooltips[id]) {
+        if (this._tooltips[id]) {
             this.positionTooltip(id);
             return;
         }
-        this.tooltips[id] = {
+        this._tooltips[id] = {
             data: data,
             arrow: null,
             selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
                 .attr('class', 'lz-data_layer-tooltip')
                 .attr('id', `${id}-tooltip`),
         };
-        this.layer_state.status_flags['has_tooltip'].add(id);
+        this._layer_state.status_flags['has_tooltip'].add(id);
         this.updateTooltip(data);
         return this;
     }
@@ -1037,16 +1037,16 @@ class BaseDataLayer {
             id = this.getElementId(d);
         }
         // Empty the tooltip of all HTML (including its arrow!)
-        this.tooltips[id].selector.html('');
-        this.tooltips[id].arrow = null;
+        this._tooltips[id].selector.html('');
+        this._tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html) {
-            this.tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
+            this._tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
         }
         // If the layout allows tool tips on this data layer to be closable then add the close button
         // and add padding to the tooltip to accommodate it
         if (this.layout.tooltip.closable) {
-            this.tooltips[id].selector.insert('button', ':first-child')
+            this._tooltips[id].selector.insert('button', ':first-child')
                 .attr('class', 'lz-tooltip-close-button')
                 .attr('title', 'Close')
                 .text('×')
@@ -1055,7 +1055,7 @@ class BaseDataLayer {
                 });
         }
         // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
-        this.tooltips[id].selector.data([d]);
+        this._tooltips[id].selector.data([d]);
         // Reposition and draw a new arrow
         this.positionTooltip(id);
         return this;
@@ -1077,15 +1077,15 @@ class BaseDataLayer {
         } else {
             id = this.getElementId(element_or_id);
         }
-        if (this.tooltips[id]) {
-            if (typeof this.tooltips[id].selector == 'object') {
-                this.tooltips[id].selector.remove();
+        if (this._tooltips[id]) {
+            if (typeof this._tooltips[id].selector == 'object') {
+                this._tooltips[id].selector.remove();
             }
-            delete this.tooltips[id];
+            delete this._tooltips[id];
         }
         // When a tooltip is removed, also remove the reference from the state
         if (!temporary) {
-            const tooltip_state = this.layer_state.status_flags['has_tooltip'];
+            const tooltip_state = this._layer_state.status_flags['has_tooltip'];
             tooltip_state.delete(id);
         }
         return this;
@@ -1098,7 +1098,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     destroyAllTooltips(temporary = true) {
-        for (let id in this.tooltips) {
+        for (let id in this._tooltips) {
             this.destroyTooltip(id, temporary);
         }
         return this;
@@ -1119,10 +1119,10 @@ class BaseDataLayer {
         if (typeof id != 'string') {
             throw new Error('Unable to position tooltip: id is not a string');
         }
-        if (!this.tooltips[id]) {
+        if (!this._tooltips[id]) {
             throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
-        const tooltip = this.tooltips[id];
+        const tooltip = this._tooltips[id];
         const coords = this._getTooltipPosition(tooltip);
 
         if (!coords) {
@@ -1141,7 +1141,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     positionAllTooltips() {
-        for (let id in this.tooltips) {
+        for (let id in this._tooltips) {
             this.positionTooltip(id);
         }
         return this;
@@ -1222,11 +1222,11 @@ class BaseDataLayer {
         }
 
         // Find all the statuses that apply to just this single element
-        const layer_state = this.layer_state;
+        const _layer_state = this._layer_state;
         var status_flags = {};  // {status_name: bool}
         STATUSES.adjectives.forEach((status) => {
             const antistatus = `un${status}`;
-            status_flags[status] = (layer_state.status_flags[status].has(id));
+            status_flags[status] = (_layer_state.status_flags[status].has(id));
             status_flags[antistatus] = !status_flags[status];
         });
 
@@ -1237,7 +1237,7 @@ class BaseDataLayer {
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
         //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-        const has_tooltip = (layer_state.status_flags['has_tooltip'].has(id));
+        const has_tooltip = (_layer_state.status_flags['has_tooltip'].has(id));
         const tooltip_was_closed = first_time ? false : !has_tooltip;
         if (show_resolved && !tooltip_was_closed && !hide_resolved) {
             this.createTooltip(element);
@@ -1292,12 +1292,12 @@ class BaseDataLayer {
         }
 
         // Track element ID in the proper status state array
-        const added_status = !this.layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
+        const added_status = !this._layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
         if (active && added_status) {
-            this.layer_state.status_flags[status].add(element_id);
+            this._layer_state.status_flags[status].add(element_id);
         }
         if (!active && !added_status) {
-            this.layer_state.status_flags[status].delete(element_id);
+            this._layer_state.status_flags[status].delete(element_id);
         }
 
         // Trigger tool tip show/hide logic
@@ -1340,7 +1340,7 @@ class BaseDataLayer {
         if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
             throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+        if (typeof this._layer_state.status_flags[status] == 'undefined') {
             return this;
         }
         if (typeof toggle == 'undefined') {
@@ -1351,14 +1351,14 @@ class BaseDataLayer {
         if (toggle) {
             this.data.forEach((element) => this.setElementStatus(status, element, true));
         } else {
-            const status_ids = new Set(this.layer_state.status_flags[status]); // copy so that we don't mutate while iterating
+            const status_ids = new Set(this._layer_state.status_flags[status]); // copy so that we don't mutate while iterating
             status_ids.forEach((id) => {
                 const element = this.getElementById(id);
                 if (typeof element == 'object' && element !== null) {
                     this.setElementStatus(status, element, false);
                 }
             });
-            this.layer_state.status_flags[status] = new Set();
+            this._layer_state.status_flags[status] = new Set();
         }
 
         // Update global status flag
@@ -1441,7 +1441,7 @@ class BaseDataLayer {
 
                 // Toggle a status
                 case 'toggle':
-                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].has(self.getElementId(element)));
+                    var current_status_boolean = (self._layer_state.status_flags[behavior.status].has(self.getElementId(element)));
                     var exclusive = behavior.exclusive && !current_status_boolean;
 
                     self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
@@ -1488,7 +1488,7 @@ class BaseDataLayer {
      *  @private
      */
     applyAllElementStatus () {
-        const status_flags = this.layer_state.status_flags;
+        const status_flags = this._layer_state.status_flags;
         const self = this;
         for (let property in status_flags) {
             if (!Object.prototype.hasOwnProperty.call(status_flags, property)) {
@@ -1498,7 +1498,7 @@ class BaseDataLayer {
                 try {
                     this.setElementStatus(property, this.getElementById(element_id), true);
                 } catch (e) {
-                    console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
+                    console.warn(`Unable to apply state: ${self._state_id}, ${property}`);
                     console.error(e);
                 }
             });

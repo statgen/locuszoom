@@ -545,8 +545,8 @@ class Plot {
                 const layer = this.panels[pid].data_layers[dlid];
                 layer.destroyAllTooltips();
 
-                delete layer.layer_state;
-                delete this.layout.state[layer.state_id];
+                delete layer._layer_state;
+                delete this.layout.state[layer._state_id];
                 if (mode === 'reset') {
                     layer._setDefaultState();
                 }
@@ -852,6 +852,17 @@ class Plot {
 
         this.svg = null;
         this.panels = null;
+    }
+
+    /**
+     * Plots can change how data is displayed by layout mutations. In rare cases, such as swapping from one source of LD to another,
+     *   these layout mutations won't be picked up instantly. This method notifies the plot to recalculate any cached properties,
+     *   like data fetching logic, that might depend on initial layout. It does not trigger a re-render by itself.
+     */
+    mutateLayout() {
+        Object.values(this.panels).forEach((panel) => {
+            Object.values(panel.data_layers).forEach((layer) => layer.mutateLayout());
+        });
     }
 
     /******* The private interface: methods only used by LocusZoom internals */

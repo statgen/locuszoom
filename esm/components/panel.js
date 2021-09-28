@@ -186,11 +186,11 @@ class Panel {
              *  @private
              *  @member {String}
              */
-            this.state_id = this.id;
-            this.state[this.state_id] = this.state[this.state_id] || {};
+            this._state_id = this.id;
+            this.state[this._state_id] = this.state[this._state_id] || {};
         } else {
             this.state = null;
-            this.state_id = null;
+            this._state_id = null;
         }
 
         /**
@@ -509,7 +509,7 @@ class Panel {
 
         // Delete the data layer and its presence in the panel layout and state
         this.layout.data_layers.splice(this.data_layers[id]._layout_idx, 1);
-        delete this.state[this.data_layers[id].state_id];
+        delete this.state[this.data_layers[id]._state_id];
         delete this.data_layers[id];
 
         // Remove the data_layer id from the z_index array

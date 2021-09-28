@@ -106,7 +106,7 @@ class Line extends BaseDataLayer {
         if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
             throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+        if (typeof this._layer_state.status_flags[status] == 'undefined') {
             return this;
         }
         if (typeof toggle == 'undefined') {

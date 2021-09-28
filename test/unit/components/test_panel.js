@@ -198,8 +198,8 @@ describe('Panel', function() {
             assert.equal(layerB.id, 'layerB');
             assert.equal(layerB._layout_idx, 1);
             assert.deepEqual(panel0._data_layer_ids_by_z_index, ['layerA', 'layerB']);
-            assert.equal(typeof this.plot.state[layerA.state_id], 'object');
-            assert.equal(typeof this.plot.state[layerB.state_id], 'object');
+            assert.equal(typeof this.plot.state[layerA._state_id], 'object');
+            assert.equal(typeof this.plot.state[layerB._state_id], 'object');
         });
 
         it('should have a method for removing data layers by id', function() {
@@ -207,7 +207,7 @@ describe('Panel', function() {
             const layerA = panel0.addDataLayer({ id: 'layerA', type: 'line' });
             const layerB = panel0.addDataLayer({ id: 'layerB', type: 'line' });
             const layerC = panel0.addDataLayer({ id: 'layerC', type: 'line' });
-            const state_id = layerB.state_id;
+            const state_id = layerB._state_id;
             assert.equal(typeof layerB, 'object');
             assert.equal(typeof this.plot.state[state_id], 'object');
             panel0.removeDataLayer('layerB');
