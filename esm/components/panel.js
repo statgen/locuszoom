@@ -495,21 +495,22 @@ class Panel {
      * @returns {Panel}
      */
     removeDataLayer(id) {
-        if (!this.data_layers[id]) {
+        const target_layer = this.data_layers[id];
+        if (!target_layer) {
             throw new Error(`Unable to remove data layer, ID not found: ${id}`);
         }
 
         // Destroy all tooltips for the data layer
-        this.data_layers[id].destroyAllTooltips();
+        target_layer.destroyAllTooltips();
 
         // Remove the svg container for the data layer if it exists
-        if (this.data_layers[id].svg.container) {
-            this.data_layers[id].svg.container.remove();
+        if (target_layer.svg.container) {
+            target_layer.svg.container.remove();
         }
 
         // Delete the data layer and its presence in the panel layout and state
-        this.layout.data_layers.splice(this.data_layers[id]._layout_idx, 1);
-        delete this.state[this.data_layers[id]._state_id];
+        this.layout.data_layers.splice(target_layer._layout_idx, 1);
+        delete this.state[target_layer._state_id];
         delete this.data_layers[id];
 
         // Remove the data_layer id from the z_index array
@@ -554,11 +555,12 @@ class Panel {
         const { cliparea } = this.layout;
 
         // Set and position the inner border, style if necessary
+        const { margin } = this.layout;
         this.inner_border
-            .attr('x', this.layout.margin.left)
-            .attr('y', this.layout.margin.top)
-            .attr('width', this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right))
-            .attr('height', this.layout.height - (this.layout.margin.top + this.layout.margin.bottom));
+            .attr('x', margin.left)
+            .attr('y', margin.top)
+            .attr('width', this.parent_plot.layout.width - (margin.left + margin.right))
+            .attr('height', this.layout.height - (margin.top + margin.bottom));
         if (this.layout.inner_border) {
             this.inner_border
                 .style('stroke-width', 1)
@@ -598,29 +600,30 @@ class Panel {
 
         // Define default and shifted ranges for all axes
         const ranges = {};
+        const axes_config = this.layout.axes;
         if (this.x_extent) {
             const base_x_range = { start: 0, end: this.layout.cliparea.width };
-            if (this.layout.axes.x.range) {
-                base_x_range.start = this.layout.axes.x.range.start || base_x_range.start;
-                base_x_range.end = this.layout.axes.x.range.end || base_x_range.end;
+            if (axes_config.x.range) {
+                base_x_range.start = axes_config.x.range.start || base_x_range.start;
+                base_x_range.end = axes_config.x.range.end || base_x_range.end;
             }
             ranges.x = [base_x_range.start, base_x_range.end];
             ranges.x_shifted = [base_x_range.start, base_x_range.end];
         }
         if (this.y1_extent) {
             const base_y1_range = { start: cliparea.height, end: 0 };
-            if (this.layout.axes.y1.range) {
-                base_y1_range.start = this.layout.axes.y1.range.start || base_y1_range.start;
-                base_y1_range.end = this.layout.axes.y1.range.end || base_y1_range.end;
+            if (axes_config.y1.range) {
+                base_y1_range.start = axes_config.y1.range.start || base_y1_range.start;
+                base_y1_range.end = axes_config.y1.range.end || base_y1_range.end;
             }
             ranges.y1 = [base_y1_range.start, base_y1_range.end];
             ranges.y1_shifted = [base_y1_range.start, base_y1_range.end];
         }
         if (this.y2_extent) {
             const base_y2_range = { start: cliparea.height, end: 0 };
-            if (this.layout.axes.y2.range) {
-                base_y2_range.start = this.layout.axes.y2.range.start || base_y2_range.start;
-                base_y2_range.end = this.layout.axes.y2.range.end || base_y2_range.end;
+            if (axes_config.y2.range) {
+                base_y2_range.start = axes_config.y2.range.start || base_y2_range.start;
+                base_y2_range.end = axes_config.y2.range.end || base_y2_range.end;
             }
             ranges.y2 = [base_y2_range.start, base_y2_range.end];
             ranges.y2_shifted = [base_y2_range.start, base_y2_range.end];
@@ -642,7 +645,7 @@ class Panel {
                     zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
                 }
                 const new_extent_size = Math.floor(current_extent_size * zoom_factor);
-                anchor = _interaction.zooming.center - this.layout.margin.left - this.layout.origin.x;
+                anchor = _interaction.zooming.center - margin.left - this.layout.origin.x;
                 const offset_ratio = anchor / cliparea.width;
                 const new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
                 ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
@@ -657,7 +660,7 @@ class Panel {
                         ranges.x_shifted[0] = +current_drag.dragged_x;
                         ranges.x_shifted[1] = cliparea.width + current_drag.dragged_x;
                     } else {
-                        anchor = current_drag.start_x - this.layout.margin.left - this.layout.origin.x;
+                        anchor = current_drag.start_x - margin.left - this.layout.origin.x;
                         scalar = constrain(anchor / (anchor + current_drag.dragged_x), 3);
                         ranges.x_shifted[0] = 0;
                         ranges.x_shifted[1] = Math.max(cliparea.width * (1 / scalar), 1);
@@ -670,7 +673,7 @@ class Panel {
                         ranges[y_shifted][0] = cliparea.height + current_drag.dragged_y;
                         ranges[y_shifted][1] = +current_drag.dragged_y;
                     } else {
-                        anchor = cliparea.height - (current_drag.start_y - this.layout.margin.top - this.layout.origin.y);
+                        anchor = cliparea.height - (current_drag.start_y - margin.top - this.layout.origin.y);
                         scalar = constrain(anchor / (anchor - current_drag.dragged_y), 3);
                         ranges[y_shifted][0] = cliparea.height;
                         ranges[y_shifted][1] = cliparea.height - (cliparea.height * (1 / scalar));
@@ -881,19 +884,20 @@ class Panel {
      * @returns {Panel}
      */
     setDimensions(width, height) {
+        const layout = this.layout;
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
                 this.parent.layout.width = Math.round(+width);
                 // Ensure that the requested height satisfies all minimum values
-                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+                layout.height = Math.max(Math.round(+height), layout.min_height);
             }
         }
-        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
+        layout.cliparea.width = Math.max(this.parent_plot.layout.width - (layout.margin.left + layout.margin.right), 0);
+        layout.cliparea.height = Math.max(layout.height - (layout.margin.top + layout.margin.bottom), 0);
         if (this.svg.clipRect) {
             this.svg.clipRect
                 .attr('width', this.parent.layout.width)
-                .attr('height', this.layout.height);
+                .attr('height', layout.height);
         }
         if (this._initialized) {
             this.render();
@@ -1144,11 +1148,13 @@ class Panel {
      * @returns {Panel}
      */
     moveUp() {
-        if (this.parent._panel_ids_by_y_index[this.layout.y_index - 1]) {
-            this.parent._panel_ids_by_y_index[this.layout.y_index] = this.parent._panel_ids_by_y_index[this.layout.y_index - 1];
-            this.parent._panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
-            this.parent.applyPanelYIndexesToPanelLayouts();
-            this.parent.positionPanels();
+        const { parent } = this;
+        const y_index = this.layout.y_index;
+        if (parent._panel_ids_by_y_index[y_index - 1]) {
+            parent._panel_ids_by_y_index[y_index] = parent._panel_ids_by_y_index[y_index - 1];
+            parent._panel_ids_by_y_index[y_index - 1] = this.id;
+            parent.applyPanelYIndexesToPanelLayouts();
+            parent.positionPanels();
         }
         return this;
     }
@@ -1213,7 +1219,6 @@ class Panel {
      * @returns {Panel}
      */
     generateExtents() {
-
         // Reset extents
         ['x', 'y1', 'y2'].forEach((axis) => {
             this[`${axis}_extent`] = null;
@@ -1221,7 +1226,6 @@ class Panel {
 
         // Loop through the data layers
         for (let id in this.data_layers) {
-
             const data_layer = this.data_layers[id];
 
             // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
@@ -1263,7 +1267,6 @@ class Panel {
      *     * color: string or LocusZoom scalable parameter object
      */
     generateTicks(axis) {
-
         // Parse an explicit 'ticks' attribute in the axis layout
         if (this.layout.axes[axis].ticks) {
             const layout = this.layout.axes[axis];

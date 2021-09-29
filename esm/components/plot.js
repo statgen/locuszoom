@@ -563,7 +563,8 @@ class Plot {
      * @returns {Plot}
      */
     removePanel(id) {
-        if (!this.panels[id]) {
+        const target_panel = this.panels[id];
+        if (!target_panel) {
             throw new Error(`Unable to remove panel, ID not found: ${id}`);
         }
 
@@ -574,17 +575,17 @@ class Plot {
         this.clearPanelData(id);
 
         // Remove all panel-level HTML overlay elements
-        this.panels[id].loader.hide();
-        this.panels[id].toolbar.destroy(true);
-        this.panels[id].curtain.hide();
+        target_panel.loader.hide();
+        target_panel.toolbar.destroy(true);
+        target_panel.curtain.hide();
 
         // Remove the svg container for the panel if it exists
-        if (this.panels[id].svg.container) {
-            this.panels[id].svg.container.remove();
+        if (target_panel.svg.container) {
+            target_panel.svg.container.remove();
         }
 
         // Delete the panel and its presence in the plot layout and state
-        this.layout.panels.splice(this.panels[id]._layout_idx, 1);
+        this.layout.panels.splice(target_panel._layout_idx, 1);
         delete this.panels[id];
         delete this.layout.state[id];
 

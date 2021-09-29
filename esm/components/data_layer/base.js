@@ -1157,7 +1157,8 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     showOrHideTooltip(element, first_time) {
-        if (typeof this.layout.tooltip != 'object') {
+        const tooltip_layout = this.layout.tooltip;
+        if (typeof tooltip_layout != 'object') {
             return this;
         }
         const id = this.getElementId(element);
@@ -1208,17 +1209,17 @@ class BaseDataLayer {
         };
 
         let show_directive = {};
-        if (typeof this.layout.tooltip.show == 'string') {
-            show_directive = { and: [ this.layout.tooltip.show ] };
-        } else if (typeof this.layout.tooltip.show == 'object') {
-            show_directive = this.layout.tooltip.show;
+        if (typeof tooltip_layout.show == 'string') {
+            show_directive = { and: [ tooltip_layout.show ] };
+        } else if (typeof tooltip_layout.show == 'object') {
+            show_directive = tooltip_layout.show;
         }
 
         let hide_directive = {};
-        if (typeof this.layout.tooltip.hide == 'string') {
-            hide_directive = { and: [ this.layout.tooltip.hide ] };
-        } else if (typeof this.layout.tooltip.hide == 'object') {
-            hide_directive = this.layout.tooltip.hide;
+        if (typeof tooltip_layout.hide == 'string') {
+            hide_directive = { and: [ tooltip_layout.hide ] };
+        } else if (typeof tooltip_layout.hide == 'object') {
+            hide_directive = tooltip_layout.hide;
         }
 
         // Find all the statuses that apply to just this single element
