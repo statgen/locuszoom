@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { makeUcscBedParser } from '../../../esm/ext/lz-parsers';
+import {makeBed12Parser} from '../../../esm/ext/lz-parsers/bed';
 
 describe('UCSC-style BED parser', function () {
     beforeEach(function () {
@@ -16,7 +16,7 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
     });
 
     it('defaults to normalizing the parsed data to match expectations', function () {
-        const parser = makeUcscBedParser(true);
+        const parser = makeBed12Parser(true);
         const result = parser(this.lines[0]);
         const expected = {
             'blockCount': undefined,
@@ -36,12 +36,12 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
     });
 
     it('warns if required fields are missing', function () {
-        const parser = makeUcscBedParser(true);
+        const parser = makeBed12Parser(true);
         assert.throws(() => parser('chr12\t51'),  /must provide all required/);
     });
 
     it('returns raw file contents if normalize = false', function () {
-        const parser = makeUcscBedParser(false);
+        const parser = makeBed12Parser(false);
         const result = parser(this.lines[0]);
         const expected = {
             'blockCount': undefined,
@@ -61,7 +61,7 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
     });
 
     it('handles additional optional BED fields if they are present', function () {
-        const parser = makeUcscBedParser(true);
+        const parser = makeBed12Parser(true);
         // The trailing comma in a list-field is part of the UCSC BED examples; weird, but make sure that we handle it!
         const a_line = `chr7	127472363	127473530	Pos2	0	+	127472363	127473530	255,0,0	2	567,488,	0,3512`;
         const result = parser(a_line);
@@ -74,7 +74,7 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
     });
 
     it('performs basic validation of block information', function () {
-        const parser = makeUcscBedParser(true);
+        const parser = makeBed12Parser(true);
         // Here, blockSizes has 3 items, but blockCounts calls for 2
         const a_line = `chr7	127472363	127473530	Pos2	0	+	127472363	127473530	255,0,0	2	567,488,999	0,3512`;
         assert.throws(() => parser(a_line), /same number of items/);
