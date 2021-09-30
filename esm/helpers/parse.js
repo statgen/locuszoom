@@ -8,7 +8,7 @@ const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^
  * Parse a single marker, cleaning up values as necessary
  * @param {String} value
  * @param {boolean} test If called in testing mode, do not throw an exception
- * @returns {[string, number, string|null, string|null] | null} chr, pos, ref, alt (if match found)
+ * @returns {Array} chr, pos, ref, alt (if match found; ref and alt optional)
  */
 function parseMarker(value, test = false) {
     const match = value && value.match(REGEX_MARKER);

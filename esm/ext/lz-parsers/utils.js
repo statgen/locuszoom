@@ -2,8 +2,6 @@
  * Constant values used by GWAS parser
  */
 
-import { REGEX_MARKER } from '../../helpers/parse';
-
 const MISSING_VALUES = new Set(['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan', 'NaN', '-NaN', 'null', 'NULL', 'None', null]);
 
 const REGEX_PVAL = /([\d.-]+)([\sxeE]*)([0-9-]*)/;
@@ -40,7 +38,7 @@ function normalizeChr(chromosome) {
  * Parse (and validate) a given number, and return the -log10 pvalue.
  * @param value
  * @param {boolean} is_neg_log
- * @returns {number||null} The -log10 pvalue
+ * @returns {number|null} The -log10 pvalue
  */
 function parsePvalToLog(value, is_neg_log = false) {
     // TODO: In future, generalize this for other values prone to underflow
@@ -111,7 +109,7 @@ function parseAlleleFrequency({ freq, allele_count, n_samples, is_alt_effect = t
 }
 
 export {
-    MISSING_VALUES, REGEX_MARKER,
+    MISSING_VALUES,
     missingToNull as _missingToNull,
     has,
     normalizeChr,
