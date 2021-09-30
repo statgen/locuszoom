@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 
-import {makeBed12Parser} from '../../../esm/ext/lz-parsers/bed';
+import {makeBed12Parser} from '../../../../esm/ext/lz-parsers/bed';
+
 
 describe('UCSC-style BED parser', function () {
     beforeEach(function () {
@@ -19,9 +20,9 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
         const parser = makeBed12Parser(true);
         const result = parser(this.lines[0]);
         const expected = {
-            'blockCount': undefined,
-            'blockSizes': undefined,
-            'blockStarts': undefined,
+            'blockCount': null,
+            'blockSizes': null,
+            'blockStarts': null,
             'chrom': '7',
             'chromEnd': 127472363,
             'chromStart': 127471197,
@@ -32,7 +33,7 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
             'thickEnd': 127472363,
             'thickStart': 127471196,
         };
-        assert.deepEqual(result, expected, 'All fields are populated in data object with the expected types');
+        assert.deepEqual(result, expected, 'Fields are populated in data object with the expected types');
     });
 
     it('warns if required fields are missing', function () {

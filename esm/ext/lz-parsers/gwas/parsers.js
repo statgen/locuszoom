@@ -4,7 +4,7 @@ import {
     MISSING_VALUES,
     has,
     parseAlleleFrequency,
-    parsePvalToLog,
+    parsePvalToLog, normalizeChr,
 } from '../utils';
 
 
@@ -31,7 +31,7 @@ import {
  * @param [delimiter='\t']
  * @return {function(string)} A parser function that can be called on each line of text with the provided options
  */
-function makeParser(
+function makeGWASParser(
     {
         // Required fields
         marker_col, // Identify the variant: marker OR chrom/pos/ref/alt
@@ -86,13 +86,13 @@ function makeParser(
         if (has(marker_col)) {
             [chr, pos, ref, alt] = parseMarker(fields[marker_col - 1], false);
         } else if (has(chrom_col) && has(pos_col)) {
-            chr = fields[chrom_col - 1].replace(/^chr/g, '');
+            chr = fields[chrom_col - 1];
             pos = fields[pos_col - 1];
         } else {
             throw new Error('Must specify all fields required to identify the variant');
         }
 
-        chr = chr.toUpperCase();
+        chr = normalizeChr(chr);
         if (chr.startsWith('RS')) {
             throw new Error(`Invalid chromosome specified: value "${chr}" is an rsID`);
         }
@@ -172,4 +172,4 @@ function makeParser(
 }
 
 
-export { makeParser };
+export { makeGWASParser };

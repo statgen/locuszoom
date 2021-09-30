@@ -29,6 +29,14 @@ function missingToNull(values, nulls = MISSING_VALUES, placeholder = null) {
 }
 
 /**
+ * Normalize chromosome representations
+ * @param {String} chromosome
+ */
+function normalizeChr(chromosome) {
+    return chromosome.replace(/^chr/g, '').toUpperCase();
+}
+
+/**
  * Parse (and validate) a given number, and return the -log10 pvalue.
  * @param value
  * @param {boolean} is_neg_log
@@ -106,6 +114,7 @@ export {
     MISSING_VALUES, REGEX_MARKER,
     missingToNull as _missingToNull,
     has,
+    normalizeChr,
     // Exports for unit testing
     parseAlleleFrequency,
     parsePvalToLog,

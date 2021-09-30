@@ -248,9 +248,8 @@ function guessGWAS(header_row, data_rows, offset = 1) {
 export {
     // Public members
     guessGWAS,
-    isNumeric,
-    isHeader,
     // Symbols exported for testing
+    isHeader as _isHeader,
     getPvalColumn as _getPvalColumn,
     findColumn as _findColumn,
     levenshtein as _levenshtein,

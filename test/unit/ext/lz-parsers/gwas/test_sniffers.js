@@ -1,15 +1,15 @@
 import { assert } from 'chai';
-import { isHeader, _findColumn, _getPvalColumn, _levenshtein, guessGWAS } from '../../../../../esm/ext/lz-parsers/gwas/sniffers';
+import { _isHeader, _findColumn, _getPvalColumn, _levenshtein, guessGWAS } from '../../../../../esm/ext/lz-parsers/gwas/sniffers';
 
 
 describe('Automatic header detection', () => {
     it('Correctly identifies various header rules', () => {
-        assert.isOk(isHeader('#Comment'), 'Comment lines are headers!');
-        assert.isOk(isHeader('Header\tLabels'), 'Headers tend to be text');
-        assert.isNotOk(isHeader('X\t100'), 'Data has numbers');
-        assert.isNotOk(isHeader('X\t.'), 'Missing data is still data');
-        assert.isNotOk(isHeader('X,100', { delimiter: ',' }), 'Handles data as csv');
-        assert.isOk(isHeader('//100', { comment_char: '//' }), 'Handles different comments');
+        assert.isOk(_isHeader('#Comment'), 'Comment lines are headers!');
+        assert.isOk(_isHeader('Header\tLabels'), 'Headers tend to be text');
+        assert.isNotOk(_isHeader('X\t100'), 'Data has numbers');
+        assert.isNotOk(_isHeader('X\t.'), 'Missing data is still data');
+        assert.isNotOk(_isHeader('X,100', { delimiter: ',' }), 'Handles data as csv');
+        assert.isOk(_isHeader('//100', { comment_char: '//' }), 'Handles different comments');
     });
 });
 
