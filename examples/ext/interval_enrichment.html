@@ -7,12 +7,12 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
     <!-- Necessary includes for LocusZoom.js -->
-    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-   <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
-    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
 
     <!-- Helpers that use an extension to add functionality to LocusZoom -->
-    <script src="../dist/ext/lz-intervals-enrichment.min.js" type="application/javascript"></script>
+    <script src="../../dist/ext/lz-intervals-enrichment.min.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Interval Enrichment Example</title>
 
@@ -35,7 +35,7 @@
       <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
       <h3 style="float: left; color: #777">Interval Annotations Example</h3>
-      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
 
       <hr style="clear: both;">
 
@@ -69,7 +69,7 @@
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
       // There's no special transformation being done to intervals data- just fetch from a URL
-      .add("intervals", ["BaseLZAdapter", { url: 'data/intervals_enrichment_simplified.json' }])
+      .add("intervals", ["BaseLZAdapter", { url: '../data/intervals_enrichment_simplified.json' }])
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
