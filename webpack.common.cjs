@@ -83,8 +83,6 @@ module.exports = {
     externals: {
         d3: 'd3',
         locuszoom: 'LocusZoom',
-        'gwas-credible-sets': 'gwasCredibleSets',
-        'tabix-reader': 'tabix',
         'raremetal.js': 'raremetal',
     },
 };

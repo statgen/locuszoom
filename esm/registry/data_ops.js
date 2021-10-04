@@ -1,5 +1,5 @@
 /**
- * "Data operation" functions, with call signature ( [recordsetA, recordsetB...], ...params) => combined_results
+ * "Data operation" functions, with call signature (state, [recordsetA, recordsetB...], ...params) => combined_results
  *
  * These usually operate on two recordsets (joins), but can operate on one recordset (eg grouping) or > 2 (hopefully rare)
  *

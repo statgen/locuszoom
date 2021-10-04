@@ -15,7 +15,6 @@
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
  *  - LocusZoom
- *  - gwas-credible-sets (available via NPM or a related CDN)
  *
  * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
  * ```

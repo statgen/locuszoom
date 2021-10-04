@@ -9,7 +9,6 @@
  * The page must incorporate and load all libraries before this file can be used, including:
  * - Vendor assets
  * - LocusZoom
- * - tabix-reader (available via NPM or a related CDN)
  *
  * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
  * ```
@@ -38,7 +37,7 @@
  *
  * @module
  */
-import tabix from 'tabix-reader';
+import { urlReader } from 'tabix-reader';
 
 
 function install(LocusZoom) {
@@ -86,7 +85,7 @@ function install(LocusZoom) {
             // Assuming that the `tabix-reader` library has been loaded via a CDN, this will create the reader
             // Since fetching the index is a remote operation, all reader usages will be via an async interface.
             if (this.url_data) {
-                this._reader_promise = tabix.urlReader(this.url_data, this.url_tbi).catch(function () {
+                this._reader_promise = urlReader(this.url_data, this.url_tbi).catch(function () {
                     throw new Error('Failed to create a tabix reader from the provided URL');
                 });
             } else {

@@ -219,7 +219,7 @@ function install (LocusZoom) {
         }
     }
 
-    LocusZoom.DataFunctions.add('gene_plus_aggregation', ([genes_data, aggregation_data]) => {
+    const genes_plus_aggregation = (state, [genes_data, aggregation_data]) => {
         // Used to highlight genes with significant aggtest results. Unlike a basic left join, it chooses one specific aggtest with the most significant results
 
         // Tie the calculated group-test results to genes with a matching name
@@ -241,7 +241,8 @@ function install (LocusZoom) {
             }
         });
         return genes_data;
-    });
+    };
+    LocusZoom.DataFunctions.add('gene_plus_aggregation', genes_plus_aggregation);
 
     LocusZoom.Adapters.add('AggregationTestSourceLZ', AggregationTestSourceLZ);
     LocusZoom.Adapters.add('AssocFromAggregationLZ', AssocFromAggregationLZ);
