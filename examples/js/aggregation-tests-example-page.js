@@ -237,7 +237,7 @@ function createDisplayWidgets(label_store, context) {
             build: 'GRCh37',
         }]);
 
-    const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
+    const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end', ldrefvar: 'ld_variant' };
     let initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
         initialState = { chr: '19', start: 45312079, end: 45512079 };

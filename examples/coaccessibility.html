@@ -97,7 +97,7 @@
         .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
-    var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
+    var stateUrlMapping = { chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
     // Fetch initial position from the URL, or use some defaults
     var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {

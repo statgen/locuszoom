@@ -101,7 +101,7 @@
         Define and render the plot
        */
       // Fetch custom layout defined for usage with credible sets
-      var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+      var stateUrlMapping = {chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
       // Fetch initial position from the URL, or use some defaults
       var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
