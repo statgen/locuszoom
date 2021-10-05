@@ -64,7 +64,7 @@
     // Define Data Sources
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45, id_field: "variant" }])
+      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45 }])
       .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])

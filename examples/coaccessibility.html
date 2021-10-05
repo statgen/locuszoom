@@ -71,16 +71,9 @@
 </div>
 
 <script type="text/javascript">
-    // Determine if we're online, based on browser state or presence of an optional query parameter
-    var online = !(typeof navigator != "undefined" && !navigator.onLine);
-    if (window.location.search.indexOf("offline") != -1) {
-        online = false;
-    }
-
-    // Define LocusZoom Data Sources object differently depending on online status
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45, id_field: "variant" }])
+        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45 }])
         .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
         .add("access", ["TabixUrlSource", {

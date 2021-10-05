@@ -89,7 +89,6 @@
           .add("assoc", ["AssociationLZ", {
               url: apiBase + "statistic/single/",
               source: 45,
-              id_field: "variant",
           }])
           .add("credset", ["CredibleSetLZ", { threshold: 0.95, significance_threshold: 7.301 }])
           .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])

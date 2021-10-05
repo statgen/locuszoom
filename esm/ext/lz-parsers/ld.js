@@ -12,7 +12,7 @@ import {normalizeMarker} from '../../helpers/parse';
  *
  * @returns {Object} Same column names used by the UM LD Server
  */
-function makePlinkLdParser(normalize = true) {
+function makePlinkLdParser({normalize = true}) {
     return (line) => {
         // Sample headers are below: SNP_A and SNP_B are based on ID column of the VCF
         // CHR_A   BP_A    SNP_A   CHR_B   BP_B    SNP_B   R2

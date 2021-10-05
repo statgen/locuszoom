@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+    <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <!-- LocusZoom plugins (additional functionality) -->
+    <script type="application/javascript" src="../../dist/ext/lz-dynamic-urls.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-parsers.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-tabix-source.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-intervals-track.min.js"></script>
+
+    <title>LocusZoom.js ~ Tabix Tracks</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Tabix tracks</h3>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>
+        LocusZoom.js is able to fetch data directly from tabix files. This is very helpful if you want to render a plot from
+        your own data, <em>without transforming the files into an intermediate format</em> (like creating JSON files or loading
+        the data into an API first). This is particularly important for very large datasets, because it allows interactive
+        region-based queries, without having to transfer the entire dataset to the user's web browser first.
+        Only the index file is loaded, plus the data needed for a particular region of interest.
+      </p>
+      <p>
+        LocusZoom provides an extension to help parse tabix data files for several common data formats. Additional
+        parsers and index types may be supported in the future. Working directly with tabix files is a way to get
+        started with LocusZoom fast as it does not require building or maintaining a server backend. It is helpful for
+        sharing small numbers of datasets or in groups that don't want to maintain their own infrastructure.
+        Typically, larger data sharing portals will not use this approach; as the number of datasets grow, they will
+        want to run their own web server to support features like searching, complex queries, and harmonizing many
+        datasets into a single standard format. Tools like <a href="https://github.com/statgen/pheweb">PheWeb</a> are
+        a popular way to handle this sort of use case.
+      </p>
+      <p>
+        A key feature of LocusZoom is that each track is independent. This means it is very straightforward to define
+        layouts in which some tracks come from a tabix file (like a BED track), while others are fetched from a remote
+        web server that handles standard well-known dataets (like genes or 1000G LD).
+      </p>
+
+      <div id="lz-plot" class="lz-container-responsive"></div>
+
+      <h3>Data formatting guidelines</h3>
+      <p>
+        Below are some tips on formatting your data files. If you are using a static file storage provider like Amazon
+        S3 or Google Cloud Storage, note that you may need to <a href="https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS">configure some additional request headers</a>
+        before Tabix will work properly.
+      </p>
+
+      <h4>GWAS Summary statistics</h4>
+      <p>
+        There is no single standard for GWAS summary statistics. As such, the LocusZoom.js parser exposes many sets of
+        options for how to read the data. The general instructions from <a href="https://my.locuszoom.org/about/#prepare-data">my.locuszoom.org</a>
+        are a useful starting point, since the same basic parsing logic is shared across multiple tools.
+      </p>
+
+      <h4>BED files</h4>
+      <p>
+        BED files are a <a href="https://genome.ucsc.edu/FAQ/FAQformat.html#format1">standard format</a> with 3-12 columns of data.
+        The default LocusZoom panel layout for a BED track will use chromosome, position, line name, and (optionally) color
+        to draw the plot. Score will be shown as a tooltip field (if present); it may have a different meaning and scale
+        depending on the contents of your BED file. As with any LocusZoom track, custom layouts can be created to render data in different ways, or to use more or
+        fewer columns based on the data of interest.
+      </p>
+
+      <p>
+        The following command is helpful for preparing BED files for use in the browser:
+        <code>$ sort -k1,1 -k2,2n input.bed | bgzip > input-sorted.gff.gz && tabix -p bed input-sorted.gff.gz</code><br>
+        Some BED files will have one or more header rows; in this case, modify the tabix command with: <code>--skip-lines N</code> (where N is the number of headers).
+      </p>
+
+      <h4>PLINK LD</h4>
+      <!-- TODO : write, and include custom LD in the demo; upload to AWS -->
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      "use strict";
+
+      const gwasParser = LzParsers.makeGWASParser({
+          // 1-based column indices. The values below match the harmonized format output by my.locuszoom.org
+          chrom_col: 1,
+          pos_col: 2,
+          ref_col: 4,
+          alt_col: 5,
+          pvalue_col: 6,
+          is_neg_log_pvalue: true,
+          beta_col: 7,
+          stderr_beta_col: 8
+      });
+      const bedParser = LzParsers.makeBed12Parser({normalize: true});
+
+      const apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+      const data_sources = new LocusZoom.DataSources()
+          .add("assoc", ["TabixUrlSource", {
+              url_data:  '../data/tabix-demo/gwas_giant-bmi_meta_women-only.gz',   //'../data/tabix-demo/DFF622JQK.bed.bgz',
+              parser_func: gwasParser,
+              overfetch: 0,
+          }])
+          .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
+          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+          .add("intervals", ["TabixUrlSource", {
+              url_data:  '../data/tabix-demo/DFF622JQK.bed.bgz',
+              parser_func: bedParser,
+              overfetch: 0.25,
+          }])
+          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+          .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
+
+      // Get the standard association plot layout from LocusZoom's built-in layouts
+      var stateUrlMapping = { chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
+      // Fetch initial position from the URL, or use some defaults
+      var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
+      if (!Object.keys(initialState).length) {
+          initialState = { chr: 16, start: 53609247, end: 54009247 };
+      }
+      const layout = LocusZoom.Layouts.get("plot", "standard_association", {
+          state: initialState,
+          panels: [
+              LocusZoom.Layouts.get('panel', 'association', { title: { text: "GIANT BMI meta-analysis (women only)" }}),
+              LocusZoom.Layouts.get('panel', 'bed_intervals', {title: { text: "Accessible chromatin (ChIP - Pancreatic Islets)" }}),
+              LocusZoom.Layouts.get('panel', 'genes'),
+          ],
+      });
+
+      // Generate the LocusZoom plot, and reflect the initial plot state in url
+      window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+
+      // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+      //   a previously viewed region)
+      LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+      LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    </script>
+  </body>
+</html>

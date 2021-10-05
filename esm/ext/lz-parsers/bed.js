@@ -29,7 +29,7 @@ function _hasNum(value) {
  * @param {Boolean} normalize Whether to normalize the output to the format expected by LocusZoom (eg type coercion
  *  for numbers, removing chr chromosome prefixes, and using 1-based and inclusive coordinates instead of 0-based disjoint intervals)
  */
-function makeBed12Parser(normalize = true) {
+function makeBed12Parser({normalize = true}) {
     /*
      * @param {String} line The line of text to be parsed
      */
@@ -71,7 +71,6 @@ function makeBed12Parser(normalize = true) {
             thickEnd = _hasNum(thickEnd);
 
             itemRgb = _bedMissing(itemRgb);
-            itemRgb = itemRgb ? `rgb(${itemRgb})` : itemRgb;
 
             // LocusZoom doesn't use these fields for rendering. Parsing below is theoretical/best-effort.
             blockCount = _hasNum(blockCount);
