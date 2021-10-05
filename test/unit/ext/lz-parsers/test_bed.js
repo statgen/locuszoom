@@ -26,7 +26,7 @@ chr7	127480532	127481699	Neg4	0	-	127480532	127481699	0,0,255`.split('\n');
             'chrom': '7',
             'chromEnd': 127472363,
             'chromStart': 127471197,
-            'itemRgb': 'rgb(255,0,0)',
+            'itemRgb': '255,0,0',
             'name': 'Pos1',
             'score': 0,
             'strand': '+',

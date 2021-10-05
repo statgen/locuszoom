@@ -373,7 +373,6 @@ function install (LocusZoom) {
                 this.layout.legend = known_categories.map(function (pair, index) {
                     const id = pair[0];
                     const label = pair[1];
-                    // FIXME: use resolveScalableParameter here, so that itemRgb mode shows correct colors
                     const item_color = color_scale.parameters.values[index];
                     const item = { shape: 'rect', width: 9, label: label, color: item_color };
                     item[self.layout.track_split_field] = id;
@@ -544,10 +543,10 @@ function install (LocusZoom) {
         // Choose an appropriate color scheme based on the number of items in the track, and whether or not we are
         //  using explicitly provided itemRgb information
         _makeColorScheme(category_info) {
-            // If at least one element has an explicit itemRgb, assume the entire dataset has colors
+            // If at least one element has an explicit itemRgb, assume the entire dataset has colors. BED intervals require rgb triplets,so assume that colors will always be "r,g,b" format.
             const has_explicit_colors = category_info.find((item) => item[2]);
             if (has_explicit_colors) {
-                return category_info.map((item) => item[2]);
+                return category_info.map((item) => to_rgb({}, item[2]));
             }
 
             // Use a set of color schemes for common 15, 18, or 25 state models, as specified from:

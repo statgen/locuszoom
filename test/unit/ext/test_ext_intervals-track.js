@@ -68,10 +68,10 @@ describe('Interval annotation track', function () {
             this.instance.data = [
                 // Interesting property of real data: sometimes two HMM models are assigned the same label.
                 //   State id is considered the unambiguous identifier.
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '#FF0000' },
-                { 'intervals:state_name': 'Weak enhancer', 'intervals:state_id': 2, 'intervals:itemRgb': '#00FF00' },
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '#FF0000' },
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 3, 'intervals:itemRgb': '#0000FF' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '255,0,0' },
+                { 'intervals:state_name': 'Weak enhancer', 'intervals:state_id': 2, 'intervals:itemRgb': '0,255,0' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '255,0,0' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 3, 'intervals:itemRgb': '0,0,255' },
             ];
 
             this.instance._applyLayoutOptions();
@@ -81,13 +81,13 @@ describe('Interval annotation track', function () {
             const final_legend = this.instance.layout.legend;
             const final_colors = find_color_options(this.instance.layout);
             assert.deepEqual(final_colors.parameters.categories, [1, 2, 3], 'Unique categories are generated');
-            assert.deepEqual(final_colors.parameters.values, ['#FF0000', '#00FF00', '#0000FF'], 'Unique color options are tracked');
+            assert.deepEqual(final_colors.parameters.values, ['rgb(255,0,0)', 'rgb(0,255,0)', 'rgb(0,0,255)'], 'Unique color options are tracked');
             assert.deepEqual(
                 final_legend,
                 [
-                    { color: '#FF0000', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
-                    { color: '#00FF00', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
-                    { color: '#0000FF', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(255,0,0)', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(0,255,0)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(0,0,255)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
                 'Legend items map the correct stateID and colors together'
             );
