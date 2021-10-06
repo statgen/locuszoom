@@ -191,17 +191,21 @@
       const apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       const data_sources = new LocusZoom.DataSources()
           .add("assoc", ["TabixUrlSource", {
-              url_data:  '../data/tabix-demo/gwas_giant-bmi_meta_women-only.gz',   //'../data/tabix-demo/DFF622JQK.bed.bgz',
+              // Courtesy of https://www.ncbi.nlm.nih.gov/pubmed/25673413  - As harmonized in https://my.locuszoom.org/gwas/236887/
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/gwas_giant-bmi_meta_women-only.gz',
               parser_func: gwasParser,
               overfetch: 0,
           }])
           .add("ld", ["UserTabixLD", {
-              url_data:  '../data/tabix-demo/plink.ld.tab.gz',
+              // Fetch an LD file with just 3 possible refvars. More limited than an LD server, but able to use LD from a custom population.
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/plink.ld.tab.gz',
               parser_func: ldParser,
           }])
+          // Recombination rate is a standard dataset. Note that each dataset is fetched independently- we can mix built-in public APIs with tabix data when drawing the plot
           .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
           .add("intervals", ["TabixUrlSource", {
-              url_data:  '../data/tabix-demo/DFF622JQK.bed.bgz',
+              // This annotation track is courtesy of the CMDGA: https://cmdga.org/annotations/DSR953RQL/
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/DFF622JQK.bed.bgz',
               parser_func: bedParser,
               overfetch: 0.25,
           }])
