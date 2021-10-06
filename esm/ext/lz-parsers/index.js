@@ -32,7 +32,7 @@ function install(LocusZoom) {
                 }
 
                 // NOTE: Reuses a method from another adapter to mix in functionality
-                base.ld_refvar = LDServer.prototype.__find_ld_refvar.bind(this)(state, assoc_data);
+                base.ld_refvar = LDServer.prototype.__find_ld_refvar(state, assoc_data);
                 return base;
             }
 
