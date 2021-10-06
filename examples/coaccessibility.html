@@ -13,10 +13,6 @@
 
   <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
 
-  <!-- Load tabix reader form a CDN  -->
-  <script type="application/javascript" src="https://cdn.jsdelivr.net/npm/tabix-reader@~1.0.0"
-          crossorigin="anonymous"></script>
-
   <script type="application/javascript" src="../dist/ext/lz-tabix-source.min.js"></script>
   <script src="js/coaccessibility.js" type="application/javascript"></script>
 
@@ -75,16 +71,9 @@
 </div>
 
 <script type="text/javascript">
-    // Determine if we're online, based on browser state or presence of an optional query parameter
-    var online = !(typeof navigator != "undefined" && !navigator.onLine);
-    if (window.location.search.indexOf("offline") != -1) {
-        online = false;
-    }
-
-    // Define LocusZoom Data Sources object differently depending on online status
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45, id_field: "variant" }])
+        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45 }])
         .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
         .add("access", ["TabixUrlSource", {
@@ -101,7 +90,7 @@
         .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
-    var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
+    var stateUrlMapping = { chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
     // Fetch initial position from the URL, or use some defaults
     var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {

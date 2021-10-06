@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+    <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <!-- LocusZoom plugins (additional functionality). Note that loading tabix before parsers allows us to register additional useful functionality. -->
+    <script type="application/javascript" src="../../dist/ext/lz-dynamic-urls.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-tabix-source.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-parsers.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-intervals-track.min.js"></script>
+
+    <title>LocusZoom.js ~ Tabix Tracks</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Tabix tracks</h3>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>
+        LocusZoom.js is able to fetch data directly from tabix files. This is very helpful if you want to render a plot from
+        your own data, <em>without transforming the files into an intermediate format</em> (like creating JSON files or loading
+        the data into an API first). This is particularly important for very large datasets, because it allows interactive
+        region-based queries, without having to transfer the entire dataset to the user's web browser first.
+        Only the index file is loaded, plus the data needed for a particular region of interest.
+      </p>
+      <p>
+        LocusZoom provides an extension to help parse tabix data files for several common data formats. Additional
+        parsers and index types may be supported in the future. Working directly with tabix files is a way to get
+        started with LocusZoom fast as it does not require building or maintaining a server backend. It is helpful for
+        sharing small numbers of datasets or in groups that don't want to maintain their own infrastructure.
+        Typically, larger data sharing portals will not use this approach; as the number of datasets grow, they will
+        want to run their own web server to support features like searching, complex queries, and harmonizing many
+        datasets into a single standard format. Tools like <a href="https://github.com/statgen/pheweb">PheWeb</a> are
+        a popular way to handle this sort of use case.
+      </p>
+      <p>
+        A key feature of LocusZoom is that each track is independent. This means it is very straightforward to define
+        layouts in which some tracks come from a tabix file (like a BED track), while others are fetched from a remote
+        web server that handles standard well-known dataets (like genes or 1000G LD).
+      </p>
+
+      <div id="lz-plot" class="lz-container-responsive"></div>
+
+      <h3>Data formatting guidelines</h3>
+      <p>
+        Below are some tips on formatting your data files. If you are using a static file storage provider like Amazon
+        S3 or Google Cloud Storage, note that you may need to <a href="https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS">configure some additional request headers</a>
+        before Tabix will work properly.
+      </p>
+
+      <h4>GWAS Summary statistics</h4>
+      <p>
+        There is no single standard for GWAS summary statistics. As such, the LocusZoom.js parser exposes many sets of
+        options for how to read the data. The general instructions from <a href="https://my.locuszoom.org/about/#prepare-data">my.locuszoom.org</a>
+        are a useful starting point, since the same basic parsing logic is shared across multiple tools.
+      </p>
+
+      <h4>BED files</h4>
+      <p>
+        BED files are a <a href="https://genome.ucsc.edu/FAQ/FAQformat.html#format1">standard format</a> with 3-12 columns of data.
+        The default LocusZoom panel layout for a BED track will use chromosome, position, line name, and (optionally) color
+        to draw the plot. Score will be shown as a tooltip field (if present); it may have a different meaning and scale
+        depending on the contents of your BED file. As with any LocusZoom track, custom layouts can be created to render data in different ways, or to use more or
+        fewer columns based on the data of interest.
+      </p>
+
+      <p>
+        The following command is helpful for preparing BED files for use in the browser:
+        <code>$ sort -k1,1 -k2,2n input.bed | bgzip > input-sorted.gff.gz && tabix -p bed input-sorted.gff.gz</code><br>
+        Some BED files will have one or more header rows; in this case, modify the tabix command with: <code>--skip-lines N</code> (where N is the number of headers).
+      </p>
+
+      <h4>PLINK LD</h4>
+      <p>
+        Linkage Disequilibrium is an important tool for interpreting LocusZoom.js plots. In order to support viewing any
+        region, most LocusZoom.js usages take advantage of the Michigan LD server to calculate region-based LD relative
+        to a particular reference variant, based on the well-known 1000G reference panel.
+      </p>
+      <p>
+        We recognize that the 1000G reference panel (and its sub-populations) is not suited to all cases, especially for
+        studies with ancestry-specific results or large numbers of rare variants not represented in a public panel.
+        For many groups, <a href="https://github.com/statgen/LDServer/">setting up a private LD Server instance</a> is not an option.
+        As a fallback, we support parsing a file format derived from PLINK 1.9 `--ld-snp` calculations. Instructions
+        for preparing these files are provided below. <strong>Due to the potential for very large output files, we only
+        support pre-calculated LD relative to one (or a few) LD reference variants; this means that this feature
+        requires some advance knowledge of interesting regions in order to be useful.</strong> If the user views any
+        region that is not near a pre-provided reference variant, they will see grey dots indicating the absence of LD information.
+        We have intentionally restricted the demo so that this limitation is clear.
+      </p>
+
+      <dl>
+        <dt><b>Preparing genotype files: harmonizing ID formats</b></dt>
+        <dd>
+          LocusZoom typically calculates LD relative to a variant by EPACTS-format specifier (chrom:pos_ref/alt).
+          However, genotype VCF files have no single standard for how variants are identified. Some files even use a different variant format for each variant, which makes it hard to write easy copy-and-paste commands that would work widely
+          across files. Your file can be transformed to match the tutorial assumptions via common tool and the command below:
+
+          <code>bcftools annotate -Oz --set-id '%CHROM\:%POS\_%REF\/%ALT' original_vcf.gz &gt; vcfname_epacts_id_format.gz</code>
+
+          <em>In some rare cases (such as <a href="https://www.internationalgenome.org/faq/why-are-there-duplicate-calls-in-the-phase-3-call-set">1000G phase 3</a>), data preparation errors may result in duplicate entries for the same variant. This can break PLINK. A command such as the one below can be used to find these duplicates:<br>
+            <code>zcat < vcfname_epacts_id_format.gz | cut -f3 | sort | uniq -d</code><br>
+            They can then be removed using the following command (check the output carefully before using, because reasons for duplicate lines vary widely):
+          </em><br>
+          <code>bcftools norm -Oz --rm-dup all vcfname_epacts_id_format.gz > vcfname_epacts_id_format_rmdups.gz</code>
+        </dd>
+
+        <dt><b>Calculating LD relative to reference variants</b></dt>
+        <dd>
+          The command below will calculate LD relative to (several) variants in a 500 kb region centered around each reference variant.<br>
+          <code>plink-1.9 --r2 --vcf vcfname_epacts_id_format.gz --ld-window 499999 --ld-window-kb 500 --ld-window-r2 0.0 --ld-snp-list mysnplist.txt</code>
+
+          This command assumes the presence of a file named <em>mysnplist.txt</em>, which contains a series of rows like the example below:<br>
+          <code>
+            16:53842908_G/A
+            16:53797908_C/G
+            16:53809247_G/A
+          </code>
+        </dd>
+
+        <dt><b>Preparing the LD output file for use with LocusZoom.js</b></dt>
+        <dd>
+          As of this writing, the desired LD functionality requires PLINK 1.9.x (and is not yet available in newer versions)
+          Unfortunately, PLINK's default output format is not compatible with tabix, for historical reasons.
+          Transform to a format readable by LocusZoom via the following sequence of commands.
+          <code>cat plink.ld | tail -n+2 | sed 's/^[[:space:]]*//g' | sed 's/[[:space:]]*$//g' | tr -s ' ' '\t' | sort -k4,4 -k5,5n | bgzip > plink.ld.tab.gz && tabix  -s4 -b5 -e5 plink.ld.tab.gz</code>
+        </dd>
+
+        <dt><b>I don't use PLINK; how should my file be formatted?</b></dt>
+        <dd>
+          A custom LD file should be tab-delimited. It should specify a reference variant ("SNP_A") and LD for all others relative to that variant ("SNP_B"). The first two rows will look like the following example, taken from actual PLINK output:
+          <pre>
+          CHR_A&#9;BP_A&#9;SNP_A&#9;CHR_B&#9;BP_B&#9;SNP_B&#9;R2<br>
+          22&#9;37470224&#9;22:37470224_T/C&#9;22&#9;37370297&#9;22:37370297_T/C&#9;0.000178517
+          </pre>
+
+          <br><em>Note: pre-calculated LD files can easily become very large. We recommend only outputting LD relative to a few target reference variants at a time.</em>
+        </dd>
+      </dl>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      "use strict";
+
+      const gwasParser = LzParsers.makeGWASParser({
+          // 1-based column indices. The values below match the harmonized format output by my.locuszoom.org
+          chrom_col: 1,
+          pos_col: 2,
+          ref_col: 4,
+          alt_col: 5,
+          pvalue_col: 6,
+          is_neg_log_pvalue: true,
+          beta_col: 7,
+          stderr_beta_col: 8
+      });
+      const bedParser = LzParsers.makeBed12Parser({normalize: true});
+      const ldParser = LzParsers.makePlinkLdParser({normalize: true});
+
+      const apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+      const data_sources = new LocusZoom.DataSources()
+          .add("assoc", ["TabixUrlSource", {
+              // Courtesy of https://www.ncbi.nlm.nih.gov/pubmed/25673413  - As harmonized in https://my.locuszoom.org/gwas/236887/
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/gwas_giant-bmi_meta_women-only.gz',
+              parser_func: gwasParser,
+              overfetch: 0,
+          }])
+          .add("ld", ["UserTabixLD", {
+              // Fetch an LD file with just 3 possible refvars. More limited than an LD server, but able to use LD from a custom population.
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/plink.ld.tab.gz',
+              parser_func: ldParser,
+          }])
+          // Recombination rate is a standard dataset. Note that each dataset is fetched independently- we can mix built-in public APIs with tabix data when drawing the plot
+          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+          .add("intervals", ["TabixUrlSource", {
+              // This annotation track is courtesy of the CMDGA: https://cmdga.org/annotations/DSR953RQL/
+              url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/DFF622JQK.bed.bgz',
+              parser_func: bedParser,
+              overfetch: 0.25,
+          }])
+          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+          .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
+
+      // Get the standard association plot layout from LocusZoom's built-in layouts
+      var stateUrlMapping = { chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
+      // Fetch initial position from the URL, or use some defaults
+      var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
+      if (!Object.keys(initialState).length) {
+          initialState = { chr: 16, start: 53609247, end: 54009247 };
+      }
+      const layout = LocusZoom.Layouts.get("plot", "standard_association", {
+          state: initialState,
+          panels: [
+              LocusZoom.Layouts.get('panel', 'association', { title: { text: "GIANT BMI meta-analysis (women only)" }}),
+              LocusZoom.Layouts.get('panel', 'bed_intervals', {title: { text: "Accessible chromatin (ChIP - Pancreatic Islets)" }}),
+              LocusZoom.Layouts.get('panel', 'genes'),
+          ],
+      });
+
+      // Generate the LocusZoom plot, and reflect the initial plot state in url
+      window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+
+      // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+      //   a previously viewed region)
+      LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+      LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    </script>
+  </body>
+</html>

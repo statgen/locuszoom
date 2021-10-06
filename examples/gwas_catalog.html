@@ -85,7 +85,7 @@
        */
       var apiBase = "//portaldev.sph.umich.edu/api/v1/";
       var data_sources = new LocusZoom.DataSources()
-          .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", source: 45, id_field: "variant" }])
+          .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", source: 45 }])
           .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', population: 'ALL' }])
           .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
           .add("catalog", ["GwasCatalogLZ", { url: apiBase + 'annotation/gwascatalog/results/' }])
@@ -96,7 +96,7 @@
         Define and render the plot
        */
       // Fetch custom layout defined for usage with credible sets
-      var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+      var stateUrlMapping = {chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
       // Fetch initial position from the URL, or use some defaults
       var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {

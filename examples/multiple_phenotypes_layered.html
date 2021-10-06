@@ -104,7 +104,7 @@
         { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 30 }
     ];
     phenos.forEach(function(pheno){
-        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/",  source: pheno.study_id, id_field: "variant" }]);
+        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/",  source: pheno.study_id }]);
         var association_data_layer_mods = {
             join_options: [],
             id: "associationpvalues_" + pheno.namespace,

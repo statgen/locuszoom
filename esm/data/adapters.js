@@ -34,9 +34,7 @@
 
 import {BaseUrlAdapter} from 'undercomplicate';
 
-
-const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
-
+import {parseMarker} from '../helpers/parse';
 
 // NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
 //  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
@@ -424,12 +422,12 @@ class LDServer extends BaseUMAdapter {
 
         // Above, we compared the ldrefvar to the assoc data. But for talking to the LD server,
         //   the variant fields must be normalized to a specific format. All later LD operations will use that format.
-        const match = refvar && refvar.match(REGEX_MARKER);
+        const match = parseMarker(refvar, true);
         if (!match) {
             throw new Error('Could not request LD for a missing or incomplete marker format');
         }
 
-        const [_, chrom, pos, ref, alt] = match;
+        const [chrom, pos, ref, alt] = match;
         // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
         //  a partial match at most leaves room for potential future features.
         refvar = `${chrom}:${pos}`; // FIXME: is this a server request that we can skip?
@@ -439,7 +437,7 @@ class LDServer extends BaseUMAdapter {
 
         const coord = +pos;
         // Last step: sanity check the proposed reference variant. Is it inside the view region? If not, we're probably
-        //  remembering a user choice from before drag/view change. LD should be relative to something nearby.
+        //  remembering a user choice from before user jumped to a new region. LD should be relative to something nearby.
         if ((coord && state.ldrefvar && state.chr) && (chrom !== state.chr || coord < state.start || coord > state.end)) {
             // Rerun this method, after clearing out the proposed reference variant. NOTE: Adapter call receives a
             //   *copy* of plot.state, so wiping here doesn't remove the original value.
@@ -508,7 +506,7 @@ class LDServer extends BaseUMAdapter {
     }
 
     _performRequest(options) {
-        // Skip request if this one depends on other data, in a region with no data
+        // Skip request if this one depends on other data, and we are in a region with no data
         if (options._skip_request) {
             return Promise.resolve([]);
         }

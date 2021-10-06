@@ -543,10 +543,10 @@ function install (LocusZoom) {
         // Choose an appropriate color scheme based on the number of items in the track, and whether or not we are
         //  using explicitly provided itemRgb information
         _makeColorScheme(category_info) {
-            // If at least one element has an explicit itemRgb, assume the entire dataset has colors
+            // If at least one element has an explicit itemRgb, assume the entire dataset has colors. BED intervals require rgb triplets,so assume that colors will always be "r,g,b" format.
             const has_explicit_colors = category_info.find((item) => item[2]);
             if (has_explicit_colors) {
-                return category_info.map((item) => item[2]);
+                return category_info.map((item) => to_rgb({}, item[2]));
             }
 
             // Use a set of color schemes for common 15, 18, or 25 state models, as specified from:
@@ -612,7 +612,9 @@ function install (LocusZoom) {
 
     /**
      * (**extension**) A data layer with some preconfigured options for intervals display. This example was designed for chromHMM output,
-     *   in which various states are assigned numeric state IDs and (<= as many) text state names
+     *   in which various states are assigned numeric state IDs and (<= as many) text state names.
+     *
+     *  This layout is deprecated; most usages would be better served by the bed_intervals_layer layout instead.
      * @alias module:LocusZoom_Layouts~intervals_layer
      * @type data_layer
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
@@ -665,8 +667,31 @@ function install (LocusZoom) {
         tooltip: intervals_tooltip_layout,
     };
 
+
     /**
-     * (**extension**) A panel containing an intervals data layer, eg for BED tracks
+     * (**extension**) A data layer with some preconfigured options for intervals display. This example was designed for standard BED3+ files and the field names emitted by the LzParsers extension.
+     * @alias module:LocusZoom_Layouts~bed_intervals_layer
+     * @type data_layer
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
+    const bed_intervals_layer_layout = LocusZoom.Layouts.merge({
+        id_field: '{{intervals:chromStart}}_{{intervals:chromEnd}}_{{intervals:name}}',
+        start_field: 'intervals:chromStart',
+        end_field: 'intervals:chromEnd',
+        track_split_field: 'intervals:name',
+        track_label_field: 'intervals:name',
+        split_tracks: true,
+        always_hide_legend: false,
+        tooltip: LocusZoom.Layouts.merge({
+            html: `{{intervals:name|htmlescape}}<br>{{intervals:chromStart|htmlescape}}-{{intervals:chromEnd|htmlescape}}
+{{#if intervals:score}}<br>Score: {{intervals:score|htmlescape}}{{/if}}
+`,
+        }, intervals_tooltip_layout),
+    }, intervals_layer_layout);
+
+
+    /**
+     * (**extension**) A panel containing an intervals data layer, eg for BED tracks. This is a legacy layout whose field names were specific to one partner site.
      * @alias module:LocusZoom_Layouts~intervals
      * @type panel
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
@@ -702,8 +727,21 @@ function install (LocusZoom) {
     };
 
     /**
+     * (**extension**) A panel containing an intervals data layer, eg for BED tracks. These field names match those returned by the LzParsers extension.
+     * @alias module:LocusZoom_Layouts~bed_intervals
+     * @type panel
+     * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
+     */
+    const bed_intervals_panel_layout = LocusZoom.Layouts.merge({
+        // Normal BED tracks show the panel legend in collapsed mode!
+        min_height: 120,
+        height: 120,
+        data_layers: [bed_intervals_layer_layout],
+    }, intervals_panel_layout);
+
+    /**
      * (**extension**) A plot layout that shows association summary statistics, genes, and interval data. This example assumes
-     *  chromHMM data. (see panel layout)
+     *  chromHMM data. (see panel layout) Few people will use the full intervals plot layout directly outside of an example.
      * @alias module:LocusZoom_Layouts~interval_association
      * @type plot
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
@@ -717,7 +755,6 @@ function install (LocusZoom) {
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association'),
         panels: [
             LocusZoom.Layouts.get('panel', 'association'),
-            LocusZoom.Layouts.get('panel', 'association'),
             LocusZoom.Layouts.merge({ min_height: 120, height: 120 }, intervals_panel_layout),
             LocusZoom.Layouts.get('panel', 'genes'),
         ],
@@ -728,7 +765,9 @@ function install (LocusZoom) {
 
     LocusZoom.Layouts.add('tooltip', 'standard_intervals', intervals_tooltip_layout);
     LocusZoom.Layouts.add('data_layer', 'intervals', intervals_layer_layout);
+    LocusZoom.Layouts.add('data_layer', 'bed_intervals', bed_intervals_layer_layout);
     LocusZoom.Layouts.add('panel', 'intervals', intervals_panel_layout);
+    LocusZoom.Layouts.add('panel', 'bed_intervals', bed_intervals_panel_layout);
     LocusZoom.Layouts.add('plot', 'interval_association', intervals_plot_layout);
 
     LocusZoom.ScaleFunctions.add('to_rgb', to_rgb);
