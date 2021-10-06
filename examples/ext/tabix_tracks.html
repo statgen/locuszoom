@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
-    <!-- LocusZoom plugins (additional functionality) -->
+    <!-- LocusZoom plugins (additional functionality). Note that loading tabix before parsers allows us to register additional useful functionality. -->
     <script type="application/javascript" src="../../dist/ext/lz-dynamic-urls.min.js"></script>
-    <script type="application/javascript" src="../../dist/ext/lz-parsers.min.js"></script>
     <script type="application/javascript" src="../../dist/ext/lz-tabix-source.min.js"></script>
+    <script type="application/javascript" src="../../dist/ext/lz-parsers.min.js"></script>
     <script type="application/javascript" src="../../dist/ext/lz-intervals-track.min.js"></script>
 
     <title>LocusZoom.js ~ Tabix Tracks</title>
@@ -186,6 +186,7 @@
           stderr_beta_col: 8
       });
       const bedParser = LzParsers.makeBed12Parser({normalize: true});
+      const ldParser = LzParsers.makePlinkLdParser({normalize: true});
 
       const apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       const data_sources = new LocusZoom.DataSources()
@@ -194,7 +195,10 @@
               parser_func: gwasParser,
               overfetch: 0,
           }])
-          .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
+          .add("ld", ["UserTabixLD", {
+              url_data:  '../data/tabix-demo/plink.ld.tab.gz',
+              parser_func: ldParser,
+          }])
           .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
           .add("intervals", ["TabixUrlSource", {
               url_data:  '../data/tabix-demo/DFF622JQK.bed.bgz',

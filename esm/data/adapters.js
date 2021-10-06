@@ -506,7 +506,7 @@ class LDServer extends BaseUMAdapter {
     }
 
     _performRequest(options) {
-        // Skip request if this one depends on other data, in a region with no data
+        // Skip request if this one depends on other data, and we are in a region with no data
         if (options._skip_request) {
             return Promise.resolve([]);
         }
