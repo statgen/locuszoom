@@ -18,10 +18,10 @@ import * as d3 from 'd3';
  * @param {*} parameters.else  The value to return if the input value does not match the field value. Optional. If not
  *   defined this scale function will return null (or value of null_value parameter, if defined) when input value fails
  *   to match field_value.
- * @param {*} input value
+ * @param {*} value value
  */
-const if_value = (parameters, input) => {
-    if (typeof input == 'undefined' || parameters.field_value !== input) {
+const if_value = (parameters, value) => {
+    if (typeof value == 'undefined' || parameters.field_value !== value) {
         if (typeof parameters.else != 'undefined') {
             return parameters.else;
         } else {
@@ -44,17 +44,17 @@ const if_value = (parameters, input) => {
  *   equal length to breaks parameter. Each entry n represents the value to return if the input value is greater than
  *   or equal to break n and less than or equal to break n+1 (or break n+1 doesn't exist).
  * @param {*} parameters.null_value
- * @param {*} input value
+ * @param {*} value value
  * @returns {*}
  */
-const numerical_bin = (parameters, input) => {
+const numerical_bin = (parameters, value) => {
     const breaks = parameters.breaks || [];
     const values = parameters.values || [];
-    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+    if (typeof value == 'undefined' || value === null || isNaN(+value)) {
         return (parameters.null_value ? parameters.null_value : null);
     }
     const threshold = breaks.reduce(function (prev, curr) {
-        if (+input < prev || (+input >= prev && +input < curr)) {
+        if (+value < prev || (+value >= prev && +value < curr)) {
             return prev;
         } else {
             return curr;
@@ -91,6 +91,7 @@ const categorical_bin = (parameters, value) => {
  *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
  *
  *  See also: stable_choice.
+ * @function ordinal_cycle
  *  @param {Object} parameters
  *  @param {Array} parameters.values A list of option values
  * @return {*}
@@ -114,6 +115,9 @@ const ordinal_cycle = (parameters, value, index) => {
  *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
+ *
+ * @function stable_choice
+ *
  * @param parameters
  * @param {Array} [parameters.values] A list of options to choose from
  * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
@@ -167,19 +171,19 @@ let stable_choice = (parameters, value, index) => {
  *   colors, shapes, etc.
  * @parameters {*} parameters.null_value
  */
-const interpolate = (parameters, input) => {
+const interpolate = (parameters, value) => {
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
     var nullval = (parameters.null_value ? parameters.null_value : null);
     if (breaks.length < 2 || breaks.length !== values.length) {
         return nullval;
     }
-    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+    if (typeof value == 'undefined' || value === null || isNaN(+value)) {
         return nullval;
     }
-    if (+input <= parameters.breaks[0]) {
+    if (+value <= parameters.breaks[0]) {
         return values[0];
-    } else if (+input >= parameters.breaks[parameters.breaks.length - 1]) {
+    } else if (+value >= parameters.breaks[parameters.breaks.length - 1]) {
         return values[breaks.length - 1];
     } else {
         var upper_idx = null;
@@ -187,14 +191,14 @@ const interpolate = (parameters, input) => {
             if (!idx) {
                 return;
             }
-            if (breaks[idx - 1] <= +input && breaks[idx] >= +input) {
+            if (breaks[idx - 1] <= +value && breaks[idx] >= +value) {
                 upper_idx = idx;
             }
         });
         if (upper_idx === null) {
             return nullval;
         }
-        const normalized_input = (+input - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
+        const normalized_input = (+value - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
         if (!isFinite(normalized_input)) {
             return nullval;
         }
@@ -203,4 +207,51 @@ const interpolate = (parameters, input) => {
 };
 
 
-export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
+/**
+ * Calculate the effect direction based on beta, or the combination of beta and standard error.
+ *   Typically used with phewas plots, to show point shape based on the beta and stderr_beta fields.
+ *
+ * @function effect_direction
+ * @param parameters
+ * @param parameters.'+' The value to return if the effect direction is positive
+ * @param parameters.'-' The value to return if the effect direction is positive
+ * @param parameters.beta_field The name of the field containing beta
+ * @param parameters.stderr_beta_field The name of the field containing stderr_beta
+ * @param {Object} input This function should receive the entire datum object, rather than one single field
+ * @returns {null}
+ */
+function effect_direction(parameters, input) {
+    if (input === undefined) {
+        return null;
+    }
+
+    const { beta_field, stderr_beta_field, '+': plus_result = null, '-': neg_result = null } = parameters;
+
+    if (!beta_field || !stderr_beta_field) {
+        throw new Error(`effect_direction must specify how to find required 'beta' and 'stderr_beta' fields`);
+    }
+
+    const beta_val = input[beta_field];
+    const se_val = input[stderr_beta_field];
+
+    if (beta_val !== undefined) {
+        if (se_val !== undefined) {
+            if ((beta_val - 2 * se_val) > 0) {
+                return plus_result;
+            } else if ((beta_val + 2 * se_val) < 0) {
+                return neg_result || null;
+            }
+        } else {
+            if (beta_val > 0) {
+                return plus_result;
+            } else if (beta_val < 0) {
+                return neg_result;
+            }
+        }
+    }
+    // Note: The original PheWeb implementation allowed odds ratio in place of beta/se. LZ core is a bit more rigid
+    //   about expected data formats for layouts.
+    return null;
+}
+
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle, effect_direction };

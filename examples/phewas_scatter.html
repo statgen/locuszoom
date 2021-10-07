@@ -239,13 +239,14 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
         LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].tooltip.html', [
             "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
             "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
-            "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>",
-
+            "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}",
+            "{{#if phewas:beta|is_numeric}}<br><strong>&beta;:</strong> {{phewas:beta|scinotation|htmlescape}}{{/if}}",
+            "{{#if phewas:se|is_numeric}}<br><strong>SE (&beta;):</strong> {{phewas:se|scinotation|htmlescape}}{{/if}}",
             "{{#if phewas:study}}",
-              "<strong>Study:</strong> {{phewas:study|htmlescape}}<br>",
+              "<br><br></b><strong>Study:</strong> {{phewas:study|htmlescape}}",
             "{{/if}}",
             "{{#if phewas:pmid}} {{#if phewas:description}}",
-                '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
+                '<br><strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
             "{{/if}} {{/if}}"
         ].join(""));
 

@@ -66,21 +66,21 @@
 
       <div id="lz-plot" class="lz-container-responsive"></div>
 
-      <h3>Data formatting guidelines</h3>
+      <h3 id="data-format-instructions">Data formatting guidelines</h3>
       <p>
         Below are some tips on formatting your data files. If you are using a static file storage provider like Amazon
         S3 or Google Cloud Storage, note that you may need to <a href="https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS">configure some additional request headers</a>
         before Tabix will work properly.
       </p>
 
-      <h4>GWAS Summary statistics</h4>
+      <h4 id="data-format-gwas">GWAS Summary statistics</h4>
       <p>
         There is no single standard for GWAS summary statistics. As such, the LocusZoom.js parser exposes many sets of
         options for how to read the data. The general instructions from <a href="https://my.locuszoom.org/about/#prepare-data">my.locuszoom.org</a>
         are a useful starting point, since the same basic parsing logic is shared across multiple tools.
       </p>
 
-      <h4>BED files</h4>
+      <h4 id="data-format-bed">BED files</h4>
       <p>
         BED files are a <a href="https://genome.ucsc.edu/FAQ/FAQformat.html#format1">standard format</a> with 3-12 columns of data.
         The default LocusZoom panel layout for a BED track will use chromosome, position, line name, and (optionally) color
@@ -95,7 +95,7 @@
         Some BED files will have one or more header rows; in this case, modify the tabix command with: <code>--skip-lines N</code> (where N is the number of headers).
       </p>
 
-      <h4>PLINK LD</h4>
+      <h4 id="data-format-plink">PLINK LD</h4>
       <p>
         Linkage Disequilibrium is an important tool for interpreting LocusZoom.js plots. In order to support viewing any
         region, most LocusZoom.js usages take advantage of the Michigan LD server to calculate region-based LD relative
@@ -120,7 +120,7 @@
           However, genotype VCF files have no single standard for how variants are identified. Some files even use a different variant format for each variant, which makes it hard to write easy copy-and-paste commands that would work widely
           across files. Your file can be transformed to match the tutorial assumptions via common tool and the command below:
 
-          <code>bcftools annotate -Oz --set-id '%CHROM\:%POS\_%REF\/%ALT' original_vcf.gz &gt; vcfname_epacts_id_format.gz</code>
+          <code>bcftools annotate -Oz --set-id '%CHROM\:%POS\_%REF\/%ALT' original_vcf.gz &gt; vcfname_epacts_id_format.gz</code><br>
 
           <em>In some rare cases (such as <a href="https://www.internationalgenome.org/faq/why-are-there-duplicate-calls-in-the-phase-3-call-set">1000G phase 3</a>), data preparation errors may result in duplicate entries for the same variant. This can break PLINK. A command such as the one below can be used to find these duplicates:<br>
             <code>zcat < vcfname_epacts_id_format.gz | cut -f3 | sort | uniq -d</code><br>
@@ -135,11 +135,9 @@
           <code>plink-1.9 --r2 --vcf vcfname_epacts_id_format.gz --ld-window 499999 --ld-window-kb 500 --ld-window-r2 0.0 --ld-snp-list mysnplist.txt</code>
 
           This command assumes the presence of a file named <em>mysnplist.txt</em>, which contains a series of rows like the example below:<br>
-          <code>
-            16:53842908_G/A
-            16:53797908_C/G
-            16:53809247_G/A
-          </code>
+          <pre><code>16:53842908_G/A
+16:53797908_C/G
+16:53809247_G/A</code></pre>
         </dd>
 
         <dt><b>Preparing the LD output file for use with LocusZoom.js</b></dt>
@@ -153,12 +151,10 @@
         <dt><b>I don't use PLINK; how should my file be formatted?</b></dt>
         <dd>
           A custom LD file should be tab-delimited. It should specify a reference variant ("SNP_A") and LD for all others relative to that variant ("SNP_B"). The first two rows will look like the following example, taken from actual PLINK output:
-          <pre>
-          CHR_A&#9;BP_A&#9;SNP_A&#9;CHR_B&#9;BP_B&#9;SNP_B&#9;R2<br>
-          22&#9;37470224&#9;22:37470224_T/C&#9;22&#9;37370297&#9;22:37370297_T/C&#9;0.000178517
-          </pre>
+          <pre>CHR_A&#9;BP_A&#9;SNP_A&#9;CHR_B&#9;BP_B&#9;SNP_B&#9;R2
+22&#9;37470224&#9;22:37470224_T/C&#9;22&#9;37370297&#9;22:37370297_T/C&#9;0.000178517</pre>
 
-          <br><em>Note: pre-calculated LD files can easily become very large. We recommend only outputting LD relative to a few target reference variants at a time.</em>
+          <em>Note: pre-calculated LD files can easily become very large. We recommend only outputting LD relative to a few target reference variants at a time.</em>
         </dd>
       </dl>
 

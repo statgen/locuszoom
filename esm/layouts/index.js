@@ -337,7 +337,19 @@ const phewas_pvalues_layer = {
     data_operations: [
         { type: 'fetch', from: ['phewas'] },
     ],
-    point_shape: 'circle',
+    point_shape: [
+        {
+            scale_function: 'effect_direction',
+            parameters: {
+                '+': 'triangle',
+                '-': 'triangledown',
+                // The scale function receives the entire datum object, so it needs to be told where to find individual fields
+                beta_field: 'phewas:beta',
+                stderr_beta_field: 'phewas:se',
+            },
+        },
+        'circle',
+    ],
     point_size: 70,
     tooltip_positioning: 'vertical',
     id_field: '{{phewas:trait_group}}_{{phewas:trait_label}}',
@@ -367,11 +379,11 @@ const phewas_pvalues_layer = {
         closable: true,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: [
-            '<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>',
-            '<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>',
-            '<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>',
-        ].join(''),
+        html: `<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>
+<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>
+<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}
+{{#if phewas:beta|is_numeric}}<br><strong>&beta;:</strong> {{phewas:beta|scinotation|htmlescape}}<br>{{/if}}
+{{#if phewas:se|is_numeric}}<strong>SE (&beta;):</strong> {{phewas:se|scinotation|htmlescape}}{{/if}}`,
     },
     behaviors: {
         onmouseover: [
