@@ -7,8 +7,6 @@ import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
 
 describe('LocusZoom.Plot', function() {
-    // Tests
-
     describe('Geometry and Panels', function() {
         beforeEach(function() {
             const layout = {
@@ -99,6 +97,22 @@ describe('LocusZoom.Plot', function() {
 
             assert.equal(panelA.layout.height, 50, 'Panel A does not shrink below the minimum size');
             assert.equal(panelB.layout.height, 100, 'Panel B does not shrink below the minimum size');
+        });
+
+        it.skip('resizes to the full container size when toggling display:none --> visible', function () {
+            // TODO: JSDOM doesn't implement intersectionobserver, making it hard to unit test this feature without extensive mocking.
+            const plot = this.plot;
+            plot.layout.responsive_resize = true;
+            plot.layout.min_width = 50;
+            plot.initialize();
+
+            d3.select('body').style('display', 'none');
+            plot.rescaleSVG();
+            assert.equal(plot.layout.width, 50, 'When parent element is hidden, plot renders to the minimum dimensions');
+
+            d3.select('body').style('display', 'block');
+            plot.rescaleSVG();
+            assert.equal(plot.layout.width, 100, 'When parent element is shown, plot renders to the desired width');
         });
 
         it('should enforce consistent data layer widths and x-offsets across x-linked panels', function() {

@@ -1119,16 +1119,17 @@ class Plot {
             this.trackExternalListener(window, 'resize', resize_listener);
 
             // Many libraries collapse/hide tab widgets using display:none, which doesn't trigger the resize listener
-            // To fix a plot display issue, use a newer browser feature. IntersectionObservers are (in theory)
-            //  cleaned up when all nodes referencing them are removed, without a separate window-level listener cleanup step
             //   High threshold: Don't fire listeners on every 1px change, but allow this to work if the plot position is a bit cockeyed
-            const options = { root: document.documentElement, threshold: 0.9 };
-            const observer = new IntersectionObserver((entries, observer) => {
-                if (entries.some((entry) => entry.intersectionRatio > 0)) {
-                    this.rescaleSVG();
-                }
-            }, options);
-            observer.observe(this.container);
+            if (typeof IntersectionObserver !== 'undefined') { // don't do this in old browsers
+                const options = { root: document.documentElement, threshold: 0.9 };
+                const observer = new IntersectionObserver((entries, observer) => {
+                    if (entries.some((entry) => entry.intersectionRatio > 0)) {
+                        this.rescaleSVG();
+                    }
+                }, options);
+                // IntersectionObservers will be cleaned up when DOM node removed; no need to track them for manual cleanup
+                observer.observe(this.container);
+            }
 
             // Forcing one additional setDimensions() call after the page is loaded clears up
             // any disagreements between the initial layout and the loaded responsive container's size
