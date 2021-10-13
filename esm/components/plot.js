@@ -965,7 +965,6 @@ class Plot {
      * @returns {Plot}
      */
     initializeLayout() {
-
         // Sanity check layout values
         if (isNaN(this.layout.width) || this.layout.width <= 0) {
             throw new Error('Plot layout parameter `width` must be a positive number');
@@ -974,24 +973,10 @@ class Plot {
         // Backwards compatible check: there was previously a third option. Anything truthy should thus act as "responsive_resize: true"
         this.layout.responsive_resize = !!this.layout.responsive_resize;
 
-        // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
-        if (this.layout.responsive_resize) {
-            const resize_listener = () => this.rescaleSVG();
-            window.addEventListener('resize', resize_listener);
-            this.trackExternalListener(window, 'resize', resize_listener);
-
-            // Forcing one additional setDimensions() call after the page is loaded clears up
-            // any disagreements between the initial layout and the loaded responsive container's size
-            const load_listener = () => this.setDimensions();
-            window.addEventListener('load', load_listener);
-            this.trackExternalListener(window, 'load', load_listener);
-        }
-
         // Add panels
         this.layout.panels.forEach((panel_layout) => {
             this.addPanel(panel_layout);
         });
-
         return this;
     }
 
@@ -1127,6 +1112,30 @@ class Plot {
         // Ensure proper responsive class is present on the containing node if called for
         if (this.layout.responsive_resize) {
             d3.select(this.container).classed('lz-container-responsive', true);
+
+            // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
+            const resize_listener = () => this.rescaleSVG();
+            window.addEventListener('resize', resize_listener);
+            this.trackExternalListener(window, 'resize', resize_listener);
+
+            // Many libraries collapse/hide tab widgets using display:none, which doesn't trigger the resize listener
+            //   High threshold: Don't fire listeners on every 1px change, but allow this to work if the plot position is a bit cockeyed
+            if (typeof IntersectionObserver !== 'undefined') { // don't do this in old browsers
+                const options = { root: document.documentElement, threshold: 0.9 };
+                const observer = new IntersectionObserver((entries, observer) => {
+                    if (entries.some((entry) => entry.intersectionRatio > 0)) {
+                        this.rescaleSVG();
+                    }
+                }, options);
+                // IntersectionObservers will be cleaned up when DOM node removed; no need to track them for manual cleanup
+                observer.observe(this.container);
+            }
+
+            // Forcing one additional setDimensions() call after the page is loaded clears up
+            // any disagreements between the initial layout and the loaded responsive container's size
+            const load_listener = () => this.setDimensions();
+            window.addEventListener('load', load_listener);
+            this.trackExternalListener(window, 'load', load_listener);
         }
 
         // Create an element/layer for containing mouse guides
