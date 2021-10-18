@@ -682,6 +682,24 @@ function install (LocusZoom) {
         track_label_field: 'intervals:name',
         split_tracks: true,
         always_hide_legend: false,
+        color: [
+            {
+                // If present, an explicit color field will override any other option (and be used to auto-generate legend)
+                field: 'intervals:itemRgb',
+                scale_function: 'to_rgb',
+            },
+            {
+                // TODO: Consider changing this to stable_choice in the future, for more stable coloring
+                field: 'intervals:name',
+                scale_function: 'categorical_bin',
+                parameters: {
+                    // Placeholder. Empty categories and values will automatically be filled in when new data loads.
+                    categories: [],
+                    values: [],
+                    null_value: '#B8B8B8',
+                },
+            },
+        ],
         tooltip: LocusZoom.Layouts.merge({
             html: `{{intervals:name|htmlescape}}<br>{{intervals:chromStart|htmlescape}}-{{intervals:chromEnd|htmlescape}}
 {{#if intervals:score}}<br>Score: {{intervals:score|htmlescape}}{{/if}}
