@@ -55,7 +55,7 @@
         // TODO: Write a real data source to fetch and parse data from an API in the future. For now this fetches a
         //  JSON file with a sample payload.
         var data_sources = new LocusZoom.DataSources()
-          .add("phewas", ["PheWASLZ", { url: "data/phewas_forest.json", build: ["GRCh37"] } ]);
+          .add("phewas", ["PheWASLZ", { url: "../data/phewas_forest.json", build: ["GRCh37"] } ]);
 
         // Define a reusable layout, and then retrieve it so that the namespaces get filled in
         LocusZoom.Layouts.add("plot", "phewas_forest", {

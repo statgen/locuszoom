@@ -431,7 +431,7 @@ function install (LocusZoom) {
                     .attr('x', 0)
                     .attr('y', (d) => (d * height))
                     .attr('width', this.parent.layout.cliparea.width)
-                    .attr('height', height - this.layout.track_vertical_spacing);
+                    .attr('height', Math.max(height - this.layout.track_vertical_spacing, 1));
             }
             status_nodes.exit()
                 .remove();
@@ -446,7 +446,7 @@ function install (LocusZoom) {
                 .attr('id', (d) => this.getElementId(d))
                 .attr('x', (d) => d[XCS])
                 .attr('y', (d) => d[YCS])
-                .attr('width', (d) => d[XCE] - d[XCS])
+                .attr('width', (d) => Math.max(d[XCE] - d[XCS], 1))
                 .attr('height', this.layout.track_height)
                 .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
                 .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i));

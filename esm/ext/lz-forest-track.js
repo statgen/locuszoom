@@ -121,8 +121,10 @@ function install (LocusZoom) {
                     return `translate(${x}, ${y})`;
                 };
                 const ci_width = (d) => {
-                    return this.parent[x_scale](d[this.layout.confidence_intervals.end_field])
-                        - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
+                    const {start_field, end_field} = this.layout.confidence_intervals;
+                    const scale = this.parent[x_scale];
+                    const result =  scale(d[end_field]) - scale(d[start_field]);
+                    return Math.max(result, 1);
                 };
                 const ci_height = 1;
                 // Create confidence interval rect elements
@@ -133,7 +135,7 @@ function install (LocusZoom) {
                     .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`)
                     .merge(ci_selection)
                     .attr('transform', ci_transform)
-                    .attr('width', ci_width)
+                    .attr('width', ci_width) // Math.max(ci_width, 1))
                     .attr('height', ci_height);
 
                 // Remove old elements as needed
