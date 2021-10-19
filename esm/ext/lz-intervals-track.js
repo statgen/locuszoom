@@ -603,7 +603,6 @@ function install (LocusZoom) {
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      */
     const intervals_tooltip_layout = {
-        namespace: { 'intervals': 'intervals' },
         closable: false,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
@@ -701,9 +700,10 @@ function install (LocusZoom) {
             },
         ],
         tooltip: LocusZoom.Layouts.merge({
-            html: `{{intervals:name|htmlescape}}<br>{{intervals:chromStart|htmlescape}}-{{intervals:chromEnd|htmlescape}}
-{{#if intervals:score}}<br>Score: {{intervals:score|htmlescape}}{{/if}}
-`,
+            html: `<strong>Group: </strong>{{intervals:name|htmlescape}}<br>
+<strong>Region: </strong>{{intervals:chromStart|htmlescape}}-{{intervals:chromEnd|htmlescape}}
+{{#if intervals:score}}<br>
+<strong>Score:</strong> {{intervals:score|htmlescape}}{{/if}}`,
         }, intervals_tooltip_layout),
     }, intervals_layer_layout);
 
