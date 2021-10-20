@@ -91,7 +91,7 @@
 
       <p>
         The following command is helpful for preparing BED files for use in the browser:
-        <code>$ sort -k1,1 -k2,2n input.bed | bgzip > input-sorted.gff.gz && tabix -p bed input-sorted.gff.gz</code><br>
+        <code>$ sort -k1,1 -k2,2n input.bed | bgzip &gt; input-sorted.bed.gz && tabix -p bed input-sorted.bed.gz</code><br>
         Some BED files will have one or more header rows; in this case, modify the tabix command with: <code>--skip-lines N</code> (where N is the number of headers).
       </p>
 
@@ -117,7 +117,8 @@
         <dt><b>Preparing genotype files: harmonizing ID formats</b></dt>
         <dd>
           LocusZoom typically calculates LD relative to a variant by EPACTS-format specifier (chrom:pos_ref/alt).
-          However, genotype VCF files have no single standard for how variants are identified. Some files even use a different variant format for each variant, which makes it hard to write easy copy-and-paste commands that would work widely
+          However, genotype VCF files have no single standard for how variants are identified, which can make it hard to match the requested variant to the actual data.
+          Some files are not even internally consistent, which makes it hard to write easy copy-and-paste commands that would work widely
           across files. Your file can be transformed to match the tutorial assumptions via common tool and the command below:
 
           <code>bcftools annotate -Oz --set-id '%CHROM\:%POS\_%REF\/%ALT' original_vcf.gz &gt; vcfname_epacts_id_format.gz</code><br>
@@ -126,7 +127,7 @@
             <code>zcat < vcfname_epacts_id_format.gz | cut -f3 | sort | uniq -d</code><br>
             They can then be removed using the following command (check the output carefully before using, because reasons for duplicate lines vary widely):
           </em><br>
-          <code>bcftools norm -Oz --rm-dup all vcfname_epacts_id_format.gz > vcfname_epacts_id_format_rmdups.gz</code>
+          <code>bcftools norm -Oz --rm-dup all vcfname_epacts_id_format.gz &gt; vcfname_epacts_id_format_rmdups.gz</code>
         </dd>
 
         <dt><b>Calculating LD relative to reference variants</b></dt>
@@ -142,10 +143,10 @@
 
         <dt><b>Preparing the LD output file for use with LocusZoom.js</b></dt>
         <dd>
-          As of this writing, the desired LD functionality requires PLINK 1.9.x (and is not yet available in newer versions)
+          As of this writing, this tutorial assumes a "list of SNPs" feature that requires PLINK 1.9.x (and is not yet available in newer versions).
           Unfortunately, PLINK's default output format is not compatible with tabix, for historical reasons.
           Transform to a format readable by LocusZoom via the following sequence of commands.
-          <code>cat plink.ld | tail -n+2 | sed 's/^[[:space:]]*//g' | sed 's/[[:space:]]*$//g' | tr -s ' ' '\t' | sort -k4,4 -k5,5n | bgzip > plink.ld.tab.gz && tabix  -s4 -b5 -e5 plink.ld.tab.gz</code>
+          <code>cat plink.ld | tail -n+2 | sed 's/^[[:space:]]*//g' | sed 's/[[:space:]]*$//g' | tr -s ' ' '\t' | sort -k4,4 -k5,5n | bgzip &gt; plink.ld.tab.gz && tabix  -s4 -b5 -e5 plink.ld.tab.gz</code>
         </dd>
 
         <dt><b>I don't use PLINK; how should my file be formatted?</b></dt>
