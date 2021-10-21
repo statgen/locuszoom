@@ -122,6 +122,21 @@ describe('guessGWAS format detection', () => {
         });
     });
 
+    it('handles gwas catalog (mostly)', function () {
+        const headers = ['chromosome', 'base_pair_location', 'effect_allele', 'other_allele', 'odds_ratio', 'ci_lower', 'ci_upper', 'standard_error', 'p_value'];
+        const data = [['1', '1108138', 'A', 'G', '1.081', '0.8822', '1.325', '0.1038', '0.4517']];
+
+        const actual = guessGWAS(headers, data);
+        assert.deepEqual(actual, {
+            // Note: GWAS catalog format uses ambiguous "effect" semantics, so we don't try to capture ref and alt
+            chrom_col: 1,
+            pos_col: 2,
+            pvalue_col: 9,
+            is_neg_log_pvalue: false,
+            stderr_beta_col: 8,
+        });
+    });
+
     it('handles BOLT-LMM', () => {
         // https://data.broadinstitute.org/alkesgroup/BOLT-LMM/#x1-450008.1
         // This sample drawn from:

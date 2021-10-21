@@ -98,7 +98,7 @@ function findColumn(column_synonyms, header_names, threshold = 2) {
 function getPvalColumn(header_row, data_rows) {
     // TODO: Allow overrides
     const LOGPVALUE_FIELDS = ['neg_log_pvalue', 'log_pvalue', 'log_pval', 'logpvalue'];
-    const PVALUE_FIELDS = ['pvalue', 'p.value', 'p-value', 'pval', 'p_score', 'p'];
+    const PVALUE_FIELDS = ['pvalue', 'p.value', 'p-value', 'pval', 'p_score', 'p', 'p_value'];
 
     let ps;
     const validateP = (col, data, is_log) => { // Validate pvalues
@@ -135,8 +135,8 @@ function getChromPosRefAltColumns(header_row, data_rows) {
     // Returns 1-based column indices, for compatibility with parsers
     // Get from either a marker, or 4 separate columns
     const MARKER_FIELDS = ['snpid', 'marker', 'markerid', 'snpmarker', 'chr:position'];
-    const CHR_FIELDS = ['chrom', 'chr'];
-    const POS_FIELDS = ['position', 'pos', 'begin', 'beg', 'bp', 'end', 'ps'];
+    const CHR_FIELDS = ['chrom', 'chr', 'chromosome'];
+    const POS_FIELDS = ['position', 'pos', 'begin', 'beg', 'bp', 'end', 'ps', 'base_pair_location'];
 
     // TODO: How to handle orienting ref vs effect?
     // Order matters: consider ambiguous field names for ref before alt
@@ -154,21 +154,23 @@ function getChromPosRefAltColumns(header_row, data_rows) {
     //  be found for this function to report a match.
     const headers_marked = header_row.slice();
     const find = [
-        ['chrom_col', CHR_FIELDS],
-        ['pos_col', POS_FIELDS],
-        ['ref_col', REF_FIELDS],
-        ['alt_col', ALT_FIELDS],
+        ['chrom_col', CHR_FIELDS, true],
+        ['pos_col', POS_FIELDS, true],
+        ['ref_col', REF_FIELDS, false],
+        ['alt_col', ALT_FIELDS, false],
     ];
     const config = {};
     for (let i = 0; i < find.length; i++) {
-        const [col_name, choices] = find[i];
+        const [col_name, choices, is_required] = find[i];
         const col = findColumn(choices, headers_marked);
-        if (col === null) {
+        if (col === null && is_required) {
             return null;
         }
-        config[col_name] = col + 1;
-        // Once a column has been assigned, remove it from consideration
-        headers_marked[col] = null;
+        if (col !== null) {
+            config[col_name] = col + 1;
+            // Once a column has been assigned, remove it from consideration
+            headers_marked[col] = null;
+        }
     }
     return config;
 }
@@ -181,7 +183,7 @@ function getChromPosRefAltColumns(header_row, data_rows) {
  */
 function getEffectSizeColumns(header_names, data_rows) {
     const BETA_FIELDS = ['beta', 'effect_size', 'alt_effsize', 'effect'];
-    const STDERR_BETA_FIELDS = ['stderr_beta', 'stderr', 'sebeta', 'effect_size_sd', 'se'];
+    const STDERR_BETA_FIELDS = ['stderr_beta', 'stderr', 'sebeta', 'effect_size_sd', 'se', 'standard_error'];
 
     function validate_numeric(col, data) {
         const cleaned_vals = _missingToNull(data.map((row) => row[col]));
