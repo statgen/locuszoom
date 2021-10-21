@@ -852,7 +852,7 @@ const association_catalog_panel = function () {
                             //  with the top hit of interest
                             { field: 'catalog:trait', operator: '!=', value: null },
                             { field: 'catalog:log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
-                            { field: 'ld:state', operator: '>', value: 0.4 },
+                            { field: 'ld:correlation', operator: '>', value: 0.4 },
                         ],
                         style: {
                             'font-size': '10px',
