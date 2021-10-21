@@ -149,7 +149,7 @@ const association_pvalues_layer = {
         },
         {
             type: 'left_match',
-            name: 'combined',
+            name: 'assoc_plus_ld',
             requires: ['assoc', 'ld'],
             params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
         },
@@ -314,7 +314,7 @@ const association_pvalues_catalog_layer = function () {
     base.data_operations.push({
         type: 'assoc_to_gwas_catalog',
         name: 'assoc_catalog',
-        requires: ['combined', 'catalog'],
+        requires: ['assoc_plus_ld', 'catalog'],
         params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
     });
 
@@ -497,7 +497,7 @@ const annotation_catalog_layer = {
         },
         {
             type: 'assoc_to_gwas_catalog',
-            name: 'combined',
+            name: 'assoc_plus_ld',
             requires: ['assoc', 'catalog'],
             params: ['assoc:position', 'catalog:pos', 'catalog:log_pvalue'],
         },

@@ -169,7 +169,7 @@ function install (LocusZoom) {
                 },
                 {
                     type: 'left_match',
-                    name: 'combined',
+                    name: 'credset_plus_ld',
                     requires: ['credset', 'ld'],  // The credible sets demo wasn't fully moved over to the new data operations system, and as such it is a bit weird
                     params: ['assoc:position', 'ld:position2'],  // FIXME: old LZ used position, because it was less sensitive to format. We'd like to match assoc:variant = ld:variant2, but not every assoc source provides variant data in the way we need. This would need to be fixed via special formatting adjustment later.
                 },
