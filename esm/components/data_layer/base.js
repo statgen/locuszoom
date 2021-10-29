@@ -376,6 +376,7 @@ class BaseDataLayer {
      * A list of operations that should be run when the layout is mutated
      * Typically, these are things done once when a layout is first specified, that would not automatically
      *  update when the layout was changed.
+     * @public
      */
     mutateLayout() {
         // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.

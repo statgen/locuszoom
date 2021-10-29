@@ -859,6 +859,7 @@ class Plot {
      * Plots can change how data is displayed by layout mutations. In rare cases, such as swapping from one source of LD to another,
      *   these layout mutations won't be picked up instantly. This method notifies the plot to recalculate any cached properties,
      *   like data fetching logic, that might depend on initial layout. It does not trigger a re-render by itself.
+     * @public
      */
     mutateLayout() {
         Object.values(this.panels).forEach((panel) => {
