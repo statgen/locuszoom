@@ -9,8 +9,11 @@ import {normalizeMarker} from '../../helpers/parse';
  * Parse the output of plink v1.9 R2 calculations relative to one (or a few) target SNPs.
  * See: https://www.cog-genomics.org/plink/1.9/ld and
  * reformatting commands at https://www.cog-genomics.org/plink/1.9/other
- *
- * @returns {Object} Same column names used by the UM LD Server
+ * @function
+ * @alias module:ext/lz-parsers~makePlinkLdParser
+ * @param {object} options
+ * @param {boolean} [options.normalize=true] Normalize fields to expected datatypes and format; if false, returns raw strings as given in the file
+ * @return {function} A configured parser function that runs on one line of text from an input file
  */
 function makePlinkLdParser({normalize = true} = {}) {
     return (line) => {

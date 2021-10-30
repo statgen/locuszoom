@@ -26,8 +26,11 @@ function _hasNum(value) {
  * NOTE: This original version is aimed at tabix region queries, and carries an implicit assumption that data is the
  *  only thing that will be parsed. It makes no attempt to identify or handle header rows / metadata fields.
  *
+ * @function
+ * @alias module:ext/lz-parsers~makeBed12Parser
  * @param {Boolean} normalize Whether to normalize the output to the format expected by LocusZoom (eg type coercion
  *  for numbers, removing chr chromosome prefixes, and using 1-based and inclusive coordinates instead of 0-based disjoint intervals)
+ * @return function A configured parser function that runs on one line of text from an input file
  */
 function makeBed12Parser({normalize = true} = {}) {
     /*

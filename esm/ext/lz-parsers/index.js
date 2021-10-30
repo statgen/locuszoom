@@ -1,3 +1,26 @@
+/**
+ * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
+ *
+ * This plugin exports helper function, as well as a few optional extra helpers for rendering the plot. The GWAS parsers can be used without registering the plugin.
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-parsers.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, import the helper functions and use them with your layout:
+ *
+ * ```
+ * import { install, makeGWASParser, makeBed12Parser, makePlinkLDParser } from 'locuszoom/esm/ext/lz-parsers';
+ * LocusZoom.use(install);
+ * ```
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_Adapters~UserTabixLD}
+ *
+ * @module ext/lz-parsers
+ */
+
 import { makeBed12Parser } from './bed';
 import { makeGWASParser } from './gwas/parsers';
 import { guessGWAS } from './gwas/sniffers';
@@ -11,6 +34,12 @@ function install(LocusZoom) {
         const TabixUrlSource = LocusZoom.Adapters.get('TabixUrlSource');
         const LDServer = LocusZoom.Adapters.get('LDServer');
 
+        /**
+         * Load user-provided LD from a tabix file, and filter the returned set of records based on a reference variant. (will attempt to choose a reference variant based on the most significant association variant, if no state.ldrefvar is specified)
+         * @public
+         * @alias module:LocusZoom_Adapters~UserTabixLD
+         * @extends module:LocusZoom_Adapters~TabixUrlSource
+         */
         class UserTabixLD extends TabixUrlSource {
             constructor(config) {
                 if (!config.limit_fields) {
@@ -50,6 +79,7 @@ function install(LocusZoom) {
                 return records.filter((item) => item['variant1'] === options.ld_refvar);
             }
         }
+
 
         LocusZoom.Adapters.add('UserTabixLD', UserTabixLD);
     }

@@ -13,22 +13,24 @@ import {
  * Outputs an object with fields in portal API format.
  *
  * All column options must be provided as 1-indexed column IDs (human-friendly argument values)
- *
- * @param [marker_col]
- * @param [chrom_col]
- * @param [pos_col]
- * @param [ref_col]
- * @param [alt_col]
- * @param [rsid_col]
- * @param pvalue_col
- * @param [beta_col]
- * @param [stderr_beta_col]
- * @param [allele_freq_col]
- * @param [allele_count_col]
- * @param [n_samples_col]
- * @param [is_alt_effect=true]
- * @param [is_neg_log_pvalue=false]
- * @param [delimiter='\t']
+ * @function
+ * @alias module:ext/lz-parsers~makeGWASParser
+ * @param options
+ * @param [options.marker_col] A single identifier that specifies all of chrom, pos, ref, and alt as a single string field. Eg 1:23_A/C
+ * @param [options.chrom_col] Chromosome
+ * @param [options.pos_col] Position
+ * @param [options.ref_col] Reference allele (relative to human reference genome, eg GRCh37 or 38).
+ * @param [options.alt_col] Alt allele. Some programs specify generic A1/A2 instead; it is the job of the user to identify which columns of this GWAS are ref and alt.
+ * @param [options.rsid_col] rsID
+ * @param options.pvalue_col p-value (or -log10p)
+ * @param [options.beta_col]
+ * @param [options.stderr_beta_col]
+ * @param [options.allele_freq_col] Specify allele frequencies directly
+ * @param [options.allele_count_col] Specify allele frequencies in terms of count and n_samples
+ * @param [options.n_samples_col]
+ * @param [options.is_alt_effect=true] Some programs specify beta and frequency information in terms of ref, others alt. Identify effect allele to orient values to the correct allele.
+ * @param [options.is_neg_log_pvalue=false]
+ * @param [options.delimiter='\t'] Since this parser is usually used with tabix data, this is rarely changed (tabix does not accept other delimiters)
  * @return {function(string)} A parser function that can be called on each line of text with the provided options
  */
 function makeGWASParser(

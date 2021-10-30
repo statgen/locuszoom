@@ -213,6 +213,7 @@ function getEffectSizeColumns(header_names, data_rows) {
  * @param {String[]} header_row
  * @param {String[][]} data_rows
  * @param {int} offset Used to convert between 0 and 1-based indexing.
+ * @return {Object|null} Returns null if a complete configuration could not suggested.
  */
 function guessGWAS(header_row, data_rows, offset = 1) {
     // 1. Find a specific set of info: marker OR chr/pos/ref/alt ; pvalue OR log_pvalue
