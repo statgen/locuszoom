@@ -41,6 +41,11 @@ import {parseMarker} from '../helpers/parse';
 //  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
 //  private API methods exist in the base class.
 
+/**
+ * Replaced with the BaseLZAdapter class.
+ * @public
+ * @deprecated
+ */
 class BaseAdapter {
     constructor() {
         throw new Error('The "BaseAdapter" and "BaseApiAdapter" classes have been replaced in LocusZoom 0.14. See migration guide for details.');
@@ -48,15 +53,27 @@ class BaseAdapter {
 }
 
 /**
- * Base class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
+ * Removed class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
  * @extends module:LocusZoom_Adapters~BaseAdapter
+ * @deprecated
  * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
  * @inheritDoc
  */
 class BaseApiAdapter extends BaseAdapter {}
 
 
+/**
+ * @param {object} config
+ * @param [config.cache_enabled=true]
+ * @param [config.cache_size=3]
+ * @param [config.url]
+ * @param [config.prefix_namespace=true] Whether to modify the API response by prepending namespace to each field name.
+ *   Most adapters will do this by default, so that each field is unambiguously defined based on where it comes from. (this helps to disambiguate two providers that return similar field names, like assoc:variant and catalog:variant)
+ *   Typically, this is only disabled if the response payload is very unusual
+ * @param {String[]} [limit_fields=null] If an API returns far more data than is needed, this can be used to simplify
+ *   the payload by excluding unused fields. This can help to reduce memory usage for really big server responses like LD.
+ */
 class BaseLZAdapter extends BaseUrlAdapter {
     constructor(config = {}) {
         super(config);
@@ -71,6 +88,13 @@ class BaseLZAdapter extends BaseUrlAdapter {
         this._limit_fields = limit_fields ? new Set(limit_fields) : false;  // Optional and typically only used for very standard datasets like LD or catalog, where API returns >> what is displayed. People want to show their own custom annos for assoc plots pretty often, so the most-often-customized adapters don't specify limit_fields
     }
 
+    /**
+     * Determine how a particular request will be identified in cache. Most LZ requests are region based,
+     *   so the default is a string concatenation of `chr_start_end`
+     * @param options Receives plot.state plus any other request options defined by this source
+     * @returns {string}
+     * @private
+     */
     _getCacheKey(options) {
         // Most LZ adapters are fetching REGION data, and it makes sense to treat zooming as a cache hit by default
         let {chr, start, end} = options;  // Current view: plot.state
@@ -88,7 +112,10 @@ class BaseLZAdapter extends BaseUrlAdapter {
     }
 
     /**
-     * Note: since namespacing is the last thing we usually want to do, calculations will want to call super AFTER their own code.
+     * Add the "local namespace" as a prefix for every field returned for this request. Eg if the association api
+     *   returns a field called variant, and the source is referred to as "assoc" within a particular data layer, then
+     *   the returned records will have a field called "assoc:variant"
+     *
      * @param records
      * @param options
      * @returns {*}
@@ -123,11 +150,12 @@ class BaseLZAdapter extends BaseUrlAdapter {
      *
      * In the last step of fetching data, LZ adds a prefix to each field name.
      * This means that operations like "build query based on prior data" can't just ask for "log_pvalue" because
-     *  they are receiving "assoc.log_pvalue" or some such unknown prefix.
+     *  they are receiving "assoc:log_pvalue" or some such unknown prefix.
      *
-     * This lets use easily use dependent data
+     * This helper lets us use dependent data more easily. Not every adapter needs to use this method.
      *
-     * @private
+     * @param {Object} a_record One record (often the first one in a set of records)
+     * @param {String} fieldname The desired fieldname, eg "log_pvalue"
      */
     _findPrefixedKey(a_record, fieldname) {
         const suffixer = new RegExp(`:${fieldname}$`);
@@ -140,11 +168,19 @@ class BaseLZAdapter extends BaseUrlAdapter {
 }
 
 
+/**
+ * The base adapter for the UMich Portaldev API server. This adds a few custom behaviors that handle idiosyncrasies
+ *   of one particular web server.
+ */
 class BaseUMAdapter extends BaseLZAdapter {
+    /**
+     * @param {Object} config
+     * @param {String} [config.build] The genome build to be used by all requests for this adapter.
+     */
     constructor(config = {}) {
         super(config);
         // The UM portaldev API accepts an (optional) parameter "genome_build"
-        this._genome_build = config.genome_build;
+        this._genome_build = config.genome_build || config.build;
     }
 
     _validateBuildSource(build, source) {
@@ -159,6 +195,13 @@ class BaseUMAdapter extends BaseLZAdapter {
     }
 
     // Special behavior for the UM portaldev API: col -> row format normalization
+    /**
+     * Some endpoints in the UM portaldev API returns columns of data, rather than rows. Convert the response to record objects, each row of a table being represented as an object of {field:value} pairs.
+     * @param response_text
+     * @param options
+     * @returns {Object[]}
+     * @private
+     */
     _normalizeResponse(response_text, options) {
         let data = super._normalizeResponse(...arguments);
         // Most portaldev endpoints (though not all) store the desired response in just one specific part of the payload
@@ -195,6 +238,14 @@ class BaseUMAdapter extends BaseLZAdapter {
 }
 
 
+/**
+ * Retrieve Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a request
+ *  to a specific REST API.
+ * @public
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
+ *
+ * @param {Number} config.source The source ID for the dataset of interest, used to construct the request URL
+ */
 class AssociationLZ extends BaseUMAdapter {
     constructor(config = {}) {
         super(config);
@@ -226,21 +277,19 @@ class AssociationLZ extends BaseUMAdapter {
  * @see module:LocusZoom_Adapters~BaseUMAdapter
  */
 class GwasCatalogLZ extends BaseUMAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data.
+     * @param [config.build] The genome build to use when requesting the specific genomic region.
+     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     * @param {Number} [config.source] The ID of the chosen catalog. Most usages should omit this parameter and
+     *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
+     */
     constructor(config) {
         if (!config.limit_fields) {
             config.limit_fields = ['log_pvalue', 'pos', 'rsid', 'trait', 'variant'];
         }
         super(config);
     }
-
-    /**
-     * @param {string} config.url The base URL for the remote data.
-     * @param {Object} config.params
-     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
-     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
-     * @param {Number} [config.params.source] The ID of the chosen catalog. Most usages should omit this parameter and
-     *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
-     */
 
     /**
      * Add query parameters to the URL to construct a query for the specified region
@@ -263,12 +312,11 @@ class GwasCatalogLZ extends BaseUMAdapter {
 /**
  * Retrieve Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
  * @param {string} config.url The base URL for the remote data
- * @param {Object} config.params
- * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+ * @param [config.build] The genome build to use
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
- * @param {Number} [config.params.source] The ID of the chosen gene dataset. Most usages should omit this parameter and
+ * @param {Number} [config.source] The ID of the chosen gene dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent GENCODE data, GRCh37.
  */
 class GeneLZ extends BaseUMAdapter {
@@ -306,13 +354,12 @@ class GeneLZ extends BaseUMAdapter {
  *  matching on specific assumptions about `gene_name` format.
  *
  * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
  */
 class GeneConstraintLZ extends BaseLZAdapter {
     /**
      * @param {string} config.url The base URL for the remote data
-     * @param {Object} config.params
-     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+     * @param [config.build] The genome build to use
      *   May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
      */
     constructor(config = {}) {
@@ -384,6 +431,23 @@ class GeneConstraintLZ extends BaseLZAdapter {
 }
 
 
+/**
+ * Fetch linkage disequilibrium information from a UMich LDServer-compatible API, relative to a reference variant.
+ *  If no `plot.state.ldrefvar` is explicitly provided, this source will attempt to find the most significant GWAS
+ *  variant and yse that as the LD reference variant.
+ *
+ * THIS ADAPTER EXPECTS TO RECEIVE ASSOCIATION DATA WITH FIELDS `variant` and `log_pvalue`. It may not work correctly
+ *   if this information is not provided.
+ *
+ * This source is designed to connect its results to association data, and therefore depends on association data having
+ *  been loaded by a previous request. For custom association APIs, some additional options might
+ *  need to be be specified in order to locate the most significant SNP. Variant IDs of the form `chrom:pos_ref/alt`
+ *  are preferred, but this source will attempt to harmonize other common data formats into something that the LD
+ *  server can understand.
+ *
+ * @public
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
+ */
 class LDServer extends BaseUMAdapter {
     constructor(config) {
         if (!config.limit_fields) {
@@ -458,6 +522,8 @@ class LDServer extends BaseUMAdapter {
         //   Assumes that assoc satisfies the "assoc" fields contract, eg has fields variant and log_pvalue
         const base = super._buildRequestOptions(...arguments);
         if (!assoc_data.length) {
+            // No variants, so no need to annotate association data with LD!
+            // NOTE: Revisit. This could have odd cache implications (eg, when joining two assoc datasets to LD, and only the second dataset has data in the region)
             base._skip_request = true;
             return base;
         }
@@ -508,6 +574,7 @@ class LDServer extends BaseUMAdapter {
     _performRequest(options) {
         // Skip request if this one depends on other data, and we are in a region with no data
         if (options._skip_request) {
+            // TODO: A skipped request leads to a cache value; possible edge cases where this could get weird.
             return Promise.resolve([]);
         }
 
@@ -540,12 +607,11 @@ class LDServer extends BaseUMAdapter {
 /**
  * Retrieve Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
  * @param {string} config.url The base URL for the remote data
- * @param {Object} config.params
- * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+ * @param [config.build] The genome build to use
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
- * @param {Number} [config.params.source] The ID of the chosen dataset. Most usages should omit this parameter and
+ * @param {Number} [config.source] The ID of the chosen dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseUMAdapter {
@@ -586,8 +652,8 @@ class RecombLZ extends BaseUMAdapter {
  *
  *  Note: The name is a bit misleading. It receives JS objects, not strings serialized as "json".
  * @public
- * @see module:LocusZoom_Adapters~BaseAdapter
- * @param {object} data The data to be returned by this source (subject to namespacing rules)
+ * @see module:LocusZoom_Adapters~BaseLZAdapter
+ * @param {object} config.data The data to be returned by this source (subject to namespacing rules)
  */
 class StaticSource extends BaseLZAdapter {
     constructor(config = {}) {
@@ -595,7 +661,7 @@ class StaticSource extends BaseLZAdapter {
         super(...arguments);
         const { data } = config;
         if (!data || Array.isArray(config)) { // old usages may provide an array directly instead of as config key
-            throw new Error("'StaticSource' must provide data as required option 'data'");
+            throw new Error("'StaticSource' must provide data as required option 'config.data'");
         }
         this._data = data;
     }
@@ -609,11 +675,10 @@ class StaticSource extends BaseLZAdapter {
 /**
  * Retrieve PheWAS data retrieved from a LocusZoom/PortalDev compatible API
  * @public
- * @see module:LocusZoom_Adapters~BaseApiAdapter
+ * @see module:LocusZoom_Adapters~BaseUMAdapter
  * @param {string} config.url The base URL for the remote data
- * @param {Object} config.params
- * @param {String[]} config.params.build This datasource expects to be provided the name of the genome build that will
- *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
+ * @param {String[]} config.build This datasource expects to be provided the name of the genome build that will
+ *   be used to provide PheWAS results for this position. Note positions may not translate between builds.
  */
 class PheWASLZ extends BaseUMAdapter {
     _getURL(request_options) {

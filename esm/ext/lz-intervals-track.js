@@ -8,8 +8,10 @@
  * * {@link module:LocusZoom_ScaleFunctions~to_rgb}
  * * {@link module:LocusZoom_DataLayers~intervals}
  * * {@link module:LocusZoom_Layouts~standard_intervals}
+ * * {@link module:LocusZoom_Layouts~bed_intervals_layer}
  * * {@link module:LocusZoom_Layouts~intervals_layer}
  * * {@link module:LocusZoom_Layouts~intervals}
+ * * {@link module:LocusZoom_Layouts~bed_intervals}
  * * {@link module:LocusZoom_Layouts~interval_association}
  *
  * ### Loading and usage
