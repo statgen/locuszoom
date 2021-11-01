@@ -194,7 +194,7 @@ const data_layer = {
         // Name of a function specified in `LocusZoom.ScaleFunctions`
         scale_function: 'if',
         // The field whose value will be passed to the scale function
-        field: 'ld:isrefvar',
+        field: 'lz_is_ld_refvar',
         // Options that will be passed to the scale function; see documentation for available options
         parameters: {
             field_value: 1,
@@ -203,7 +203,7 @@ const data_layer = {
     },
     {
         scale_function: 'numerical_bin',
-        field: 'ld:state',
+        field: 'ld:correlation',
         parameters: {
             breaks: [0, 0.2, 0.4, 0.6, 0.8],
             values: ['#357ebd', '#46b8da', '#5cb85c', '#eea236', '#d43f3a'],
