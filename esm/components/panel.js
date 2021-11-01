@@ -59,7 +59,7 @@ const default_layout = {
  */
 class Panel {
     /**
-     * @param {string} [layout.id=''] An identifier string that must be unique across all panels in the plot
+     * @param {string} layout.id An identifier string that must be unique across all panels in the plot. Required.
      * @param {string} [layout.tag='custom_data_type'] Tags have no functional purpose, but they can be used
      *   as a semantic label for what is being displayed in this element. This makes it easy to write custom code like "find every panel
      *   that shows association scatter plots, anywhere": even if the IDs are different, the tag can be the same.

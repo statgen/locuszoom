@@ -5,6 +5,9 @@
 import { parseMarker } from '../../../helpers/parse';
 import { MISSING_VALUES, parsePvalToLog, _missingToNull } from '../utils';
 
+/**
+ * @private
+ */
 function isNumeric(val) {
     // Check whether an unparsed string is a numeric value"
     if (MISSING_VALUES.has(val)) {
@@ -61,6 +64,7 @@ function levenshtein(a, b) { // https://github.com/trekhleb/javascript-algorithm
 
 /**
  * Return the index of the first column name that meets acceptance criteria
+ * @private
  * @param {String[]} column_synonyms
  * @param {String[]}header_names
  * @param {Number} threshold Tolerance for fuzzy matching (# edits)
@@ -91,6 +95,7 @@ function findColumn(column_synonyms, header_names, threshold = 2) {
  * Return parser configuration for pvalues
  *
  * Returns 1-based column indices, for compatibility with parsers
+ * @private
  * @param header_row
  * @param data_rows
  * @returns {{}}
@@ -130,7 +135,9 @@ function getPvalColumn(header_row, data_rows) {
     return null;
 }
 
-
+/**
+ * @private
+ */
 function getChromPosRefAltColumns(header_row, data_rows) {
     // Returns 1-based column indices, for compatibility with parsers
     // Get from either a marker, or 4 separate columns
@@ -177,6 +184,7 @@ function getChromPosRefAltColumns(header_row, data_rows) {
 
 /**
  * Identify which columns contain effect size (beta) and stderr of the effect size
+ * @private
  * @param {String[]} header_names
  * @param {Array[]} data_rows
  * @returns {{}}
@@ -208,11 +216,14 @@ function getEffectSizeColumns(header_names, data_rows) {
     }
     return ret;
 }
+
 /**
  * Attempt to guess the correct parser settings given a set of header rows and a set of data rows
+ * @private
  * @param {String[]} header_row
  * @param {String[][]} data_rows
  * @param {int} offset Used to convert between 0 and 1-based indexing.
+ * @return {Object|null} Returns null if a complete configuration could not suggested.
  */
 function guessGWAS(header_row, data_rows, offset = 1) {
     // 1. Find a specific set of info: marker OR chr/pos/ref/alt ; pvalue OR log_pvalue

@@ -5,7 +5,9 @@
 
 import {normalizeChr} from './utils';
 
-
+/**
+ * @private
+ */
 function _bedMissing(value) {
     // BED files specify . as the missing/ null value character
     if (value === null || value === undefined || value === '.') {
@@ -14,6 +16,9 @@ function _bedMissing(value) {
     return value;
 }
 
+/**
+ * @private
+ */
 function _hasNum(value) {
     // Return a number, or null if value marked as missing
     value = _bedMissing(value);
@@ -26,8 +31,12 @@ function _hasNum(value) {
  * NOTE: This original version is aimed at tabix region queries, and carries an implicit assumption that data is the
  *  only thing that will be parsed. It makes no attempt to identify or handle header rows / metadata fields.
  *
- * @param {Boolean} normalize Whether to normalize the output to the format expected by LocusZoom (eg type coercion
+ * @function
+ * @alias module:ext/lz-parsers~makeBed12Parser
+ * @param {object} options
+ * @param {Boolean} options.normalize Whether to normalize the output to the format expected by LocusZoom (eg type coercion
  *  for numbers, removing chr chromosome prefixes, and using 1-based and inclusive coordinates instead of 0-based disjoint intervals)
+ * @return function A configured parser function that runs on one line of text from an input file
  */
 function makeBed12Parser({normalize = true} = {}) {
     /*

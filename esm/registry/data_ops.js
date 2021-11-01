@@ -1,15 +1,22 @@
 /**
  * "Data operation" functions, with call signature (state, [recordsetA, recordsetB...], ...params) => combined_results
  *
- * These usually operate on two recordsets (joins), but can operate on one recordset (eg grouping) or > 2 (hopefully rare)
+ * After data is retrieved from adapters, Data Operations will be run on the resulting data. The most common operation
+ *  is a "join", such as combining association + LD together into a single set of records for plotting. Several join
+ *  functions (that operate by analogy to SQL) are provided built-in.
  *
- * Pieces of code designed to transform or connect well structured data, usually as returned from an API
- *
- * Most of these are `joins`: intended to combine two recordsets (like assoc + ld) to a single final source of truth
+ * Other use cases include grouping or filtering records; data operations can consider dynamic properties stored in plot.state.
+ *   (in the future, adapters may cache more aggressively; if you want to provide your own code for filtering returned data,
+ *    this is the recommended path to do so)
+ * Usually, a data operation receives two recordsets (the left and right members of the join, like "assoc" and "ld").
+ * In practice, any number of recordsets can be passed to one join function. There are performance penalties to making too many network
+ *   requests when rendering a web page, so in practice, joining too many distinct data entities in this fashion is
+ *   uncommon. (if possible, try to provide your data with fewer adapters/network requests!)
  *
  * In a few cases, the rules of how to combine datasets are very specific to those two types of data. Some,
  *   particularly for advanced features, may carry assumptions about field names/ formatting.
- *   (example: log_pvalue instead of pvalue, or variant specifier formats)
+ *   (example: choosing the best EBI GWAS catalog entry for a variant may look for a field called `log_pvalue` instead of `pvalue`,
+ *   or it may match two datasets based on a specific way of identifying the variant)
  *
  * @module LocusZoom_DataFunctions
  */
@@ -86,14 +93,72 @@ function genes_to_gnomad_constraint(genes_data, constraint_data) {
     return genes_data;
 }
 
+
+/**
+ * Perform a left outer join, based on records where the field values at `left_key` and `right_key` are identical
+ *
+ * By analogy with SQL, the result will include all values in the left recordset, annotated (where applicable) with all keys from matching records in the right recordset
+ *
+ * @function
+ * @name left_match
+ * @param {Object} plot_state
+ * @param {Array[]} recordsets
+ * @param {String} left_key
+ * @params {String} right_key
+ */
 registry.add('left_match', _wrap_join(joins.left_match));
 
+/**
+ * Perform an inner join, based on records where the field values at `left_key` and `right_key` are identical
+ *
+ * By analogy with SQL, the result will include all fields from both recordsets, but only for records where both the left and right keys are defined, and equal. If a record is not in one or both recordsets, it will be excluded from the result.
+ *
+ * @function
+ * @name inner_match
+ * @param {Object} plot_state
+ * @param {Array[]} recordsets
+ * @param {String} left_key
+ * @params {String} right_key
+ */
 registry.add('inner_match', _wrap_join(joins.inner_match));
 
+/**
+ * Perform a full outer join, based on records where the field values at `left_key` and `right_key` are identical
+ *
+ * By analogy with SQL, the result will include all records from both the left and right recordsets. If there are matching records, then the relevant items will include fields from both records combined into one.
+ *
+ * @function
+ * @name full_outer_match
+ * @param {Object} plot_state
+ * @param {Array[]} recordsets
+ * @param {String} left_key
+ * @params {String} right_key
+ */
 registry.add('full_outer_match', _wrap_join(joins.full_outer_match));
 
+/**
+ * A single purpose join function that combines GWAS data with best claim from the EBI GWAS catalog. Essentially this is a left join modified to make further decisions about which records to use.
+ *
+ * @function
+ * @name assoc_to_gwas_catalog
+ * @param {Object} plot_state
+ * @param {Array[]} recordsets An array with two items: assoc records, then catalog records
+ * @param {String} assoc_key The name of the key field in association data, eg variant ID
+ * @param {String} catalog_key The name of the key field in gwas catalog data, eg variant ID
+ * @param {String} catalog_log_p_name The name of the "log_pvalue" field in gwas catalog data, used to choose the most significant claim for a given variant
+ */
 registry.add('assoc_to_gwas_catalog', _wrap_join(assoc_to_gwas_catalog));
 
+/**
+ * A single purpose join function that combines gene data (UM Portaldev API format) with gene constraint data (gnomAD api format).
+ *
+ * This acts as a left join that has to perform custom operations to parse two very unusual recordset formats.
+ *
+ * @function
+ * @name genes_to_gnomad_constraint
+ * @param {Object} plot_state
+ * @param {Array[]} recordsets An array with two items: UM Portaldev API gene records, then gnomAD gene constraint data
+ */
 registry.add('genes_to_gnomad_constraint', _wrap_join(genes_to_gnomad_constraint));
 
 export default registry;

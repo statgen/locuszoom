@@ -52,6 +52,21 @@ import SCALABLE from '../../registry/scalable';
  * @property value The target value to compare to
  */
 
+/**
+ * @typedef {object} DataOperation A synchronous function that modifies data returned from adapters, in order to clean up or reformat prior to plotting.
+ * @property {module:LocusZoom_DataFunctions|'fetch'} type
+ * @property {String[]} [from] For operations of type "fetch", this is required. By default, it will fill in any items provided in "namespace" (everything specified in namespace triggers an adapter/network request)
+ *   A namespace should be manually specified in this array when there are dependencies (one request depends on the content of what is returned from another namespace).
+ *   Eg, for ld to be fetched after association data, specify "ld(assoc)". Most LocusZoom examples fill in all items, in order to make the examples more clear.
+ * @property {String} [name] The name of this operation. This only needs to be specified if a data layer performs several operations, and needs to refer to the result of a prior operation.
+ *   Eg, if the retrieved data is combined via several left joins in series: `name: "assoc_plus_ld"` -> feeds into `{name: "final", requires: ["assoc_plus_ld"]}`
+ * @property {String[]} requires The names of each adapter required. This does not need to specify dependencies, just
+ *  the names of other namespaces (or data operations) whose results must be available before a join can be performed
+ * @property {String[]} params Any user-defined parameters that should be passed to the particular join function
+ *   (see: {@link module:LocusZoom_DataFunctions} for details). For example, this could specify the left and right key fields for a join function, based on the expected field names used in this data layer: `params: ['assoc:position', 'ld:position2']`
+ *   Separate from this section, data functions will also receive a copy of "plot.state" automatically.
+ */
+
 
 /**
  * @typedef {object} LegendItem
@@ -115,6 +130,14 @@ class BaseDataLayer {
      *   used to identify where to draw tooltips, eg, if the plot is dragged or zoomed). If no single field uniquely
      *   identifies all items, a template expression can be used to create an ID from multiple fields instead. (it is
      *   your job to assure that all of the expected fields are present in every element)
+     * @param {object} layout.namespace A set of key value pairs representing how to map the local usage of data ("assoc")
+     *   to the globally unique name for something defined in LocusZoom.DataSources.
+     *   Namespaces allow a single layout to be reused to plot many tracks of the same type: "given some form of association data, plot it".
+     *   These pairs take the form of { local_name: global_name }. (and all data layer layouts provide a default) In order to reuse
+     *   a layout with a new provider of data- like plotting two association studies stacked together-
+     *   only the namespace section of the layout needs to be overridden.
+     *   Eg, `LocusZoom.Layouts.get('data_layers', 'association_pvalues', { namespace: { assoc: 'assoc_study_2' }})`
+     * @param {module:LocusZoom_DataLayers~DataOperation[]} layout.data_operations A set of data operations that will be performed on the data returned from the data adapters specified in `namespace`. (see: {@link module:LocusZoom_DataFunctions})
      * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
      *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
      *  details vary from one layer to the next. See the Interactivity Tutorial for details.
@@ -376,6 +399,7 @@ class BaseDataLayer {
      * A list of operations that should be run when the layout is mutated
      * Typically, these are things done once when a layout is first specified, that would not automatically
      *  update when the layout was changed.
+     * @public
      */
     mutateLayout() {
         // Are we fetching data from external providers? If so, validate that those API calls would meet the expected contract.

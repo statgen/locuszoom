@@ -67,10 +67,11 @@ const default_layout = {
  */
 
 /**
- * One particular data layer has completed a request for data.
- * // FIXME: docs should be revised once this new event is stabilized
+ * One particular data layer has completed a request for data. This event is primarily used internally by the `subscribeToData` function, and the syntax may change in the future.
  * @event data_from_layer
- * @property {object} data The data used to draw this layer: an array where each element represents one row/ datum
+ * @property {object} data
+ * @property {String} data.layer The fully qualified ID of the layer emitting this event
+ * @property {Object[]} data.content The data used to draw this layer: an array where each element represents one row/ datum
  *  element. It reflects all namespaces and data operations used by that layer.
  * @see event:any_lz_event
  */
@@ -859,6 +860,7 @@ class Plot {
      * Plots can change how data is displayed by layout mutations. In rare cases, such as swapping from one source of LD to another,
      *   these layout mutations won't be picked up instantly. This method notifies the plot to recalculate any cached properties,
      *   like data fetching logic, that might depend on initial layout. It does not trigger a re-render by itself.
+     * @public
      */
     mutateLayout() {
         Object.values(this.panels).forEach((panel) => {

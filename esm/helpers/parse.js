@@ -2,10 +2,14 @@
  * Parse useful entities
  */
 
+/**
+ * @private
+ */
 const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
 
 /**
  * Parse a single marker, cleaning up values as necessary
+ * @private
  * @param {String} value
  * @param {boolean} test If called in testing mode, do not throw an exception
  * @returns {Array} chr, pos, ref, alt (if match found; ref and alt optional)
@@ -25,6 +29,7 @@ function parseMarker(value, test = false) {
 /**
  * Normalize a provided variant string into the EPACTS-style `chrom:pos_ref/alt` format expected by LocusZoom and the Michigan LD Server
  *   This allows harmonizing various input data to a consistent format
+ * @private
  * @param {String} variant A string that specifies variant information in one of several common formats (like chr1:99_A/C, 1-99-A-C, 1:99:A:C, etc)
  */
 function normalizeMarker(variant) {
