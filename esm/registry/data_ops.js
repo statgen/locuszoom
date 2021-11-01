@@ -1,15 +1,22 @@
 /**
  * "Data operation" functions, with call signature (state, [recordsetA, recordsetB...], ...params) => combined_results
  *
- * These usually operate on two recordsets (joins), but can operate on one recordset (eg grouping) or > 2 (hopefully rare)
+ * After data is retrieved from adapters, Data Operations will be run on the resulting data. The most common operation
+ *  is a "join", such as combining association + LD together into a single set of records for plotting. Several join
+ *  functions (that operate by analogy to SQL) are provided built-in.
  *
- * Pieces of code designed to transform or connect well structured data, usually as returned from an API
- *
- * Most of these are `joins`: intended to combine two recordsets (like assoc + ld) to a single final source of truth
+ * Other use cases include grouping or filtering records; data operations can consider dynamic properties stored in plot.state.
+ *   (in the future, adapters may cache more aggressively; if you want to provide your own code for filtering returned data,
+ *    this is the recommended path to do so)
+ * Usually, a data operation receives two recordsets (the left and right members of the join, like "assoc" and "ld").
+ * In practice, any number of recordsets can be passed to one join function. There are performance penalties to making too many network
+ *   requests when rendering a web page, so in practice, joining too many distinct data entities in this fashion is
+ *   uncommon. (if possible, try to provide your data with fewer adapters/network requests!)
  *
  * In a few cases, the rules of how to combine datasets are very specific to those two types of data. Some,
  *   particularly for advanced features, may carry assumptions about field names/ formatting.
- *   (example: log_pvalue instead of pvalue, or variant specifier formats)
+ *   (example: choosing the best EBI GWAS catalog entry for a variant may look for a field called `log_pvalue` instead of `pvalue`,
+ *   or it may match two datasets based on a specific way of identifying the variant)
  *
  * @module LocusZoom_DataFunctions
  */

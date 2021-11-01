@@ -16,7 +16,7 @@
  * ```
  *
  * ### Features provided
- * * {@link module:LocusZoom_Adapters~UserTabixLD}
+ * * {@link module:LocusZoom_Adapters~UserTabixLD} (if the {@link module:ext/lz-tabix-source} extension is loaded first)
  *
  * @module ext/lz-parsers
  */
@@ -39,6 +39,8 @@ function install(LocusZoom) {
          * @public
          * @alias module:LocusZoom_Adapters~UserTabixLD
          * @extends module:LocusZoom_Adapters~TabixUrlSource
+         * @see {@link module:ext/lz-tabix-source} for required extension and installation instructions
+         * @see {@link module:ext/lz-parsers} for required extension and installation instructions
          */
         class UserTabixLD extends TabixUrlSource {
             constructor(config) {

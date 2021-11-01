@@ -53,7 +53,7 @@ function install (LocusZoom) {
      * (**extension**) Retrieve Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
      * @public
      * @alias module:LocusZoom_Adapters~IntervalLZ
-     * @see module:LocusZoom_Adapters~BaseApiAdapter
+     * @see module:LocusZoom_Adapters~BaseUMAdapter
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      * @param {number} config.params.source The numeric ID for a specific dataset as assigned by the API server
      */

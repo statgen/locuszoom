@@ -51,7 +51,7 @@ function install(LocusZoom) {
      *
      * @alias module:LocusZoom_Adapters~TabixUrlSource
      * @see {@link module:ext/lz-tabix-source} for required extension and installation instructions
-     * @see module:LocusZoom_Adapters~BaseApiAdapter
+     * @see module:LocusZoom_Adapters~BaseLZAdapter
      * @param {function} config.parser_func A function that parses a single line of text and returns (usually) a
      *  structured object of data fields
      * @param {string} config.url_data The URL for the bgzipped and tabix-indexed file
