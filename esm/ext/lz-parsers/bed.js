@@ -5,7 +5,9 @@
 
 import {normalizeChr} from './utils';
 
-
+/**
+ * @private
+ */
 function _bedMissing(value) {
     // BED files specify . as the missing/ null value character
     if (value === null || value === undefined || value === '.') {
@@ -14,6 +16,9 @@ function _bedMissing(value) {
     return value;
 }
 
+/**
+ * @private
+ */
 function _hasNum(value) {
     // Return a number, or null if value marked as missing
     value = _bedMissing(value);

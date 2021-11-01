@@ -137,7 +137,7 @@ class BaseDataLayer {
      *   a layout with a new provider of data- like plotting two association studies stacked together-
      *   only the namespace section of the layout needs to be overridden.
      *   Eg, `LocusZoom.Layouts.get('data_layers', 'association_pvalues', { namespace: { assoc: 'assoc_study_2' }})`
-     * @param {module:LocusZoom_DataLayers~DataOperation[]} data_operations A set of data operations that will be performed on the data returned from the data adapters specified in `namespace`. (see: {@link module:LocusZoom_DataFunctions})
+     * @param {module:LocusZoom_DataLayers~DataOperation[]} layout.data_operations A set of data operations that will be performed on the data returned from the data adapters specified in `namespace`. (see: {@link module:LocusZoom_DataFunctions})
      * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
      *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
      *  details vary from one layer to the next. See the Interactivity Tutorial for details.

@@ -2,14 +2,21 @@
  * Constant values used by GWAS parser
  */
 
+/**
+ * @private
+ */
 const MISSING_VALUES = new Set(['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan', 'NaN', '-NaN', 'null', 'NULL', 'None', null]);
 
+/**
+ * @private
+ */
 const REGEX_PVAL = /([\d.-]+)([\sxeE]*)([0-9-]*)/;
 
 
 /**
  * Utility helper that checks for the presence of a numeric value (incl 0),
  *  eg "has column specified"
+ * @private
  * @param num
  * @returns {boolean}
  */
@@ -20,6 +27,7 @@ function has(num) {
 /**
  * Convert all missing values to a standardized input form
  * Useful for columns like pvalue, where a missing value explicitly allowed
+ * @private
  */
 function missingToNull(values, nulls = MISSING_VALUES, placeholder = null) {
     // TODO Make this operate on a single value; cache for efficiency?
@@ -28,6 +36,7 @@ function missingToNull(values, nulls = MISSING_VALUES, placeholder = null) {
 
 /**
  * Normalize chromosome representations
+ * @private
  * @param {String} chromosome
  */
 function normalizeChr(chromosome) {
@@ -36,6 +45,7 @@ function normalizeChr(chromosome) {
 
 /**
  * Parse (and validate) a given number, and return the -log10 pvalue.
+ * @private
  * @param value
  * @param {boolean} is_neg_log
  * @returns {number|null} The -log10 pvalue
@@ -80,6 +90,9 @@ function parsePvalToLog(value, is_neg_log = false) {
     return -Math.log10(val);
 }
 
+/**
+ * @private
+ */
 function parseAlleleFrequency({ freq, allele_count, n_samples, is_alt_effect = true }) {
     if (freq !== undefined && allele_count !== undefined) {
         throw new Error('Frequency and allele count options are mutually exclusive');
