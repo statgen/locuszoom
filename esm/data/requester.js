@@ -1,11 +1,22 @@
+/**
+ * @module
+ * @private
+ */
 import {getLinkedData} from 'undercomplicate';
 
 import { DATA_OPS } from '../registry';
 
 
 class DataOperation {
-    constructor(join_type, params) {
+    /**
+     * Perform a data operation (such as a join)
+     * @param {String} join_type
+     * @param initiator The entity that initiated the request for data. Usually, this is the data layer. This argument exists so that a data_operation could do things like auto-define axis labels/ color scheme in response to dynamic data. It has potential for side effects if misused, so use sparingly!
+     * @param params Optional user/layout parameters to be passed to the data function
+     */
+    constructor(join_type, initiator, params) {
         this._callable = DATA_OPS.get(join_type);
+        this._initiator = initiator;
         this._params = params || [];
     }
 
@@ -14,8 +25,9 @@ class DataOperation {
         //   Other ops are possible, like consolidating just one set of records to best value per key
         // Hence all dependencies are passed as first arg: [dep1, dep2, dep3...]
 
-        // Every data operation receives plot_state, the input data, + any additional options
-        return Promise.resolve(this._callable(plot_state, dependent_recordsets, ...this._params));
+        // Every data operation receives plot_state, reference to the data layer that called it, the input data, & any additional options
+        const context = {plot_state, data_layer: this._initiator};
+        return Promise.resolve(this._callable(context, dependent_recordsets, ...this._params));
     }
 }
 
@@ -51,9 +63,10 @@ class Requester {
      *      removed adapter.
      * @param {Object} namespace_options
      * @param {Array} data_operations
+     * @param {Object|null} initiator The entity that initiated the request (the data layer). Passed to data operations, but not adapters.
      * @returns {Array} Map of entities and list of dependencies
      */
-    config_to_sources(namespace_options = {}, data_operations = []) {
+    config_to_sources(namespace_options = {}, data_operations = [], initiator) {
         const entities = new Map();
         const namespace_local_names = Object.keys(namespace_options);
 
@@ -112,7 +125,7 @@ class Requester {
                     }
                 });
 
-                const task = new DataOperation(type, params);
+                const task = new DataOperation(type, initiator, params);
                 entities.set(name, task);
                 dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
             }
@@ -122,19 +135,23 @@ class Requester {
 
     /**
      *
-     * @param {Object} state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
+     * @param {Object} context
+     * @param {Object} context.state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
+     * @param {Object|null} context.data_layer A reference to the data layer that initiated the request (if applicable).
+     *   Data operations (but NOT adapters) are passed this property; it can be used to do things like auto-generate
+     *   axis tick marks or panel legends after all dynamic data has been received. This is an advanced usage and should be handled with care!
      * @param {Map} entities A list of adapter and join tasks. This is created internally from data layer layouts.
      *  Keys are layer-local namespaces for data types (like assoc), and values are adapter or join task instances
      *  (things that implement a method getData).
      * @param {String[]} dependencies Instructions on what adapters to fetch from, in what order
      * @returns {Promise}
      */
-    getData(state, entities, dependencies) {
+    getData({ plot_state, data_layer }, entities, dependencies) {
         if (!dependencies.length) {
             return Promise.resolve([]);
         }
         // The last dependency (usually the last join operation) determines the last thing returned.
-        return getLinkedData(state, entities, dependencies, true);
+        return getLinkedData(plot_state, entities, dependencies, true);
     }
 }
 

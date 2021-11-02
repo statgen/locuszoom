@@ -406,7 +406,7 @@ class BaseDataLayer {
         if (this.parent_plot) { // Don't run this method if instance isn't mounted to a plot, eg unit tests that don't require requester
             const { namespace, data_operations } = this.layout;
             this._data_contract = findFields(this.layout, Object.keys(namespace));
-            const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations);
+            const [entities, dependencies] = this.parent_plot.lzd.config_to_sources(namespace, data_operations, this);
             this._entities = entities;
             this._dependencies = dependencies;
         }

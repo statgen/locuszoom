@@ -1,13 +1,19 @@
 /**
- * "Data operation" functions, with call signature (state, [recordsetA, recordsetB...], ...params) => combined_results
+ * "Data operation" functions, with call signature ({plot_state, data_layer}, [recordsetA, recordsetB...], ...params) => combined_results
  *
  * After data is retrieved from adapters, Data Operations will be run on the resulting data. The most common operation
  *  is a "join", such as combining association + LD together into a single set of records for plotting. Several join
  *  functions (that operate by analogy to SQL) are provided built-in.
  *
- * Other use cases include grouping or filtering records; data operations can consider dynamic properties stored in plot.state.
+ * Other use cases (even if no examples are in the built in code, see unit tests for what is possible):
+ * 1. Grouping or filtering records; data operations can consider dynamic properties stored in plot.state.
  *   (in the future, adapters may cache more aggressively; if you want to provide your own code for filtering returned data,
  *    this is the recommended path to do so)
+ * 2. Since the context argument also contains a reference to the data layer instance (and thus the parent panel and plot),
+ *    a data operation can modify the layout when new data is received, without having to create a custom data layer class. Eg,
+ *    for datasets where the categories are not known before first render, this could generate automatic x-axis ticks
+ *    (PheWAS), automatic panel legends or color schemes (BED tracks), etc.
+ *
  * Usually, a data operation receives two recordsets (the left and right members of the join, like "assoc" and "ld").
  * In practice, any number of recordsets can be passed to one join function. There are performance penalties to making too many network
  *   requests when rendering a web page, so in practice, joining too many distinct data entities in this fashion is
@@ -32,9 +38,12 @@ import {RegistryBase} from './base';
 const registry = new RegistryBase();
 
 function _wrap_join(handle) {
-    // Validate number of arguments and convert call signature from (plot_state, deps, ...params) to (left, right, ...params).
-    // Must data operations are joins, so this wrapper is common shared code.
-    return (plot_state, deps, ...params) => {
+    // Validate number of arguments and convert call signature from (context, deps, ...params) to (left, right, ...params).
+
+    // Many of our join functions are implemented with a different number of arguments than what a datafunction
+    //   actually receives. (eg, a join function is generic and doesn't care about "context" information like plot.state)
+    // This wrapper is simple shared code to handle required validation and conversion stuff.
+    return (context, deps, ...params) => {
         if (deps.length !== 2) {
             throw new Error('Join functions must receive exactly two recordsets');
         }

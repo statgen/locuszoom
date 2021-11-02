@@ -706,7 +706,7 @@ class Plot {
             throw new Error("subscribeToData must specify the desired data: either 'from_layer' or 'namespace' option");
         }
 
-        const [entities, dependencies] = this.lzd.config_to_sources(namespace, data_operations);
+        const [entities, dependencies] = this.lzd.config_to_sources(namespace, data_operations); // Does not pass reference to initiator- we don't want external subscribers with the power to mutate the whole plot.
         const listener = () => {
             try {
                 // NOTE TO FUTURE SELF: since this event does something async and not tied to a returned promise, unit tests will behave strangely,

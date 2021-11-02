@@ -145,14 +145,18 @@ Some adapters can not begin to define their request until they see the data from
 
 Each individual adapter will receive data it depends on as a function argument to `getData`. The string syntax reflects how the data is connected internally!  In the example above, "ld" is only retrieved after a request to "assoc" is complete, and the LD adapter received the assoc data to help define the next request.
 
-> NOTE: Sometimes it is useful to extend an existing layout to fetch additional kinds of data. If an item is specified as a source of data for this layer (eg `namespace: {'assoc': 'assoc'}`), it will automatically be added to the `fetch.from` instruction. This means that everything listed in `data_layer.namespace` will trigger a data retrieval request. You only need to modify the list of names in `fetch.from` if you want to specify dependencies, eg "don't fetch LD until assoc data is ready". All of the built in LZ layouts are verbose and explicit, in an effort to reduce the amount of "magic" and make the examples easier to understand.
+> NOTE: Sometimes it is useful to extend an existing layout to fetch additional kinds of data. It can be annoying to extend a "list" field like fetch.from, so LocusZoom has some magic to help out: if an item is specified as a source of data for this layer (eg `namespace: {'assoc': 'assoc'}`), it will automatically be added to the `fetch.from` instruction. This means that **everything listed in `data_layer.namespace` will trigger a data retrieval request**. You only need to modify the contents of `fetch.from` if you want to specify that the new item depends on something else, eg "don't fetch LD until assoc data is ready: `ld(assoc)`". All of the built in LZ layouts are verbose and explicit, in an effort to reduce the amount of "magic" and make the examples easier to understand.
 
 #### Joins ("Data functions")
 The second instruction in the example above is a *join*. It specifies how to compare multiple sets of data into one list of records ("one record per data point on the plot").
 
-Any function defined in `LocusZoom.DataFunctions` can be referenced. Several builtin joins are provided (including `left_match`, `inner_match`, and `full_outer_match`). Any arbitrary join function is possible, with the call signature `(state, [recordsetA, recordsetB...], ...params) => combined_results`
+Any function defined in `LocusZoom.DataFunctions` can be referenced. Several builtin joins are provided (including `left_match`, `inner_match`, and `full_outer_match`). Any arbitrary join function can be added to the `LocusZoom.DataFunctions` registry, with the call signature `({plot_state, data_layer}}, [recordsetA, recordsetB...], ...params) => combined_results`.
+
+Data operations are synchronous; they are used for data formatting and cleanup. Use adapters for asynchronous operations like network requests.
 
 The plot will receive the last item in the dependency graph (taking into account both adapters and joins). If something looks strange, make sure that you have specified how to join all your data sources together.
+
+> TIP: Because data functions are given access to plot.state and the data layer instance that initiated the request, they are able to do surprisingly powerful things, like filtering the returned data in response to a global plot_state parameter or auto-defining a layout (`data_layer.layout`) in response to dynamic data (axis labels, color scheme, etc). This is a very advanced usage and has the potential for side effects; use sparingly! See the LocusZoom unit tests for a few examples of what is possible.
 
 # Creating your own custom adapter
 ## Can I reuse existing code?

@@ -7,7 +7,11 @@ import {DATA_OPS} from '../../../esm/registry';
 describe('Requester object defines and parses requests', function () {
     describe('Layout parsing', function () {
         before(function () {
-            DATA_OPS.add('sumtwo', ({ state_field = 0 }, [left, right], some_param) => left + right + some_param + state_field);
+            DATA_OPS.add('sumtwo', (
+                {plot_state: { state_field = 0 }},
+                [left, right],
+                some_param
+            ) => left + right + some_param + state_field);
         });
 
         after(function () {
@@ -18,6 +22,7 @@ describe('Requester object defines and parses requests', function () {
             this._all_datasources = new Map([
                 ['assoc1', { name: 'assoc1', getData: () => Promise.resolve(1) }],
                 ['someld', { name: 'someld', getData: () => Promise.resolve(2) }],
+                ['intervals', { name: 'intervals', getData: () => Promise.resolve(['a', 'b', 'c', 'd']) }],
                 ['assoc2', { name: 'assoc2' }],
                 ['catalog', { name: 'catalog' }],
             ]);
@@ -103,7 +108,7 @@ describe('Requester object defines and parses requests', function () {
 
             const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations);
 
-            return this._requester.getData({}, entities, dependencies)
+            return this._requester.getData({ plot_state: {} }, entities, dependencies)
                 .then((res) => {
                     assert.equal(res, 6);  // 1 + 2 + 3
                 });
@@ -123,9 +128,41 @@ describe('Requester object defines and parses requests', function () {
 
             const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations);
 
-            return this._requester.getData({ state_field: 20 }, entities, dependencies)
+            return this._requester.getData({ plot_state: { state_field: 20 } }, entities, dependencies)
                 .then((res) => {
                     assert.equal(res, 26);  // 1 + 2 + 3 + 20
+                });
+        });
+
+        it('passes a reference to the initiator, allowing it to do things like mutate the data layer layout when data is received', function () {
+            const namespace_options = {'intervals': 'intervals'};
+            DATA_OPS.add('layer_mutator', ({plot_state, data_layer}, [data]) => {
+                // This sort of operation is very special-purpose and tied to the mock layout and changes we want to see!
+                data_layer.layout.mock_x_categories = data;
+                // An operation must always return data in the end. This usage is pretty esoteric, in that it exits solely to create side effects.
+                return data;
+            });
+
+            const data_operations = [
+                { type: 'fetch', from: ['intervals'] },
+                {
+                    type: 'layer_mutator',
+                    name: 'combined',
+                    requires: ['intervals'],
+                    params: [3],
+                },
+            ];
+
+            const mock_layer = {
+                layout: {
+                    mock_x_categories: [],
+                },
+            };
+            const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations, mock_layer);
+
+            return this._requester.getData({ plot_state: { state_field: 20 } }, entities, dependencies)
+                .then((res) => {
+                    assert.deepEqual(mock_layer.layout.mock_x_categories, res, 'In this example, mock categories exactly match returned data');
                 });
         });
 
