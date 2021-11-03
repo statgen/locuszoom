@@ -60,7 +60,7 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot'),
+    toolbar: LocusZoom.Layouts.get('toolbar_widgets', 'standard_plot'),
     panels: [
         LocusZoom.Layouts.get('panel', 'association', { height: 225 }),
         LocusZoom.Layouts.get('panel', 'genes', { height: 225 })
@@ -131,7 +131,7 @@ Since the registry just returns JSON-serializable objects, you could create a pl
 To see the list of pre-defined layouts (as well as any custom ones you have created):
 ```js
 > LocusZoom.Layouts.list();
-{plot: Array(4), panel: Array(7), data_layer: Array(9), dashboard: Array(4), dashboard_components: Array(1), tooltip: Array(5) }
+{plot: Array(4), panel: Array(7), data_layer: Array(9), toolbar: Array(4), toolbar_widgets: Array(1), tooltip: Array(5) }
 ```
 
 This will return a top level representation of the available types, showing the available categories. Note that even data layers are composed of smaller building blocks. This lets you use individual parts of a representation (like association tooltips) without committing to the other design choices for a common piece (like the association layer). 
@@ -162,18 +162,18 @@ Consider an association plot, where the only requested change is to use the righ
 
 The "modifications" object does not work as well for compound values, like a list, because this behavior is not well defined: changing the 5th element of a list could mean replacement, removal, or minor additions to fields... etc. In practice, this is quite often relevant... because panels and data layers are specified as lists. (order matters)
  
-For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via *self-calling functions* that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar (dashboard) that adds just one extra button to an existing layout:
+For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via *self-calling functions* that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar that adds just one extra button to an existing layout:
 
 ```js
 {
-    dashboard: (function () {
-        var base = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        base.components.push({
+    toolbar: (function () {
+        var base = LocusZoom.Layouts.get('toolbar', 'standard_panel');
+        base.widgets.push({
             type: 'toggle_legend',
             position: 'right'
         });
         return base;
-    })() // Function calls itself immediately, so "dashboard" is set to the return value
+    })() // Function calls itself immediately, so "toolbar" is set to the return value
 }
 ```
 

@@ -60,8 +60,7 @@ class Toolbar {
      */
     initialize() {
         // Parse layout to generate widget instances
-        // In LZ 0.12, `dashboard.components` was renamed to `toolbar.widgets`. Preserve a backwards-compatible alias.
-        const options = (this.parent.layout.dashboard && this.parent.layout.dashboard.components) || this.parent.layout.toolbar.widgets;
+        const options = this.parent.layout.toolbar.widgets;
         if (Array.isArray(options)) {
             options.forEach((layout) => {
                 try {
