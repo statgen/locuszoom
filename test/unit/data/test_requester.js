@@ -108,7 +108,7 @@ describe('Requester object defines and parses requests', function () {
 
             const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations);
 
-            return this._requester.getData({ plot_state: {} }, entities, dependencies)
+            return this._requester.getData({}, entities, dependencies)
                 .then((res) => {
                     assert.equal(res, 6);  // 1 + 2 + 3
                 });
@@ -128,7 +128,7 @@ describe('Requester object defines and parses requests', function () {
 
             const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations);
 
-            return this._requester.getData({ plot_state: { state_field: 20 } }, entities, dependencies)
+            return this._requester.getData({ state_field: 20 }, entities, dependencies)
                 .then((res) => {
                     assert.equal(res, 26);  // 1 + 2 + 3 + 20
                 });
@@ -160,7 +160,7 @@ describe('Requester object defines and parses requests', function () {
             };
             const [entities, dependencies] = this._requester.config_to_sources(namespace_options, data_operations, mock_layer);
 
-            return this._requester.getData({ plot_state: { state_field: 20 } }, entities, dependencies)
+            return this._requester.getData({}, entities, dependencies)
                 .then((res) => {
                     assert.deepEqual(mock_layer.layout.mock_x_categories, res, 'In this example, mock categories exactly match returned data');
                 });

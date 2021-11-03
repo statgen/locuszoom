@@ -63,7 +63,9 @@ class Requester {
      *      removed adapter.
      * @param {Object} namespace_options
      * @param {Array} data_operations
-     * @param {Object|null} initiator The entity that initiated the request (the data layer). Passed to data operations, but not adapters.
+     * @param {Object|null} initiator The entity that initiated the request (the data layer). Passed to data operations,
+     *   but not adapters. By baking this reference into each data operation, functions can do things like autogenerate
+     *   axis tick marks or color schemes based on dyanmic data. This is an advanced usage and should be handled with care!
      * @returns {Array} Map of entities and list of dependencies
      */
     config_to_sources(namespace_options = {}, data_operations = [], initiator) {
@@ -134,19 +136,14 @@ class Requester {
     }
 
     /**
-     *
-     * @param {Object} context
-     * @param {Object} context.state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
-     * @param {Object|null} context.data_layer A reference to the data layer that initiated the request (if applicable).
-     *   Data operations (but NOT adapters) are passed this property; it can be used to do things like auto-generate
-     *   axis tick marks or panel legends after all dynamic data has been received. This is an advanced usage and should be handled with care!
+     * @param {Object} plot_state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
      * @param {Map} entities A list of adapter and join tasks. This is created internally from data layer layouts.
      *  Keys are layer-local namespaces for data types (like assoc), and values are adapter or join task instances
      *  (things that implement a method getData).
      * @param {String[]} dependencies Instructions on what adapters to fetch from, in what order
      * @returns {Promise}
      */
-    getData({ plot_state, data_layer }, entities, dependencies) {
+    getData(plot_state, entities, dependencies) {
         if (!dependencies.length) {
             return Promise.resolve([]);
         }
