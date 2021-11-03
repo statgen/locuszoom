@@ -1,4 +1,4 @@
-import widgets from '../../registry/widgets';
+import WIDGETS from '../../registry/widgets';
 import * as d3 from 'd3';
 
 /**
@@ -63,17 +63,11 @@ class Toolbar {
         const options = this.parent.layout.toolbar.widgets;
         if (Array.isArray(options)) {
             options.forEach((layout) => {
-                try {
-                    const widget = widgets.create(layout.type, layout, this);
-                    this.widgets.push(widget);
-                } catch (e) {
-                    console.warn('Failed to create widget');
-                    console.error(e);
-                }
+                this.addWidget(layout);
             });
         }
 
-        // Add mouseover event handlers to show/hide panel toolbar
+        // Add mouseover event handlers to show/hide panel toolbar (plot toolbar will always be shown)
         if (this.type === 'panel') {
             d3.select(this.parent.parent.svg.node().parentNode)
                 .on(`mouseover.${this.id}`, () => {
@@ -90,6 +84,27 @@ class Toolbar {
         }
 
         return this;
+    }
+
+    /**
+     * Add a new widget to the toolbar. The widget may not show up correctly until the first time that
+     * @param {Object} layout The layout object describing the desired widget
+     * @param {boolean} render Whether to render the widget immediately. This option is useful when adding a toolbar widget
+     *   dynamically, rather than creating a toolbar and rendering it all at once
+     * @returns {layout.type}
+     */
+    addWidget(layout, render = false) {
+        try {
+            const widget = WIDGETS.create(layout.type, layout, this);
+            this.widgets.push(widget);
+            if (render) {
+                widget.show();
+            }
+            return widget;
+        } catch (e) {
+            console.warn('Failed to create widget');
+            console.error(e);
+        }
     }
 
     /**
