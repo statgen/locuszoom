@@ -87,19 +87,18 @@ class Toolbar {
     }
 
     /**
-     * Add a new widget to the toolbar. The widget may not show up correctly until the first time that
+     * Add a new widget to the toolbar.
+     * FIXME: Kludgy to use. In the very rare cases where a widget is added dynamically, the caller will need to:
+     *  - add the widget to plot.layout.toolbar.widgets, AND calling it with the same object reference here.
+     *  - call widget.show() to ensure that the widget is initialized and rendered correctly
+     *  When creating an existing plot defined in advance, neither of these actions is needed and so we don't do this by default.
      * @param {Object} layout The layout object describing the desired widget
-     * @param {boolean} render Whether to render the widget immediately. This option is useful when adding a toolbar widget
-     *   dynamically, rather than creating a toolbar and rendering it all at once
      * @returns {layout.type}
      */
-    addWidget(layout, render = false) {
+    addWidget(layout) {
         try {
             const widget = WIDGETS.create(layout.type, layout, this);
             this.widgets.push(widget);
-            if (render) {
-                widget.show();
-            }
             return widget;
         } catch (e) {
             console.warn('Failed to create widget');
