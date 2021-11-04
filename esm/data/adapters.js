@@ -449,6 +449,17 @@ class GeneConstraintLZ extends BaseLZAdapter {
  * @see module:LocusZoom_Adapters~BaseUMAdapter
  */
 class LDServer extends BaseUMAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data.
+     * @param [config.build='GRCh37'] The genome build to use when calculating LD relative to a specified reference variant.
+     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     * @param [config.source='1000G'] The name of the reference panel to use, as specified in the LD server instance.
+     *  May be overridden by a global parameter `plot.state.ld_source` to implement widgets that alter LD display.
+     * @param [config.population='ALL'] The sample population used to calculate LD for a specified source;
+     *  population names vary depending on the reference panel and how the server was populated wth data.
+     *  May be overridden by a global parameter `plot.state.ld_pop` to implement widgets that alter LD display.
+     * @param [config.method='rsquare'] The metric used to calculate LD
+     */
     constructor(config) {
         if (!config.limit_fields) {
             config.limit_fields = ['variant2', 'position2', 'correlation'];
