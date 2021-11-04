@@ -39,6 +39,11 @@ describe('Data adapters', function () {
             }
         }
 
+        it('will merge options nested in config.params into the base options for backwards compat', function () {
+            const source = new BaseTestClass({ a: 1, params: {b: 2, c: 3, a: 4}});
+            assert.deepEqual(source._config, {b: 2, c: 3, a: 4}, 'Options in config.params will be merged, and original .params child will be deleted');
+        });
+
         it('checks if request can be satisfied using cached data', function () {
             const source = new BaseTestClass({ prefix_namespace: false });
             const first_test_data = [{a: 1, b:2}];

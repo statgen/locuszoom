@@ -76,6 +76,12 @@ class BaseApiAdapter extends BaseAdapter {}
  */
 class BaseLZAdapter extends BaseUrlAdapter {
     constructor(config = {}) {
+        if (config.params) {
+            // Backwards-compat: prevent old sources from breaking in subtle ways because config options are no longer split between two places.
+            console.warn('Deprecation warning: all options in "config.params" should now be specified as top level keys.');
+            Object.assign(config, config.params || {});
+            delete config.params; // fields are moved, not just copied in both places; Custom code will need to reflect new reality!
+        }
         super(config);
 
         // Prefix the namespace for this source to all fieldnames: id -> assoc.id
