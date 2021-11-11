@@ -26,17 +26,51 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { TRANSFORMS } from '../registry';
+            <pre class="prettyprint source linenums"><code>/**
+ * @module
+ * @private
+ */
+import {getLinkedData} from 'undercomplicate';
+
+import { DATA_OPS } from '../registry';
+
+
+class DataOperation {
+    /**
+     * Perform a data operation (such as a join)
+     * @param {String} join_type
+     * @param initiator The entity that initiated the request for data. Usually, this is the data layer. This argument exists so that a data_operation could do things like auto-define axis labels/ color scheme in response to dynamic data. It has potential for side effects if misused, so use sparingly!
+     * @param params Optional user/layout parameters to be passed to the data function
+     */
+    constructor(join_type, initiator, params) {
+        this._callable = DATA_OPS.get(join_type);
+        this._initiator = initiator;
+        this._params = params || [];
+    }
+
+    getData(plot_state, ...dependent_recordsets) {
+        // Most operations are joins: they receive two pieces of data (eg left + right)
+        //   Other ops are possible, like consolidating just one set of records to best value per key
+        // Hence all dependencies are passed as first arg: [dep1, dep2, dep3...]
+
+        // Every data operation receives plot_state, reference to the data layer that called it, the input data, &amp; any additional options
+        const context = {plot_state, data_layer: this._initiator};
+        return Promise.resolve(this._callable(context, dependent_recordsets, ...this._params));
+    }
+}
+
 
 /**
  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
- *   It passes state information and ensures that data is formatted in the manner expected by the plot.
+ *   It passes plot.state information to each adapter, and ensures that a series of requests can be performed in a
+ *   designated order.
+ *
+ * Each data layer calls the requester object directly, and as such, each data layer has a private view of data: it can
+ *   perform its own calculations, filter results, and apply transforms without influencing other layers.
+ *  (while still respecting a shared cache where appropriate)
  *
  * This object is not part of the public interface. It should almost **never** be replaced or modified directly.
  *
- * It is also responsible for constructing a "chain" of dependent requests, by requesting each datasource
- *   sequentially in the order specified in the datalayer `fields` array. Data sources are only chained within a
- *   data layer, and only if that layer requests more than one source of data.
  * @param {DataSources} sources A set of data sources used specifically by this plot instance
  * @private
  */
@@ -45,60 +79,111 @@ class Requester {
         this._sources = sources;
     }
 
-    __split_requests(fields) {
-        // Given a fields array, return an object specifying what datasource names the data layer should make requests
-        //  to, and how to handle the returned data
-        var requests = {};
-        // Regular expression finds namespace:field|trans
-        var re = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/;
-        fields.forEach(function(raw) {
-            var parts = re.exec(raw);
-            var ns = parts[1] || 'base';
-            var field = parts[2];
-            var trans = TRANSFORMS.get(parts[3]);
-            if (typeof requests[ns] == 'undefined') {
-                requests[ns] = {outnames:[], fields:[], trans:[]};
+    /**
+     * Parse the data layer configuration when a layer is first created.
+     *  Validate config, and return entities and dependencies in a format usable for data retrieval.
+     *  This is used by data layers, and also other data-retrieval functions (like subscribeToDate).
+     *
+     *  Inherent assumptions:
+     *  1. A data layer will always know its data up front, and layout mutations will only affect what is displayed.
+     *  2. People will be able to add new data adapters (tracks), but if they are removed, the accompanying layers will be
+     *      removed at the same time. Otherwise, the pre-parsed data fetching logic could could preserve a reference to the
+     *      removed adapter.
+     * @param {Object} namespace_options
+     * @param {Array} data_operations
+     * @param {Object|null} initiator The entity that initiated the request (the data layer). Passed to data operations,
+     *   but not adapters. By baking this reference into each data operation, functions can do things like autogenerate
+     *   axis tick marks or color schemes based on dyanmic data. This is an advanced usage and should be handled with care!
+     * @returns {Array} Map of entities and list of dependencies
+     */
+    config_to_sources(namespace_options = {}, data_operations = [], initiator) {
+        const entities = new Map();
+        const namespace_local_names = Object.keys(namespace_options);
+
+        // 1. Specify how to coordinate data. Precedence:
+        //   a) EXPLICIT fetch logic,
+        //   b) IMPLICIT auto-generate fetch order if there is only one NS,
+        //   c) Throw "spec required" error if > 1, because 2 adapters may need to be fetched in a sequence
+        let dependency_order = data_operations.find((item) => item.type === 'fetch');  // explicit spec: {fetch, from}
+        if (!dependency_order) {
+            dependency_order = { type: 'fetch', from: namespace_local_names };
+            data_operations.unshift(dependency_order);
+        }
+
+        // Validate that all NS items are available to the root requester in DataSources. All layers recognize a
+        //  default value, eg people copying the examples tend to have defined a datasource called "assoc"
+        const ns_pattern = /^\w+$/;
+        for (let [local_name, global_name] of Object.entries(namespace_options)) {
+            if (!ns_pattern.test(local_name)) {
+                throw new Error(`Invalid namespace name: '${local_name}'. Must contain only alphanumeric characters`);
             }
-            requests[ns].outnames.push(raw);
-            requests[ns].fields.push(field);
-            requests[ns].trans.push(trans);
-        });
-        return requests;
+
+            const source = this._sources.get(global_name);
+            if (!source) {
+                throw new Error(`A data layer has requested an item not found in DataSources: data type '${local_name}' from ${global_name}`);
+            }
+            entities.set(local_name, source);
+
+            // Note: Dependency spec checker will consider "ld(assoc)" to match a namespace called "ld"
+            if (!dependency_order.from.find((dep_spec) => dep_spec.split('(')[0] === local_name)) {
+                // Sometimes, a new piece of data (namespace) will be added to a layer. Often this doesn't have any dependencies, other than adding a new join.
+                //  To make it easier to EXTEND existing layers, by default, we'll push any unknown namespaces to data_ops.fetch
+                // Thus the default behavior is "fetch all namespaces as though they don't depend on anything.
+                //  If they depend on something, only then does "data_ops[@type=fetch].from" need to be mutated
+                dependency_order.from.push(local_name);
+            }
+        }
+
+        let dependencies = Array.from(dependency_order.from);
+
+        // Now check all joins. Are namespaces valid? Are they requesting known data?
+        for (let config of data_operations) {
+            let {type, name, requires, params} = config;
+            if (type !== 'fetch') {
+                let namecount = 0;
+                if (!name) {
+                    name = config.name = `join${namecount}`;
+                    namecount += 1;
+                }
+
+                if (entities.has(name)) {
+                    throw new Error(`Configuration error: within a layer, join name '${name}' must be unique`);
+                }
+                requires.forEach((require_name) => {
+                    if (!entities.has(require_name)) {
+                        throw new Error(`Data operation cannot operate on unknown provider '${require_name}'`);
+                    }
+                });
+
+                const task = new DataOperation(type, initiator, params);
+                entities.set(name, task);
+                dependencies.push(`${name}(${requires.join(', ')})`); // Dependency resolver uses the form item(depA, depB)
+            }
+        }
+        return [entities, dependencies];
     }
 
     /**
-     * Fetch data, and create a chain that only connects two data sources if they depend on each other
-     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields The list of data fields specified in the `layout` for a specific data layer
+     * @param {Object} plot_state Plot state, which will be passed to every adapter. Includes view extent (chr, start, end)
+     * @param {Map} entities A list of adapter and join tasks. This is created internally from data layer layouts.
+     *  Keys are layer-local namespaces for data types (like assoc), and values are adapter or join task instances
+     *  (things that implement a method getData).
+     * @param {String[]} dependencies Instructions on what adapters to fetch from, in what order
      * @returns {Promise}
      */
-    getData(state, fields) {
-        var requests = this.__split_requests(fields);
-        // Create an array of functions that, when called, will trigger the request to the specified datasource
-        var request_handles = Object.keys(requests).map((key) => {
-            if (!this._sources.get(key)) {
-                throw new Error(`Datasource for namespace ${key} not found`);
-            }
-            return this._sources.get(key).getData(
-                state,
-                requests[key].fields,
-                requests[key].outnames,
-                requests[key].trans
-            );
-        });
-        //assume the fields are requested in dependent order
-        //TODO: better manage dependencies
-        var ret = Promise.resolve({header:{}, body: [], discrete: {}});
-        for (var i = 0; i &lt; request_handles.length; i++) {
-            // If a single datalayer uses multiple sources, perform the next request when the previous one completes
-            ret = ret.then(request_handles[i]);
+    getData(plot_state, entities, dependencies) {
+        if (!dependencies.length) {
+            return Promise.resolve([]);
         }
-        return ret;
+        // The last dependency (usually the last join operation) determines the last thing returned.
+        return getLinkedData(plot_state, entities, dependencies, true);
     }
 }
 
 
 export default Requester;
+
+export {DataOperation as _JoinTask};
 </code></pre>
         </article>
     </section>
@@ -109,7 +194,7 @@ export default Requester;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-parsers.html">ext/lz-parsers</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataFunctions.html">LocusZoom_DataFunctions</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-data_requester-DataOperation.html">DataOperation</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseLZAdapter.html">BaseLZAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseUMAdapter.html">BaseUMAdapter</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_Adapters-UserTabixLD.html">UserTabixLD</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_from_layer">data_from_layer</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
