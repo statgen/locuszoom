@@ -21,7 +21,17 @@ const triangledown = {
 };
 
 /**
- * Apply shared namespaces to a layout, recursively
+ * Apply shared namespaces to a layout, recursively.
+ *
+ * Overriding namespaces can be used to identify where to retrieve data from, but not to add new data sources to a layout.
+ *   For that, a key would have to be added to `layout.namespace` directly.
+ *
+ * Detail: This function is a bit magical. Whereas most layouts overrides are copied over verbatim (merging objects and nested keys), applyNamespaces will *only* copy
+ *  over keys that are relevant to that data layer. Eg, if overrides specifies a key called "red_herring",
+ *  an association data layer will ignore that data source entirely, and not copy it into `assoc_layer.namespace`.
+ *
+ * Only items under a key called `namespace` are given this special treatment. This allows a single call to `Layouts.get('plot'...)` to specify
+ *   namespace overrides for many layers in one convenient place, without accidentally telling every layer to request all possible data for itself.
  * @private
   */
 function applyNamespaces(layout, shared_namespaces) {

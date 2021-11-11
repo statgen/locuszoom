@@ -218,6 +218,7 @@ describe('Layout helpers', function () {
             };
 
 
+            // Note: a namespace is ONLY copied over if it is relevant to that data layer (other_anno should not appear anywhere)
             const actual = applyNamespaces(base, { assoc: 'assoc22', ld: 'ld5', other_anno: 'mything' });
             assert.deepEqual(actual, expected, 'Overrides as appropriate');
         });
