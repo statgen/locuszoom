@@ -161,15 +161,28 @@ const association_pvalues_layer = {
     coalesce: {
         active: true,
     },
-    point_shape: {
-        scale_function: 'if',
-        field: 'lz_is_ld_refvar',
-        parameters: {
-            field_value: true,
-            then: 'diamond',
-            else: 'circle',
+    point_shape: [
+        {
+            scale_function: 'if',
+            field: 'lz_is_ld_refvar',
+            parameters: {
+                field_value: true,
+                then: 'diamond',
+            },
         },
-    },
+        {
+            // Not every dataset will provide these params
+            scale_function: 'effect_direction',
+            parameters: {
+                '+': 'triangle',
+                '-': 'triangledown',
+                // The scale function receives the entire datum object, so it needs to be told where to find individual fields
+                beta_field: 'assoc:beta',
+                stderr_beta_field: 'assoc:se',
+            },
+        },
+        'circle',
+    ],
     point_size: {
         scale_function: 'if',
         field: 'lz_is_ld_refvar',

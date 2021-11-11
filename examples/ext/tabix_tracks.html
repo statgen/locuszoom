@@ -61,7 +61,11 @@
       <p>
         A key feature of LocusZoom is that each track is independent. This means it is very straightforward to define
         layouts in which some tracks come from a tabix file (like a BED track), while others are fetched from a remote
-        web server that handles standard well-known dataets (like genes or 1000G LD).
+        web server that handles standard well-known datasets (like genes or 1000G LD).
+      </p>
+      <p>
+        In this demo, tabix loaders (and built-in file format parsers) are used for association, LD, and BED track data.
+        Genes and recombination rate are fetched from the UM PortalDev API. View the source code of this page for details.
       </p>
 
       <div id="lz-plot" class="lz-container-responsive"></div>

@@ -337,7 +337,7 @@ describe('Layout helpers', function () {
 
             const scenarios = [
                 ['predicate_filters retrieve only list items where a specific condition is met', '$..color[?(@.scale_function === "if")].field', ['lz_is_ld_refvar']],
-                ['retrieves a list of scale function names', 'panels[?(@.tag === "association")]..scale_function', [ 'if', 'if', 'if', 'numerical_bin' ]],
+                ['retrieves a list of scale function names', 'panels[?(@.tag === "association")]..scale_function', [ 'if', 'numerical_bin', 'if', 'effect_direction', 'if' ]],
                 ['fetches dotted field path - one specific axis label', 'panels[?(@.tag === "association")].axes.x.label', [ 'Chromosome {{chr}} (Mb)' ]],
                 ['is able to query and return falsy values', '$.extra_field', [false]],
                 ['returns an empty list if no matches are found', '$.nonexistent', []],
