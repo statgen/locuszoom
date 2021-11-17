@@ -213,11 +213,12 @@ const association_pvalues_layer = {
         '#AAAAAA',
     ],
     legend: [
+        {  label: 'LD (r²)' }, // We're omitting the refvar symbol for now, but can show it with // shape: 'diamond', color: '#9632b8'
         {
             shape: 'ribbon',
-            label: 'LD (r²)',
-            width: 25,
-            height: 5,
+            orientation: 'vertical',
+            width: 10,
+            height: 15,
             color_stops: ['rgb(70, 54, 153)', 'rgb(38, 188, 225)', 'rgb(110, 254, 104)', 'rgb(248, 195, 42)', 'rgb(219, 61, 17)'],
             tick_labels: [0, 0.2, 0.4, 0.6, 0.8, 1.0],
             label_size: 10,
@@ -742,7 +743,7 @@ const association_panel = {
     id: 'association',
     tag: 'association',
     min_height: 200,
-    height: 225,
+    height: 275,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: (function () {

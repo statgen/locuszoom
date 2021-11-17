@@ -92,7 +92,7 @@ svg.#{$namespace}-locuszoom  {
   path.#{$namespace}-data_layer-scatter, path.#{$namespace}-data_layer-category_scatter {
     stroke: #{$default_black_shadow};
     stroke-opacity: #{$default_black_shadow_opacity};
-    stroke-width: 1px;
+    stroke-width: 0.8px;
     cursor: pointer;
   }
 

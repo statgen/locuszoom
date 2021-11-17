@@ -138,35 +138,63 @@ class Legend {
                         line_height = Math.max(line_height, height + padding);
                     } else if (shape === 'ribbon') {
                         // Color ribbons describe a series of color stops: small boxes of color across a continuous
-                        //  scale. Drawn like:
+                        //  scale. Drawn horizontally, or vertically, like:
                         //      [red | orange | yellow | green ] label
                         // For example, this can be used with the numerical-bin color scale to describe LD color stops in a compact way.
                         const width = +element.width || 25;
                         const height = +element.height || width;
-                        const color_stops = element.color_stops;
-                        const ribbon_group = selector.append('g');
+                        const is_horizontal = (element.orientation || 'vertical') === 'horizontal';
+                        let color_stops = element.color_stops;
+
+                        const all_elements = selector.append('g');
+                        const ribbon_group = all_elements.append('g');
+                        const axis_group = all_elements.append('g');
                         let axis_offset = 0;
                         if (element.tick_labels) {
+                            let range;
+                            if (is_horizontal) {
+                                range = [0, width * color_stops.length - 1];  // 1 px offset to align tick with inner borders
+                            } else {
+                                range = [height * color_stops.length - 1, 0];
+                            }
                             const scale = d3.scaleLinear()
                                 .domain(d3.extent(element.tick_labels)) // Assumes tick labels are always numeric in this mode
-                                .range([0, width * color_stops.length - 1]); // 1 px offset to align tick with inner borders
-                            const axis = d3.axisTop(scale)
+                                .range(range);
+                            const axis = (is_horizontal ? d3.axisTop : d3.axisRight)(scale)
                                 .tickSize(3)
                                 .tickValues(element.tick_labels)
                                 .tickFormat((v) => v);
-                            ribbon_group.call(axis);
-                            axis_offset += ribbon_group.node().getBoundingClientRect().height;
+                            axis_group.call(axis);
+                            let bcr = axis_group.node().getBoundingClientRect();
+                            axis_offset = bcr.height;
                         }
-                        ribbon_group
-                            .attr('transform', `translate(${0}, ${axis_offset})`);
+                        if (is_horizontal) {
+                            // Shift axis down (so that tick marks aren't above the origin)
+                            axis_group
+                                .attr('transform', `translate(0, ${axis_offset})`);
+                            // Ribbon appears below axis
+                            ribbon_group
+                                .attr('transform', `translate(0, ${axis_offset})`);
+                        } else {
+                            // Vertical mode: Shift axis ticks to the right of the ribbon
+                            all_elements.attr('transform', 'translate(5, 0)');
+                            axis_group
+                                .attr('transform', `translate(${width}, 0)`);
+                        }
 
+                        if (!is_horizontal) {
+                            //  Vertical mode: renders top -> bottom but scale is usually specified low..high
+                            color_stops = color_stops.slice();
+                            color_stops.reverse();
+                        }
                         for (let i = 0; i < color_stops.length; i++) {
                             const color = color_stops[i];
+                            const to_next_marking = is_horizontal ? `translate(${width * i}, 0)` : `translate(0, ${height * i})`;
                             ribbon_group
                                 .append('rect')
                                 .attr('class', element.class || '')
                                 .attr('stroke', 'black')
-                                .attr('transform', `translate(${width * i}, 0)`)
+                                .attr('transform', to_next_marking)
                                 .attr('stroke-width', 0.5)
                                 .attr('width', width)
                                 .attr('height', height)
@@ -174,7 +202,13 @@ class Legend {
                                 .call(applyStyles, element.style || {});
                         }
 
-                        label_x = width * color_stops.length + padding;
+                        // Note: In vertical mode, it's usually easier to put the label above the legend as a separate marker
+                        //  This is because the legend element label is drawn last (can't use it's size to position the ribbon, which is drawn first)
+                        if (!is_horizontal && element.label) {
+                            throw new Error('Legend labels not supported for vertical ribbons (use a separate legend item as text instead)');
+                        }
+                        // This only makes sense for horizontal labels.
+                        label_x = (width * color_stops.length + padding);
                         label_y += axis_offset;
                     } else if (shape_factory) {
                         // Shape symbol is a recognized d3 type, so we can draw it in the legend (circle, diamond, etc.)
