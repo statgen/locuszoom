@@ -18,7 +18,7 @@ const default_layout = {
     width: 10,
     height: 10,
     padding: 5,
-    label_size: 12,
+    label_size: 14,
     hidden: false,
 };
 
@@ -105,7 +105,7 @@ class Legend {
                 layer_legend.forEach((element) => {
                     const selector = this.elements_group.append('g')
                         .attr('transform', `translate(${x}, ${y})`);
-                    const label_size = +element.label_size || +this.layout.label_size || 12;
+                    const label_size = +element.label_size || +this.layout.label_size;
                     let label_x = 0;
                     let label_y = (label_size / 2) + (padding / 2);
                     line_height = Math.max(line_height, label_size + padding);
@@ -164,7 +164,9 @@ class Legend {
                                 .tickSize(3)
                                 .tickValues(element.tick_labels)
                                 .tickFormat((v) => v);
-                            axis_group.call(axis);
+                            axis_group
+                                .call(axis)
+                                .attr('class', 'lz-axis');
                             let bcr = axis_group.node().getBoundingClientRect();
                             axis_offset = bcr.height;
                         }

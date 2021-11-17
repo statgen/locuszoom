@@ -213,7 +213,7 @@ const association_pvalues_layer = {
         '#AAAAAA',
     ],
     legend: [
-        {  label: 'LD (r²)' }, // We're omitting the refvar symbol for now, but can show it with // shape: 'diamond', color: '#9632b8'
+        {  label: 'LD (r²)', label_size: 14 }, // We're omitting the refvar symbol for now, but can show it with // shape: 'diamond', color: '#9632b8'
         {
             shape: 'ribbon',
             orientation: 'vertical',
@@ -221,7 +221,6 @@ const association_pvalues_layer = {
             height: 15,
             color_stops: ['rgb(70, 54, 153)', 'rgb(38, 188, 225)', 'rgb(110, 254, 104)', 'rgb(248, 195, 42)', 'rgb(219, 61, 17)'],
             tick_labels: [0, 0.2, 0.4, 0.6, 0.8, 1.0],
-            label_size: 10,
         },
     ],
     label: null,
@@ -743,8 +742,8 @@ const association_panel = {
     id: 'association',
     tag: 'association',
     min_height: 200,
-    height: 275,
-    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    height: 300,
+    margin: { top: 35, right: 55, bottom: 40, left: 70 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: (function () {
         const base = deepCopy(standard_panel_toolbar);
@@ -757,22 +756,22 @@ const association_panel = {
     axes: {
         x: {
             label: 'Chromosome {{chr}} (Mb)',
-            label_offset: 32,
+            label_offset: 38,
             tick_format: 'region',
             extent: 'state',
         },
         y1: {
             label: '-log10 p-value',
-            label_offset: 28,
+            label_offset: 50,
         },
         y2: {
             label: 'Recombination Rate (cM/Mb)',
-            label_offset: 40,
+            label_offset: 46,
         },
     },
     legend: {
         orientation: 'vertical',
-        origin: { x: 55, y: 40 },
+        origin: { x: 75, y: 40 },
         hidden: true,
     },
     interaction: {
@@ -799,19 +798,19 @@ const coaccessibility_panel = {
     tag: 'coaccessibility',
     min_height: 150,
     height: 180,
-    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    margin: { top: 35, right: 55, bottom: 40, left: 70 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
     axes: {
         x: {
             label: 'Chromosome {{chr}} (Mb)',
-            label_offset: 32,
+            label_offset: 38,
             tick_format: 'region',
             extent: 'state',
         },
         y1: {
             label: 'Score',
-            label_offset: 28,
+            label_offset: 40,
             render: false,  // We are mainly concerned with the relative magnitudes: hide y axis to avoid clutter.
         },
     },
@@ -871,7 +870,7 @@ const association_catalog_panel = function () {
                             { field: 'ld:correlation', operator: '>', value: 0.4 },
                         ],
                         style: {
-                            'font-size': '10px',
+                            'font-size': '12px',
                             'font-weight': 'bold',
                             'fill': '#333333',
                         },
@@ -897,7 +896,7 @@ const genes_panel = {
     tag: 'genes',
     min_height: 150,
     height: 225,
-    margin: { top: 20, right: 50, bottom: 20, left: 50 },
+    margin: { top: 20, right: 55, bottom: 20, left: 70 },
     axes: {},
     interaction: {
         drag_background_to_pan: true,
@@ -930,7 +929,7 @@ const phewas_panel = {
     tag: 'phewas',
     min_height: 300,
     height: 300,
-    margin: { top: 20, right: 50, bottom: 120, left: 50 },
+    margin: { top: 20, right: 55, bottom: 120, left: 70 },
     inner_border: 'rgb(210, 210, 210)',
     axes: {
         x: {
@@ -946,7 +945,7 @@ const phewas_panel = {
         },
         y1: {
             label: '-log10 p-value',
-            label_offset: 28,
+            label_offset: 50,
         },
     },
     data_layers: [
@@ -965,7 +964,7 @@ const annotation_catalog_panel = {
     tag: 'gwascatalog',
     min_height: 50,
     height: 50,
-    margin: { top: 25, right: 50, bottom: 10, left: 50 },
+    margin: { top: 25, right: 55, bottom: 10, left: 70 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
     axes: {
@@ -1039,7 +1038,7 @@ const standard_phewas_plot = {
             axes: {
                 x: {
                     label: 'Chromosome {{chr}} (Mb)',
-                    label_offset: 32,
+                    label_offset: 38,
                     tick_format: 'region',
                     extent: 'state',
                 },

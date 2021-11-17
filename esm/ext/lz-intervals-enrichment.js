@@ -159,7 +159,7 @@ function install(LocusZoom) {
         hide: { and: ['unhighlighted', 'unselected'] },
         html: `<b>Tissue</b>: {{intervals:tissueId|htmlescape}}<br>
                <b>Range</b>: {{intervals:chromosome|htmlescape}}: {{intervals:start|htmlescape}}-{{intervals:end|htmlescape}}<br>
-               <b>-log10 p</b>: {{intervals:pValue|neglog10|scinotation|htmlescape}}<br>
+               <b>-log<sub>10</sub> p</b>: {{intervals:pValue|neglog10|scinotation|htmlescape}}<br>
                <b>Enrichment (n-fold)</b>: {{intervals:fold|scinotation|htmlescape}}`,
     };
 
@@ -257,18 +257,18 @@ function install(LocusZoom) {
         tag: 'intervals_enrichment',
         min_height: 250,
         height: 250,
-        margin: { top: 35, right: 50, bottom: 40, left: 50 },
+        margin: { top: 35, right: 50, bottom: 40, left: 70 },
         inner_border: 'rgb(210, 210, 210)',
         axes: {
             x: {
                 label: 'Chromosome {{chr}} (Mb)',
-                label_offset: 32,
+                label_offset: 34,
                 tick_format: 'region',
                 extent: 'state',
             },
             y1: {
                 label: 'enrichment (n-fold)',
-                label_offset: 28,
+                label_offset: 40,
             },
         },
         interaction: {

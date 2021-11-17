@@ -11,7 +11,7 @@ const default_layout = {
     // Optionally specify different fill and stroke properties
     stroke: 'rgb(54, 54, 150)',
     color: '#363696',
-    label_font_size: 12,
+    label_font_size: 15,
     label_exon_spacing: 3,
     exon_height: 10,
     bounding_box_padding: 3,
@@ -266,6 +266,7 @@ class Genes extends BaseDataLayer {
                 const boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
                     .data([gene], (d) => `${d.gene_name}_boundary`);
 
+                // FIXME: Make gene text font sizes scalable
                 height = 1;
                 boundaries.enter()
                     .append('rect')

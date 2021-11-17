@@ -721,7 +721,7 @@ function install (LocusZoom) {
         tag: 'intervals',
         min_height: 50,
         height: 50,
-        margin: { top: 25, right: 150, bottom: 5, left: 50 },
+        margin: { top: 25, right: 150, bottom: 5, left: 70 },
         toolbar: (function () {
             const l = LocusZoom.Layouts.get('toolbar', 'standard_panel');
             l.widgets.push({
