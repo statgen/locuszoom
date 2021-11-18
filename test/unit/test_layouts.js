@@ -357,8 +357,8 @@ describe('Layout helpers', function () {
                 ['set many values to a constant', '$..id', 'all', ['all', 'all', 'all', 'all', 'all', 'all']],
                 ['add items to an array', '$.some_list', (old_value) => old_value.concat(['field1', 'field2']), [['field0', 'field1', 'field2']]],
                 // Two subtly different cases for nested objects (direct query, and as part of filtered list)
-                ['mutate an object inside an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 50, right: 50, top: 35, new_field: 10}]],
-                ['mutate an object inside a list', '$..panels[?(@.tag === "association")]', (old_config) => (old_config.margin.new_field = 10) && old_config, [Object.assign(base_panel, {margin: {bottom: 40, left: 50, right: 50, top: 35, new_field: 10}})]],
+                ['mutate an object inside an object', '$..panels[?(@.tag === "association")].margin', (old_config) => (old_config.new_field = 10) && old_config, [{bottom: 40, left: 70, right: 55, top: 35, new_field: 10}]],
+                ['mutate an object inside a list', '$..panels[?(@.tag === "association")]', (old_config) => (old_config.margin.new_field = 10) && old_config, [Object.assign(base_panel, {margin: {bottom: 40, left: 70, right: 55, top: 35, new_field: 10}})]],
             ];
 
             for (let [label, selector, mutator, expected] of scenarios) {
