@@ -72,7 +72,8 @@ import SCALABLE from '../../registry/scalable';
  * @typedef {object} LegendItem
  * @property [shape] This is optional (e.g. a legend element could just be a textual label).
  *   Supported values are the standard d3 3.x symbol types (i.e. "circle", "cross", "diamond", "square",
- *   "triangle-down", and "triangle-up"), as well as "rect" for an arbitrary square/rectangle or line for a path.
+ *   "triangle-down", and "triangle-up"), as well as "rect" for an arbitrary square/rectangle or "line" for a path.
+ *   A special "ribbon" option can be use to draw a series of explicit, numeric-only color stops (a row of colored squares, such as to indicate LD)
  * @property {string} color The point color (hexadecimal, rgb, etc)
  * @property {string} label The human-readable label of the legend item
  * @property {string} [class] The name of a CSS class used to style the point in the legend
@@ -81,9 +82,12 @@ import SCALABLE from '../../registry/scalable';
  * @property {number} [length] Length (in pixels) for the path rendered as the graphical portion of the legend element
  *  if the value of the shape parameter is "line".
  * @property {number} [width] Width (in pixels) for the rect rendered as the graphical portion of the legend element if
- *   the value of the shape parameter is "rect".
+ *   the value of the shape parameter is "rect" or "ribbon".
  * @property {number} [height] Height (in pixels) for the rect rendered as the graphical portion of the legend element if
- *   the value of the shape parameter is "rect".
+ *   the value of the shape parameter is "rect" or "ribbon".
+ * @property {'vertical'|'horizontal'} [orientation='vertical'] For shape "ribbon", specifies whether to draw the ribbon vertically or horizontally.
+ * @property {Array} [tick_labels] For shape "ribbon", specifies the tick labels that correspond to each colorstop value. Tick labels appear at all box edges: this array should have 1 more item than the number of colorstops.
+ * @property {String[]} [color_stops] For shape "ribbon", specifies the colors of each box in the row of colored squares. There should be 1 fewer item in color_stops than the number of tick labels.
  * @property {object} style CSS styles object to be applied to the DOM element representing the graphical portion of
  *   the legend element.
  */
