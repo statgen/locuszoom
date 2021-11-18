@@ -16,7 +16,7 @@ svg.#{$namespace}-locuszoom  {
   border: none;
   cursor: crosshair;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 10px;
+  font-size: 14px;
 
   rect.#{$namespace}-clickarea {
     fill: rgb(0,0,0);
@@ -40,7 +40,7 @@ svg.#{$namespace}-locuszoom  {
   }
 
   .#{$namespace}-panel-title {
-    font-size: 18px;
+    font-size: 150%;
     font-weight: 600;
   }
 
@@ -57,9 +57,18 @@ svg.#{$namespace}-locuszoom  {
   	shape-rendering: crispEdges;
   }
 
+  .#{$namespace}-axis {
+    // Override the font-size applied by D3
+    font-size: 100%;
+  }
+
   .#{$namespace}-axis .#{$namespace}-label {
-    font-size: 12px;
+    font-size: 120%;
     font-weight: 600;
+  }
+
+  .tick {
+    font-size: 100%;
   }
 
   .tick text:focus {
@@ -92,7 +101,7 @@ svg.#{$namespace}-locuszoom  {
   path.#{$namespace}-data_layer-scatter, path.#{$namespace}-data_layer-category_scatter {
     stroke: #{$default_black_shadow};
     stroke-opacity: #{$default_black_shadow_opacity};
-    stroke-width: 1px;
+    stroke-width: 0.8px;
     cursor: pointer;
   }
 
@@ -458,7 +467,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     top: 0px;
     right: 0px;
     padding: 2px 4px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 300;
     background-color: #D8D8D8;
     color: #333333;
