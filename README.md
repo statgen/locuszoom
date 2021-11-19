@@ -2,6 +2,11 @@
 
 LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.
 
+
+For more information, see our paper:
+
+*Boughton, A. P. et al. LocusZoom.js: interactive and embeddable visualization of genetic association study results. Bioinformatics (2021) [doi:10.1093/bioinformatics/btab186](https://doi.org/10.1093/bioinformatics/btab186).*
+
 **This is a low level library aimed at developers who want to customize their own data sharing/visualization tools. If you are a genetics researcher who just wants to make a fast visualization of your research results, try our user-friendly plot-your-own data services built on LocusZoom.js: [my.locuszoom.org](https://my.locuszoom.org/) and [LocalZoom](https://statgen.github.io/localzoom/)**.
 
 
