@@ -264,9 +264,9 @@ function effect_direction(parameters, input) {
 
     if (beta_val !== undefined) {
         if (se_val !== undefined) {
-            if ((beta_val - 2 * se_val) > 0) {
+            if ((beta_val - 1.96 * se_val) > 0) {
                 return plus_result;
-            } else if ((beta_val + 2 * se_val) &lt; 0) {
+            } else if ((beta_val + 1.96 * se_val) &lt; 0) {
                 return neg_result || null;
             }
         } else {

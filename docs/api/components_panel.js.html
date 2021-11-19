@@ -131,7 +131,8 @@ class Panel {
      *   genomic coordinates, eg 23423456 => 23.42 (Mb)
      * @param {Array} [layout.axes.x.ticks] An array of custom ticks that will override any automatically generated)
      * @param {string} [layout.axes.y1.label] Label text for the provided axis
-     * @param {number} [layout.axes.y1.label_offset]
+     * @param {number} [layout.axes.y1.label_offset] The distance between the axis title and the axis. Use this to prevent
+     *  the title from overlapping with tick mark labels. If there is not enough space for the label, be sure to increase the panel margins (left or right) accordingly.
      * @param {boolean} [layout.axes.y1.render=false] Whether to render this axis
      * @param {Array} [layout.axes.y1.ticks] An array of custom ticks that will override any automatically generated)
      * @param {string} [layout.axes.y2.label] Label text for the provided axis
@@ -461,7 +462,6 @@ class Panel {
      * @returns {BaseDataLayer}
      */
     addDataLayer(layout) {
-
         // Sanity checks
         if (typeof layout !== 'object' || typeof layout.id !== 'string' || !layout.id.length) {
             throw new Error('Invalid data layer layout');
@@ -1016,7 +1016,6 @@ class Panel {
      * @returns {Panel}
      */
     initialize() {
-
         // Append a container group element to house the main panel group element and the clip path
         // Position with initial layout parameters
         const base_id = this.getBaseId();
@@ -1342,7 +1341,6 @@ class Panel {
      * @returns {Panel}
      */
     renderAxis(axis) {
-
         if (!['x', 'y1', 'y2'].includes(axis)) {
             throw new Error(`Unable to render axis; invalid axis identifier: ${axis}`);
         }

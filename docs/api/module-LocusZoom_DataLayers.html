@@ -877,6 +877,8 @@ field satisfies this filter</p></td>
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -905,10 +907,15 @@ field satisfies this filter</p></td>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"><p>This is optional (e.g. a legend element could just be a textual label).
 Supported values are the standard d3 3.x symbol types (i.e. &quot;circle&quot;, &quot;cross&quot;, &quot;diamond&quot;, &quot;square&quot;,
-&quot;triangle-down&quot;, and &quot;triangle-up&quot;), as well as &quot;rect&quot; for an arbitrary square/rectangle or line for a path.</p></td>
+&quot;triangle-down&quot;, and &quot;triangle-up&quot;), as well as &quot;rect&quot; for an arbitrary square/rectangle or &quot;line&quot; for a path.
+A special &quot;ribbon&quot; option can be use to draw a series of explicit, numeric-only color stops (a row of colored squares, such as to indicate LD)</p></td>
         </tr>
 
     
@@ -935,6 +942,10 @@ Supported values are the standard d3 3.x symbol types (i.e. &quot;circle&quot;, 
                 </td>
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last"><p>The point color (hexadecimal, rgb, etc)</p></td>
@@ -964,6 +975,10 @@ Supported values are the standard d3 3.x symbol types (i.e. &quot;circle&quot;, 
                 </td>
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last"><p>The human-readable label of the legend item</p></td>
@@ -996,6 +1011,10 @@ Supported values are the standard d3 3.x symbol types (i.e. &quot;circle&quot;, 
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"><p>The name of a CSS class used to style the point in the legend</p></td>
         </tr>
@@ -1026,6 +1045,10 @@ Supported values are the standard d3 3.x symbol types (i.e. &quot;circle&quot;, 
                 </td>
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last"><p>The point area for each element (if the shape is a d3 symbol). Eg, for a 40 px area,
@@ -1059,6 +1082,10 @@ a circle would be ~7..14 px in diameter.</p></td>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"><p>Length (in pixels) for the path rendered as the graphical portion of the legend element
 if the value of the shape parameter is &quot;line&quot;.</p></td>
@@ -1091,9 +1118,13 @@ if the value of the shape parameter is &quot;line&quot;.</p></td>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"><p>Width (in pixels) for the rect rendered as the graphical portion of the legend element if
-the value of the shape parameter is &quot;rect&quot;.</p></td>
+the value of the shape parameter is &quot;rect&quot; or &quot;ribbon&quot;.</p></td>
         </tr>
 
     
@@ -1123,9 +1154,123 @@ the value of the shape parameter is &quot;rect&quot;.</p></td>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"><p>Height (in pixels) for the rect rendered as the graphical portion of the legend element if
-the value of the shape parameter is &quot;rect&quot;.</p></td>
+the value of the shape parameter is &quot;rect&quot; or &quot;ribbon&quot;.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>orientation</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'vertical'</span>
+|
+
+<span class="param-type">'horizontal'</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'vertical'
+                
+                </td>
+            
+
+            <td class="description last"><p>For shape &quot;ribbon&quot;, specifies whether to draw the ribbon vertically or horizontally.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tick_labels</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>For shape &quot;ribbon&quot;, specifies the tick labels that correspond to each colorstop value. Tick labels appear at all box edges: this array should have 1 more item than the number of colorstops.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>color_stops</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;String></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>For shape &quot;ribbon&quot;, specifies the colors of each box in the row of colored squares. There should be 1 fewer item in color_stops than the number of tick labels.</p></td>
         </tr>
 
     
@@ -1152,6 +1297,10 @@ the value of the shape parameter is &quot;rect&quot;.</p></td>
                 </td>
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last"><p>CSS styles object to be applied to the DOM element representing the graphical portion of

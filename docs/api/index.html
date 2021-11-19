@@ -45,14 +45,14 @@
     <section>
         <article><h1>LocusZoom</h1>
 <p>LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.</p>
-<p><strong>This is a low level library aimed at developers who want to customize their own data sharing/visualization. If you are a genetics researcher who just wants to make a fast visualization of your research results, try our user-friendly plot-your-own data services built on LocusZoom.js: <a href="https://my.locuszoom.org/">my.locuszoom.org</a> and <a href="https://statgen.github.io/localzoom/">LocalZoom</a></strong>.</p>
+<p><strong>This is a low level library aimed at developers who want to customize their own data sharing/visualization tools. If you are a genetics researcher who just wants to make a fast visualization of your research results, try our user-friendly plot-your-own data services built on LocusZoom.js: <a href="https://my.locuszoom.org/">my.locuszoom.org</a> and <a href="https://statgen.github.io/localzoom/">LocalZoom</a></strong>.</p>
 <p><img src="https://github.com/statgen/locuszoom/workflows/Unit%20tests/badge.svg?branch=develop" alt="Build Status"></p>
 <p>See <a href="https://statgen.github.io/locuszoom/docs/">https://statgen.github.io/locuszoom/docs/</a> for full documentation and API reference.</p>
 <p>To see functional examples of plots generated with LocusZoom.js see <a href="http://statgen.github.io/locuszoom/">statgen.github.io/locuszoom</a> and <a href="http://statgen.github.io/locuszoom/#examples">statgen.github.io/locuszoom/#examples</a>.</p>
-<p><img src="http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png" alt="LocusZoom.js Standard Association Plot"></p>
+<p><img src="examples/locuszoom_standard_association_example.png" alt="LocusZoom.js Standard Association Plot"></p>
 <h2>Making a LocusZoom Plot</h2>
 <h3>1. Include Necessary JavaScript and CSS</h3>
-<p>The page you build that embeds the LocusZoom plugin must include the following resources, found in the <code>dist</code> directory:</p>
+<p>The page you build that embeds the LocusZoom plugin must include the following resources, found in the <code>dist</code> directory (or via CDN):</p>
 <ul>
 <li>
 <p><code>d3.js</code><br>
@@ -112,15 +112,15 @@ data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;fil
 <p>A basic example may then look like this:</p>
 <pre class="prettyprint source lang-html"><code>&lt;html>
   &lt;head>
-    &lt;script src=&quot;locuszoom.app.min.js&quot; type=&quot;text/javascript&quot;>&lt;/script>
-    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;locuszoom.css&quot;/>
+    &lt;script src=&quot;dist/locuszoom.app.min.js&quot; type=&quot;text/javascript&quot;>&lt;/script>
+    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;dist/locuszoom.css&quot;/>
   &lt;/head>
   &lt;body>
     &lt;div id=&quot;lz-plot&quot;>&lt;/div>
     &lt;script type=&quot;text/javascript&quot;>
-      var data_sources = new LocusZoom.DataSources();
+      const data_sources = new LocusZoom.DataSources();
       data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;https://server.com/api/single/&quot;, source: 1 }]);
-      var layout = {
+      const layout = {
         width: 800,
         panels: [
           {
@@ -137,16 +137,16 @@ data_sources.add(&quot;assoc&quot;, [&quot;AssociationLZ&quot;, { url: &quot;fil
           }
         ]
       };
-      var plot = LocusZoom.populate(&quot;#lz-plot&quot;, data_sources, layout);
+      const plot = LocusZoom.populate(&quot;#lz-plot&quot;, data_sources, layout);
     &lt;/script>
   &lt;/body>
 &lt;/html>
 </code></pre>
 <h3>Other Ways To Make a LocusZoom Plot</h3>
 <h4>Use a Predefined Layout</h4>
-<p>The core LocusZoom library comes equipped with several predefined layouts, organized by type (&quot;plot&quot;, &quot;panel&quot;, &quot;data_layer&quot;, and &quot;toolbar&quot;). You can see what layouts are predefined by reading the contents of <code>assets/js/app/Layouts.js</code> or in the browser by entering <code>LocusZoom.Layouts.list()</code> (or to list one specific type: <code>LocusZoom.Layouts.list(type)</code>).</p>
+<p>The core LocusZoom library comes equipped with several predefined layouts, organized by type (&quot;plot&quot;, &quot;panel&quot;, &quot;data_layer&quot;, and &quot;toolbar&quot;). You can see what layouts are predefined by reading the <a href="https://statgen.github.io/locuszoom/docs/api/module-LocusZoom_Layouts.html">documentation</a> or introspecting in the browser by entering <code>LocusZoom.Layouts.list()</code> (or to list one specific type, like &quot;data_layer&quot;: <code>LocusZoom.Layouts.list(type)</code>).</p>
 <p>Get any predefined layout by type and name using <code>LocusZoom.Layouts.get(type, name)</code>.</p>
-<p>If your data matches the field names and formats of the <a href="https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints">UMich PortalDev API</a>, these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary.</p>
+<p>If your data matches the field names and formats of the <a href="https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints">UMich PortalDev API</a>, these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary. (for example, some LocusZoom features assume the presence of a field called <code>log_pvalue</code>)</p>
 <p>See the <a href="https://statgen.github.io/locuszoom/docs/guides/rendering_layouts.html">guide to working with layouts</a> for further details.</p>
 <h4>Build a Layout Using Some Predefined Pieces</h4>
 <p><code>LocusZoom.Layouts.get(type, name)</code> can also be used to pull predefined layouts of smaller pieces, like data layers or
@@ -167,8 +167,8 @@ toolbars, into a custom layout:</p>
 </code></pre>
 <h4>Modify a Predefined Layout</h4>
 <p>The <code>get()</code> function also accepts a partial layout to be merged with the predefined layout as a third argument, providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:</p>
-<pre class="prettyprint source lang-javascript"><code>const changes = { label_font_size: 20 };
-LocusZoom.Layouts.get(&quot;data_layer&quot;, &quot;genes&quot;, changes);
+<pre class="prettyprint source lang-javascript"><code>const overrides = { label_font_size: 20 };
+LocusZoom.Layouts.get(&quot;data_layer&quot;, &quot;genes&quot;, overrides);
 </code></pre>
 <h4>Predefining State by Building a State Object</h4>
 <p><strong>State</strong> is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the state object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization as a top-level parameter in the layout. For example:</p>
@@ -205,8 +205,8 @@ LocusZoom.Layouts.get(&quot;data_layer&quot;, &quot;genes&quot;, changes);
 <h3>Static analysis and code style</h3>
 <p>LocusZoom runs code quality checks via <a href="http://eslint.org/">ESLint</a>, the rules for which can be found in <code>.eslintrc</code>. This will run automatically as part of all new code commits, and during every build.</p>
 <h2>Help and Support</h2>
-<p>Full documentation can be found here: <a href="https://statgen.github.io/locuszoom/docs/">docs/</a></p>
-<p>A LocusZoom discussion forum is available here: <a href="https://groups.google.com/forum/#!forum/locuszoom">groups.google.com/forum/#!forum/locuszoom</a>.
+<p>Full API documentation and prose guides are available at: <a href="https://statgen.github.io/locuszoom/docs/">https://statgen.github.io/locuszoom/docs/</a></p>
+<p>A LocusZoom discussion forum is available here: <a href="https://groups.google.com/forum/#!forum/locuszoom">https://groups.google.com/forum/#!forum/locuszoom</a>.
 For the most effective help, please specify that your question  is about &quot;LocusZoom.js&quot;.</p>
 <p>If you have questions or feedback please file an issue on the <a href="https://github.com/statgen/locuszoom/issues">LocusZoom.js GitHub repository</a> or post at the discussion forum referenced above.</p></article>
     </section>
