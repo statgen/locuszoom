@@ -94,7 +94,7 @@
     // Fetch initial position from the URL, or use some defaults
     var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
-        initialState = { chr: 10, start: 114176406, end: 115176406 };
+        initialState = { chr: '10', start: 114176406, end: 115176406 };
     }
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
     LocusZoom.Layouts.mutate_attrs(layout, '$.panels[?(@.tag === "coaccessibility")]', (config) => {

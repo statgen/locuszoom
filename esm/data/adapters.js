@@ -519,7 +519,7 @@ class LDServer extends BaseUMAdapter {
         const coord = +pos;
         // Last step: sanity check the proposed reference variant. Is it inside the view region? If not, we're probably
         //  remembering a user choice from before user jumped to a new region. LD should be relative to something nearby.
-        if ((coord && state.ldrefvar && state.chr) && (chrom !== state.chr || coord < state.start || coord > state.end)) {
+        if ((coord && state.ldrefvar && state.chr) && (chrom !== String(state.chr) || coord < state.start || coord > state.end)) {
             // Rerun this method, after clearing out the proposed reference variant. NOTE: Adapter call receives a
             //   *copy* of plot.state, so wiping here doesn't remove the original value.
             state.ldrefvar = null;

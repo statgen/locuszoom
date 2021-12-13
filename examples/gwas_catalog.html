@@ -100,7 +100,7 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
-        initialState = { chr: 9, start: 21751670, end: 22351670 };
+        initialState = { chr: '9', start: 21751670, end: 22351670 };
       }
       // This example demonstrates using the `state.genome_build` param, which tells LZ annotation sources to
       //  automatically select an appropriate dataset based on a globally specified genome build.

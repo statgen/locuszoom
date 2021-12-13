@@ -104,7 +104,7 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
-        initialState = {chr: 16, start: 74947245, end: 75547245};
+        initialState = {chr: '16', start: 74947245, end: 75547245};
       }
 
       layout = LocusZoom.Layouts.get("plot", "association_credible_set", {state: initialState});
