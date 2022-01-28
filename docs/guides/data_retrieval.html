@@ -111,7 +111,7 @@
 <li><a href="#creating-your-own-custom-adapter">Creating your own custom adapter</a>
 <ul>
 <li><a href="#can-i-reuse-existing-code">Can I reuse existing code?</a></li>
-<li><a href="#re-using-code-via-subclasses">Re-using code via subclasses</a></li>
+<li><a href="#customizing-data-retrieval-via-subclasses">Customizing data retrieval via subclasses</a></li>
 <li><a href="#what-happens-during-a-data-request">What happens during a data request?</a>
 <ul>
 <li><a href="#step-1-fetching-data-from-a-remote-server-and-converting-to-records">Step 1: Fetching data from a remote server and converting to records</a></li>
@@ -241,23 +241,34 @@
 <li>If the actual headers, body, or request method must be customized in order to carry out the request. This happens when data is retrieved from a particular technology (REST vs GraphQL vs Tabix), or if the request must incorporate some form of authentication credentials.</li>
 <li>If some of the fields in your custom API format need to be transformed or renamed in order to match expectations in LZ code. For example, the LD adapter may try to suggest an LD reference variant by looking for the GWAS variant with the largest <code>log_pvalue</code>. (over time, built-in LZ adapters trend towards being more strict about field names; it is easier to write reliable code when not having to deal with unpredictable data!)</li>
 </ol>
-<h2 id="re-using-code-via-subclasses">Re-using code via subclasses</h2>
+<h2 id="customizing-data-retrieval-via-subclasses">Customizing data retrieval via subclasses</h2>
 <p>Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the UM PortalDev API, but a different way of constructing queries, you can change just one function and define a new data adapter:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">const</span> AssociationLZ <span class="op">=</span> LocusZoom<span class="op">.</span><span class="at">Adapters</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;AssociationLZ&#39;</span>)<span class="op">;</span></span>
 <span id="cb6-2"><a href="#cb6-2"></a><span class="kw">class</span> CustomAssociation <span class="kw">extends</span> AssociationLZ {</span>
 <span id="cb6-3"><a href="#cb6-3"></a>    _getURL(request_options) {</span>
 <span id="cb6-4"><a href="#cb6-4"></a>        <span class="co">// Every adapter receives the info from plot.state, plus any additional request options calculated/added in the function `_buildRequestOptions`</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a>      <span class="co">// The inputs to the function can be used to influence what query is constructed. Eg, since the current view region is stored in `plot.state`:</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>        <span class="co">// The inputs to the function can be used to influence what query is constructed. Eg, since the current view region is stored in `plot.state`:</span></span>
 <span id="cb6-6"><a href="#cb6-6"></a>        <span class="kw">const</span> {chr<span class="op">,</span> start<span class="op">,</span> end} <span class="op">=</span> request_options<span class="op">;</span></span>
 <span id="cb6-7"><a href="#cb6-7"></a>        <span class="co">// Fetch the region of interest from a hypothetical REST API that uses query parameters to define the region query, for a given study URL such as `data.example/gwas/&lt;id&gt;/?chr=_&amp;start=_&amp;end=_`</span></span>
 <span id="cb6-8"><a href="#cb6-8"></a>        <span class="cf">return</span> <span class="vs">`</span><span class="sc">${</span><span class="kw">this</span><span class="op">.</span><span class="at">_url</span><span class="sc">}</span><span class="vs">/</span><span class="sc">${</span><span class="kw">this</span><span class="op">.</span><span class="at">source</span><span class="sc">}</span><span class="vs">/?chr=</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(chr)<span class="sc">}</span><span class="vs">&amp;start=</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(start)<span class="sc">}</span><span class="vs">&amp;end</span><span class="sc">${</span><span class="pp">encodeURIComponent</span>(end)<span class="sc">}</span><span class="vs">`</span></span>
 <span id="cb6-9"><a href="#cb6-9"></a>  }</span>
-<span id="cb6-10"><a href="#cb6-10"></a>}</span>
-<span id="cb6-11"><a href="#cb6-11"></a><span class="co">// A custom adapter should be added to the registry before using it</span></span>
-<span id="cb6-12"><a href="#cb6-12"></a>LocusZoom<span class="op">.</span><span class="at">Adapters</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> CustomAssociation)<span class="op">;</span></span>
-<span id="cb6-13"><a href="#cb6-13"></a></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="co">// From there, it can be used anywhere throughout LocusZoom, in the same way as any built-in adapter</span></span>
-<span id="cb6-15"><a href="#cb6-15"></a>data_sources<span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;mystudy&#39;</span><span class="op">,</span> [<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://data.example/gwas&#39;</span><span class="op">,</span> <span class="dt">source</span><span class="op">:</span> <span class="dv">42</span> }])<span class="op">;</span></span></code></pre></div>
+<span id="cb6-10"><a href="#cb6-10"></a>  </span>
+<span id="cb6-11"><a href="#cb6-11"></a>  _annotateRecords(records<span class="op">,</span> options) {</span>
+<span id="cb6-12"><a href="#cb6-12"></a>      <span class="co">// Imagine that your API returns a payload that mostly works, but a few fields are a little different than what is expected.</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a>      <span class="co">// Usually LocusZoom is pretty tolerant of changing field names- but because Association plots connect to so many extra annotations, certain magic features require a little extra attention to detail</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a>      records<span class="op">.</span><span class="fu">forEach</span>((item) <span class="kw">=&gt;</span> {</span>
+<span id="cb6-15"><a href="#cb6-15"></a>          <span class="co">// LocusZoom connects assoc summstats to other datasets, by finding the most significant variant. To find that variant and ask for LD, it expects two special fields with very specific names, and sort of specific formats. If you already have these fields, great- if not, they can be manually added by custom code, even if no one will let you change the API server directly</span></span>
+<span id="cb6-16"><a href="#cb6-16"></a>          item<span class="op">.</span><span class="at">log_pvalue</span> <span class="op">=</span> <span class="op">-</span><span class="bu">Math</span><span class="op">.</span><span class="fu">log10</span>(item<span class="op">.</span><span class="at">pValue</span>)<span class="op">;</span>  <span class="co">// It&#39;s better if you send log_pvalue from the server directly, not calculate it on the front end (JS is subject to numerical underflow, and sending pValue to the browser may cause numerical underflow problems)</span></span>
+<span id="cb6-17"><a href="#cb6-17"></a>          item<span class="op">.</span><span class="at">variant</span> <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>item<span class="op">.</span><span class="at">chrom</span><span class="sc">}</span><span class="vs">:</span><span class="sc">${</span>item<span class="op">.</span><span class="at">pos</span><span class="sc">}</span><span class="vs">_</span><span class="sc">${</span>item<span class="op">.</span><span class="at">ref</span><span class="sc">}</span><span class="vs">/</span><span class="sc">${</span>item<span class="op">.</span><span class="at">alt</span><span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb6-18"><a href="#cb6-18"></a>      })<span class="op">;</span></span>
+<span id="cb6-19"><a href="#cb6-19"></a>      <span class="cf">return</span> records<span class="op">;</span></span>
+<span id="cb6-20"><a href="#cb6-20"></a>  }</span>
+<span id="cb6-21"><a href="#cb6-21"></a>}</span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="co">// A custom adapter should be added to the registry before using it</span></span>
+<span id="cb6-23"><a href="#cb6-23"></a>LocusZoom<span class="op">.</span><span class="at">Adapters</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> CustomAssociation)<span class="op">;</span></span>
+<span id="cb6-24"><a href="#cb6-24"></a></span>
+<span id="cb6-25"><a href="#cb6-25"></a><span class="co">// From there, it can be used anywhere throughout LocusZoom, in the same way as any built-in adapter</span></span>
+<span id="cb6-26"><a href="#cb6-26"></a>data_sources<span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;mystudy&#39;</span><span class="op">,</span> [<span class="st">&#39;CustomAssociation&#39;</span><span class="op">,</span> {<span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://data.example/gwas&#39;</span><span class="op">,</span> <span class="dt">source</span><span class="op">:</span> <span class="dv">42</span> }])<span class="op">;</span></span></code></pre></div>
 <p>In the above example, an HTTP GET request will be sent to the server every time that new data is requested. If further control is required (like sending a POST request with custom body), you may need to override additional methods such as <a href="../api/module-LocusZoom_Adapters-BaseLZAdapter.html#_performRequest">fetchRequest</a>. See below for more information, then consult the detailed developer documentation for details.</p>
 <p>Common types of data retrieval that are most often customized:</p>
 <ul>
