@@ -181,14 +181,13 @@ class CustomAssociation extends AssociationLZ {
   }
   
   _annotateRecords(records, options) {
-      // Imagine that your API returns a field called pValue (not recommended due to numerical underflow!)... 
-      // but LZ generally expects a field called `log_pvalue` (because it is used to make connections between data, this is one of the few field names we are somewhat strict about: this is the -log10(pvalue)).
-      // Since many special features (like "find best hit for LD") depend on this field, we can manually
-      // add the desired field name using custom code that acts on the normalized, parsed records from the server
-      
-      // Ideally, your service should send the -log10(pvalue) directly, because very significant hits will get rounded to 0 once they reach the browser, and sending them as log_pvalue will ensure that your results are displayed correctly without truncation. (underflow is a basic limitation of javascript)
-      // But sometimes, you need to work with a server that made a different choice, or you want to add a calculated or transformed field. This helper method is a place to perform any required cleanup.
-      records.forEach((item) => item.log_pvalue = -Math.log10(item.pValue));
+      // Imagine that your API returns a payload that mostly works, but a few fields are a little different than what is expected.
+      // Usually LocusZoom is pretty tolerant of changing field names- but because Association plots connect to so many extra annotations, certain magic features require a little extra attention to detail
+      records.forEach((item) => {
+          // LocusZoom connects assoc summstats to other datasets, by finding the most significant variant. To find that variant and ask for LD, it expects two special fields with very specific names, and sort of specific formats. If you already have these fields, great- if not, they can be manually added by custom code, even if no one will let you change the API server directly
+          item.log_pvalue = -Math.log10(item.pValue);  // It's better if you send log_pvalue from the server directly, not calculate it on the front end (JS is subject to numerical underflow, and sending pValue to the browser may cause numerical underflow problems)
+          item.variant = `${item.chrom}:${item.pos}_${item.ref}/${item.alt}`;
+      });
       return records;
   }
 }
