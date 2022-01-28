@@ -18,11 +18,11 @@ To see functional examples of plots generated with LocusZoom.js see [statgen.git
 
 ![LocusZoom.js Standard Association Plot](examples/locuszoom_standard_association_example.png)
 
-## Making a LocusZoom Plot
+## Making a LocusZoom Plot: Quickstart tutorial
 
 ### 1. Include Necessary JavaScript and CSS
 
-The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory (or via CDN):
+The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory (or preferably loaded via CDN):
 
 * `d3.js`  
   [D3.js](https://d3js.org/) v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded [via a CDN](https://cdn.jsdelivr.net/npm/d3@^5.16.0). It must be present before LocusZoom is loaded.
@@ -178,15 +178,15 @@ LocusZoom.Layouts.get("data_layer", "genes", overrides);
 
 #### Predefining State by Building a State Object
 
-**State** is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the state object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization as a top-level parameter in the layout. For example:
+**State** is JSON-serializable object containing information that can affect the entire plot (including all data retrieval requests). State can be set before or after the plot is initialized. For example, the following special-named fields will cause the plot to be loaded to a specific region of interest on first render:
 
 ```javascript
 const layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
 ```
 
-#### Predefining State With `data-region`
+#### Alternate: setting the initial view via `data-region`
 
-You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the containing element before populating it, like so:
+You can also describe the locususing a `data-region` attribute of the containing element before populating it, like so:
 
 ```html
 <div id="lz-plot" data-region="10:114550452-115067678"></div>
@@ -195,7 +195,6 @@ You can also describe the locus query aspect of the State (chromosome, start, an
 When `LocusZoom.populate()` is executed on the element defined above it will automatically parse any `data-region` parameter to convert those values into the initial state.
 
 ## Development Setup
-
 ### Dependencies
 
 LocusZoom is an entirely client-side library designed to plug into arbitrary data sets, be they local files, APIs, or something else entirely. It has the following external dependencies:
@@ -221,8 +220,8 @@ This build process will also write sourcemaps, to help with debugging code even 
 * `npm run test` - Run unit tests (optional: `npm run test:coverage` to output a code coverage report)
 * `npm run dev` - Automatically rebuild the library whenever code changes (development mode)
 * `npm run build` - Run tests, and if they pass, build the library for release
-* `npm run css` - Rebuild the CSS using SASS
-* `npm run docs` - Build the library documentation
+* `npm run css` - Rebuild the CSS using SASS (CSS rarely changes, so this doesn't get done automatically in dev mode)
+* `npm run docs` - Build just the library documentation
 
 
 #### Automated Testing

@@ -166,7 +166,7 @@ The built-in LocusZoom adapters can be used as-is in many cases, so long as the 
 2. If the actual headers, body, or request method must be customized in order to carry out the request. This happens when data is retrieved from a particular technology (REST vs GraphQL vs Tabix), or if the request must incorporate some form of authentication credentials.
 3. If some of the fields in your custom API format need to be transformed or renamed in order to match expectations in LZ code. For example, the LD adapter may try to suggest an LD reference variant by looking for the GWAS variant with the largest `log_pvalue`. (over time, built-in LZ adapters trend towards being more strict about field names; it is easier to write reliable code when not having to deal with unpredictable data!)
 
-## Re-using code via subclasses
+## Customizing data retrieval via subclasses
 Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the UM PortalDev API, but a different way of constructing queries, you can change just one function and define a new data adapter:
 
 ```javascript
@@ -174,10 +174,22 @@ const AssociationLZ = LocusZoom.Adapters.get('AssociationLZ');
 class CustomAssociation extends AssociationLZ {
     _getURL(request_options) {
         // Every adapter receives the info from plot.state, plus any additional request options calculated/added in the function `_buildRequestOptions`
-      // The inputs to the function can be used to influence what query is constructed. Eg, since the current view region is stored in `plot.state`:
+        // The inputs to the function can be used to influence what query is constructed. Eg, since the current view region is stored in `plot.state`:
         const {chr, start, end} = request_options;
         // Fetch the region of interest from a hypothetical REST API that uses query parameters to define the region query, for a given study URL such as `data.example/gwas/<id>/?chr=_&start=_&end=_`
         return `${this._url}/${this.source}/?chr=${encodeURIComponent(chr)}&start=${encodeURIComponent(start)}&end${encodeURIComponent(end)}`
+  }
+  
+  _annotateRecords(records, options) {
+      // Imagine that your API returns a field called pValue (not recommended due to numerical underflow!)... 
+      // but LZ generally expects a field called `log_pvalue` (because it is used to make connections between data, this is one of the few field names we are somewhat strict about: this is the -log10(pvalue)).
+      // Since many special features (like "find best hit for LD") depend on this field, we can manually
+      // add the desired field name using custom code that acts on the normalized, parsed records from the server
+      
+      // Ideally, your service should send the -log10(pvalue) directly, because very significant hits will get rounded to 0 once they reach the browser, and sending them as log_pvalue will ensure that your results are displayed correctly without truncation. (underflow is a basic limitation of javascript)
+      // But sometimes, you need to work with a server that made a different choice, or you want to add a calculated or transformed field. This helper method is a place to perform any required cleanup.
+      records.forEach((item) => item.log_pvalue = -Math.log10(item.pValue));
+      return records;
   }
 }
 // A custom adapter should be added to the registry before using it
