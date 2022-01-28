@@ -106,7 +106,6 @@
     phenos.forEach(function(pheno){
         data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/",  source: pheno.study_id }]);
         var association_data_layer_mods = {
-            join_options: [],
             id: "associationpvalues_" + pheno.namespace,
             name: pheno.title,
             point_shape: "circle",
