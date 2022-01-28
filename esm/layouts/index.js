@@ -722,7 +722,7 @@ const region_nav_plot_toolbar = function () {
             button_html: '<<',
             position: 'right',
             group_position: 'start',
-        }
+        },
     );
     return base;
 }();
@@ -911,7 +911,7 @@ const genes_panel = {
                 position: 'right',
                 button_html: 'Resize',
             },
-            deepCopy(gene_selector_menu)
+            deepCopy(gene_selector_menu),
         );
         return base;
     })(),
@@ -1067,7 +1067,7 @@ const coaccessibility_plot = {
             // This is a companion to the "match" directive in the coaccessibility panel
             const base = Object.assign(
                 { height: 270 },
-                deepCopy(genes_panel)
+                deepCopy(genes_panel),
             );
             const layer = base.data_layers[0];
             layer.match = { send: 'gene_name', receive: 'gene_name' };

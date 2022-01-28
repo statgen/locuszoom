@@ -469,7 +469,7 @@ describe('LocusZoom.Plot', function() {
         it('requires specifying one of two ways to subscribe', function () {
             assert.throws(
                 () => this.plot.subscribeToData({ useless_option: 'something' }),
-                /must specify the desired data/
+                /must specify the desired data/,
             );
         });
 
@@ -495,7 +495,7 @@ describe('LocusZoom.Plot', function() {
             assert.throws(
                 () => this.plot.subscribeToData({ from_layer: 'panel0.layer1' }, () => null),
                 /unknown data layer/,
-                'Warns if requesting an unknown layer'
+                'Warns if requesting an unknown layer',
             );
         });
 
@@ -504,7 +504,7 @@ describe('LocusZoom.Plot', function() {
 
             const listener = this.plot.subscribeToData(
                 {  namespace: { 'first': 'first' } },
-                dataCallback
+                dataCallback,
             );
             assert.ok(listener, 'Listener defined');
 
@@ -531,7 +531,7 @@ describe('LocusZoom.Plot', function() {
                     from_layer: 'plot.panel1.layer1',
                     onerror: errorCallback,
                 },
-                dataCallback
+                dataCallback,
             );
 
             return this.plot.applyState()
@@ -549,7 +549,7 @@ describe('LocusZoom.Plot', function() {
                     from_layer: 'plot.panel1.layer1',
                     onerror: errorCallback,
                 },
-                dataCallback
+                dataCallback,
             );
 
             this.plot.off('data_from_layer', listener);
@@ -557,7 +557,7 @@ describe('LocusZoom.Plot', function() {
             assert.notInclude(
                 this.plot._event_hooks['data_from_layer'],
                 listener,
-                'Listener should not be registered'
+                'Listener should not be registered',
             );
             assert.ok(dataCallback.notCalled, 'listener success callback was not fired');
             assert.ok(errorCallback.notCalled, 'listener error callback was not fired');
@@ -727,7 +727,7 @@ describe('LocusZoom.Plot', function() {
                     assert.equal(
                         filtered[0]['s:id'],
                         'b',
-                        'This item displayed is the one that satisfies matching rules'
+                        'This item displayed is the one that satisfies matching rules',
                     );
                 });
             });

@@ -52,7 +52,7 @@ describe('Interval annotation track', function () {
             assert.deepEqual(
                 this.color_config,
                 // Note we are comparing base layout (before auto-gen) to dynamic layout (after)
-                find_color_options(this.instance.layout)
+                find_color_options(this.instance.layout),
             );
             assert.deepEqual(this.instance.layout.legend, this.instance._base_layout.legend);
         });
@@ -89,7 +89,7 @@ describe('Interval annotation track', function () {
                     { color: 'rgb(0,255,0)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
                     { color: 'rgb(0,0,255)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
-                'Legend items map the correct stateID and colors together'
+                'Legend items map the correct stateID and colors together',
             );
         });
 
@@ -113,7 +113,7 @@ describe('Interval annotation track', function () {
             assert.deepEqual(
                 final_colors.parameters.values,
                 ['rgb(212,212,212)', 'rgb(192,192,192)', 'rgb(128,128,128)', 'rgb(189,183,107)', 'rgb(233,150,122)', 'rgb(205,92,92)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,0)', 'rgb(194,225,5)', 'rgb(0,100,0)', 'rgb(0,128,0)', 'rgb(50,205,50)', 'rgb(255,69,0)', 'rgb(255,0,0)'],
-                'The smallest preset color scheme that fits data size will be used'
+                'The smallest preset color scheme that fits data size will be used',
             );
             assert.deepEqual(
                 final_legend,
@@ -122,7 +122,7 @@ describe('Interval annotation track', function () {
                     { color: 'rgb(192,192,192)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
                     { color: 'rgb(128,128,128)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
-                'Legend items map the correct stateID and colors together'
+                'Legend items map the correct stateID and colors together',
             );
         });
     });

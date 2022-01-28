@@ -42,7 +42,7 @@ describe('Layout helper functions', function () {
             assert.sameMembers(
                 result,
                 ['assoc:nearest_gene', 'assoc:rsid'],
-                'Finds all unique valid field names'
+                'Finds all unique valid field names',
             );
         });
 
@@ -63,7 +63,7 @@ describe('Layout helper functions', function () {
             assert.sameMembers(
                 result,
                 ['phewas:trait_group'],
-                'Finds nested field names'
+                'Finds nested field names',
             );
         });
     });

@@ -24,14 +24,14 @@ describe('TabixUrlSource', function () {
     it('requires a parser function', function () {
         assert.throws(
             () => ADAPTERS.create('TabixUrlSource', { url_data: 'ok.tbi' }),
-            /missing required configuration/
+            /missing required configuration/,
         );
     });
 
     it('Checks that overfetch is provided as a fraction', function () {
         assert.throws(
             () => ADAPTERS.create('TabixUrlSource', { url_data: 'ok.tbi', parser_func: () => 12, overfetch: 99 }),
-            /fraction/
+            /fraction/,
         );
     });
 

@@ -1349,7 +1349,7 @@ class BaseDataLayer {
                 // The broadcast value can use transforms to "clean up value before sending broadcasting"
                 'match_requested',
                 { value: new Field(value_to_broadcast).resolve(element), active: active },
-                true
+                true,
             );
         }
         return this;
@@ -1572,7 +1572,7 @@ class BaseDataLayer {
                 this.parent.emit(
                     'data_from_layer',
                     { layer: this.getBaseId(), content: deepCopy(new_data) }, // TODO: revamp event signature post layer-eventing-mixin
-                    true
+                    true,
                 );
             });
     }

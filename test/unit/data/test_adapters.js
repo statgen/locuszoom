@@ -21,11 +21,11 @@ describe('Data adapters', function () {
         it('warns when trying to create instance of (removed) old style adapters', function () {
             assert.throws(
                 () => new BaseAdapter({}),
-                /have been replaced/
+                /have been replaced/,
             );
             assert.throws(
                 () => new BaseApiAdapter({}),
-                /have been replaced/
+                /have been replaced/,
             );
         });
     });
@@ -66,7 +66,7 @@ describe('Data adapters', function () {
             const source = new BaseTestClass({});
             return source.getData({
                 _provider_name: 'sometest',
-                _test_data: [{ a: 1, b: 2 }]}
+                _test_data: [{ a: 1, b: 2 }]},
             ).then((result) => assert.deepEqual(result, [{'sometest:a': 1, 'sometest:b': 2}]));
         });
 
@@ -74,7 +74,7 @@ describe('Data adapters', function () {
             const source = new BaseTestClass({ limit_fields: ['b'] });
             return source.getData({
                 _provider_name: 'sometest',
-                _test_data: [{ a: 1, b: 2 }]}
+                _test_data: [{ a: 1, b: 2 }]},
             ).then((result) => assert.deepEqual(result, [{ 'sometest:b': 2}]));
         });
 
@@ -87,7 +87,7 @@ describe('Data adapters', function () {
             assert.throws(
                 () => source._findPrefixedKey([{'sometest:aaa': 1 }], 'no_such_key'),
                 /Could not locate/,
-                'Pedantically insists that data match the expected contract'
+                'Pedantically insists that data match the expected contract',
             );
         });
     });
@@ -112,7 +112,7 @@ describe('Data adapters', function () {
             const adapter = new BaseUMAdapter({ prefix_namespace: false });
             assert.throws(
                 () => adapter._normalizeResponse({ a: [1, 2], b: [3] }),
-                /same length/
+                /same length/,
             );
         });
     });
@@ -158,11 +158,11 @@ describe('Data adapters', function () {
         it('warns if the `data` key is missing', function () {
             assert.throws(
                 () => new StaticSource([]),
-                /required option/
+                /required option/,
             );
             assert.throws(
                 () => new StaticSource({}),
-                /required option/
+                /required option/,
             );
         });
 
@@ -220,13 +220,13 @@ describe('Data adapters', function () {
             assert.throws(
                 () => source37._buildRequestOptions({ ldrefvar: '1:2_A/B' }, null),
                 /must depend on/,
-                'Warns if the adapter is totally misused (not part of a dependency chain)'
+                'Warns if the adapter is totally misused (not part of a dependency chain)',
             );
 
             assert.throws(
                 () => source37._buildRequestOptions({ ldrefvar: '1:2_A/B' }, [{ some_other_data: true, meets_assoc_contract: false }]),
                 /required key name/,
-                'Warns if the adapter is totally misused (not given association data)'
+                'Warns if the adapter is totally misused (not given association data)',
             );
 
         });

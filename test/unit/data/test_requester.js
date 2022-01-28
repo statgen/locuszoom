@@ -10,7 +10,7 @@ describe('Requester object defines and parses requests', function () {
             DATA_OPS.add('sumtwo', (
                 {plot_state: { state_field = 0 }},
                 [left, right],
-                some_param
+                some_param,
             ) => left + right + some_param + state_field);
         });
 
@@ -66,7 +66,7 @@ describe('Requester object defines and parses requests', function () {
                     this._requester.config_to_sources({ 'somenamespace': 'nowhere' }, []);
                 },
                 /not found in DataSources/,
-                'Namespace references something not registered in datasource'
+                'Namespace references something not registered in datasource',
             );
 
             // Test duplicate namespace errors: joins
@@ -76,7 +76,7 @@ describe('Requester object defines and parses requests', function () {
                     [
                         {name: 'combined', type: 'left_match', requires: []},
                         {name: 'combined', type: 'left_match', requires: []},
-                    ]
+                    ],
                 );
             }, /join name 'combined' must be unique/);
 
@@ -86,10 +86,10 @@ describe('Requester object defines and parses requests', function () {
                         {},
                         [
                             {name: 'combined', type: 'left_match', requires: ['unregistered', 'whatisthis']},
-                        ]
+                        ],
                     );
                 },
-                /cannot operate on unknown provider/
+                /cannot operate on unknown provider/,
             );
 
         });
@@ -174,7 +174,7 @@ describe('Requester object defines and parses requests', function () {
             assert.deepEqual(
                 data_operations,
                 [{type: 'fetch', from: ['assoc', 'catalog', 'ld']}], // autogen doesn't specify dependencies, like ld(assoc)
-                'Layout data_ops is mutated in place to reference namespaces (no dependencies assumed when auto-specifying)'
+                'Layout data_ops is mutated in place to reference namespaces (no dependencies assumed when auto-specifying)',
             );
 
             assert.deepEqual(dependencies, ['assoc', 'catalog', 'ld'], 'Dependencies are auto-guessed from namespaces');
@@ -188,7 +188,7 @@ describe('Requester object defines and parses requests', function () {
                     { type: 'fetch', from: ['assoc', 'catalog', 'ld'] },
                     { type: 'sumtwo', name: 'somejoin', requires: ['assoc', 'ld'], params: [5] },
                 ],
-                'Auto-generates fetch rules specifically; leaves other data ops untouched'
+                'Auto-generates fetch rules specifically; leaves other data ops untouched',
             );
             assert.deepEqual(dependencies, ['assoc', 'catalog', 'ld', 'somejoin(assoc, ld)'], 'Dependencies are (still) auto-guessed from namespaces');
         });
@@ -201,7 +201,7 @@ describe('Requester object defines and parses requests', function () {
             assert.deepEqual(
                 data_operations,
                 [{type: 'fetch', from: ['assoc', 'catalog']}],
-                'Layout data_ops is mutated in place to reference namespaces (no dependencies assumed when auto-specifying)'
+                'Layout data_ops is mutated in place to reference namespaces (no dependencies assumed when auto-specifying)',
             );
             assert.deepEqual(dependencies, ['assoc', 'catalog'], 'Dependencies take all namespaces into account');
         });
@@ -222,7 +222,7 @@ describe('Requester object defines and parses requests', function () {
                     { type: 'sumtwo', name: 'has_name', requires: ['assoc', 'catalog'], params: [] },
                     { type: 'sumtwo', name: 'join0', requires: ['assoc', 'has_name'], params: [] },
                 ],
-                'Layout data_ops is mutated in place to give a name to any join without one'
+                'Layout data_ops is mutated in place to give a name to any join without one',
             );
 
             assert.deepEqual(

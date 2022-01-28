@@ -31,7 +31,7 @@ describe('Panel', function() {
         it('should fail if panel layout does not specify an ID', function() {
             assert.throws(
                 () => this.plot.addPanel({ 'foo': 'bar' }),
-                /must specify "id"/
+                /must specify "id"/,
             );
         });
 

@@ -52,7 +52,7 @@ function makeGWASParser(
         n_samples_col,
         is_alt_effect = true, // whether effect allele is oriented towards alt. We don't support files like METAL, where ref/alt may switch places per line of the file
         delimiter = '\t',
-    }
+    },
 ) {
     // Column IDs should be 1-indexed (human friendly)
     if (has(marker_col) && has(chrom_col) && has(pos_col)) {

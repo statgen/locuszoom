@@ -22,7 +22,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.throws(
                 () => layer.getElementId({ not_much_to_go_on: 12 }),
                 /Unable to generate/,
-                'Cannot generate ID field if no value is present for that field'
+                'Cannot generate ID field if no value is present for that field',
             );
         });
 
@@ -40,14 +40,14 @@ describe('LocusZoom.DataLayer', function () {
             assert.throws(
                 () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
                 /Unable to generate/,
-                'Not using a field name in the data, and expression is not recognized as a template'
+                'Not using a field name in the data, and expression is not recognized as a template',
             );
 
             layer.layout.id_field = '';
             assert.throws(
                 () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
                 /Unable to generate/,
-                'An empty template does not evaluate to a useful element ID'
+                'An empty template does not evaluate to a useful element ID',
             );
         });
     });

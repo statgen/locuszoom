@@ -144,7 +144,7 @@ describe('Toolbar widgets', function () {
                 assert.equal(
                     this.widget._getValue(),
                     output,
-                    `Number conversion should convert input ${input} to output ${output}`
+                    `Number conversion should convert input ${input} to output ${output}`,
                 );
             });
         });

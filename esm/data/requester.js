@@ -2,7 +2,7 @@
  * @module
  * @private
  */
-import {getLinkedData} from 'undercomplicate';
+import {getLinkedData} from './undercomplicate';
 
 import { DATA_OPS } from '../registry';
 

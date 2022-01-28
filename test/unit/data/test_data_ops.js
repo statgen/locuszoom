@@ -12,7 +12,7 @@ describe('Data operations', function() {
             const func = DATA_OPS.get('left_match');
             assert.throws(
                 () => func([1, 2, 3], 'paramA'),
-                /must receive exactly two recordsets/
+                /must receive exactly two recordsets/,
             );
         });
     });
@@ -44,7 +44,7 @@ describe('Data operations', function() {
                     [assoc_data, catalog_data],
                     'assoc:position',
                     'catalog:pos',
-                    'catalog:log_pvalue'
+                    'catalog:log_pvalue',
                 );
 
                 assert.deepEqual(res, [
@@ -86,7 +86,7 @@ describe('Data operations', function() {
                     [assoc_data, catalog_data],
                     'assoc:position',
                     'catalog:pos',
-                    'catalog:log_pvalue'
+                    'catalog:log_pvalue',
                 );
 
                 assert.deepEqual(res, [
@@ -121,7 +121,7 @@ describe('Data operations', function() {
                     [assoc_data, []],
                     'assoc:position',
                     'catalog:pos',
-                    'catalog:log_pvalue'
+                    'catalog:log_pvalue',
                 );
                 assert.deepEqual(res, assoc_data);
             });

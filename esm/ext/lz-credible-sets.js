@@ -56,7 +56,7 @@ function install (LocusZoom) {
             // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
             this._config = Object.assign(
                 { threshold: 0.95, significance_threshold: 7.301 },
-                this._config
+                this._config,
             );
             this._prefix_namespace = false;
         }
@@ -382,7 +382,7 @@ function install (LocusZoom) {
                         },
                     },
                 ],
-            }
+            },
         );
         return l;
     }();

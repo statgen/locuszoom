@@ -1097,7 +1097,7 @@ class Plot {
             const panel = this.panels[panel_id];
             panel.setDimensions(
                 this.layout.width,
-                panel.layout.height
+                panel.layout.height,
             );
         });
 

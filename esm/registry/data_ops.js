@@ -26,7 +26,7 @@
  *
  * @module LocusZoom_DataFunctions
  */
-import {joins} from 'undercomplicate';
+import {joins} from '../data/undercomplicate';
 
 import {RegistryBase} from './base';
 

@@ -310,7 +310,7 @@ class Genes extends BaseDataLayer {
                     })
                     .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight())
                         + data_layer.layout.bounding_box_padding
-                        + data_layer.layout.label_font_size
+                        + data_layer.layout.label_font_size,
                     );
 
                 labels.exit()

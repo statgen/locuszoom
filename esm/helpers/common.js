@@ -247,7 +247,7 @@ function debounce(func, delay = 500) {
         clearTimeout(timer);
         timer = setTimeout(
             () => func.apply(this, arguments),
-            delay
+            delay,
         );
     };
 }

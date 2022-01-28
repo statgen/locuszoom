@@ -195,7 +195,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 8,
                 stderr_beta_col: 9,
-            }
+            },
         );
     });
 
@@ -215,7 +215,7 @@ describe('guessGWAS format detection', () => {
                 alt_col: 7,
                 pvalue_col: 9,
                 is_neg_log_pvalue: false,
-            }
+            },
         );
     });
 
@@ -235,7 +235,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 8,
                 stderr_beta_col: 9,
-            }
+            },
         );
     });
 
@@ -254,7 +254,7 @@ describe('guessGWAS format detection', () => {
                 pvalue_col: 17,
                 is_neg_log_pvalue: false,
                 beta_col: 16,
-            }
+            },
         );
     });
 
@@ -274,7 +274,7 @@ describe('guessGWAS format detection', () => {
                 pvalue_col: 16,
                 is_neg_log_pvalue: false,
                 beta_col: 15,
-            }
+            },
         );
     });
 
@@ -292,7 +292,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 9,
                 stderr_beta_col: 10,
-            }
+            },
         );
     });
 
@@ -314,7 +314,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 9,
                 stderr_beta_col: 10,
-            }
+            },
         );
     });
 
@@ -334,7 +334,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 12,
                 stderr_beta_col: 13,
-            }
+            },
         );
     });
 
@@ -351,7 +351,7 @@ describe('guessGWAS format detection', () => {
                 is_neg_log_pvalue: false,
                 beta_col: 4,
                 stderr_beta_col: 5,
-            }
+            },
         );
     });
 });

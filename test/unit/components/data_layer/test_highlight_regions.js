@@ -16,14 +16,14 @@ describe('highlight_regions data layer', function () {
             assert.throws(
                 () => DATA_LAYERS.create('highlight_regions', layout),
                 /not both/,
-                'Invalid layout options should trigger an error'
+                'Invalid layout options should trigger an error',
             );
         });
         it('does not allow mouse interaction', function () {
             assert.throws(
                 () => DATA_LAYERS.create('highlight_regions', { interaction: {}, behaviors: [] }),
                 /mouse events/,
-                'Invalid layout options should trigger an error'
+                'Invalid layout options should trigger an error',
             );
         });
     });

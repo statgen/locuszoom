@@ -200,7 +200,7 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
             (acc, key) => {
                 acc[key] = renameField(layout[key], old_name, new_name, warn_transforms);
                 return acc;
-            }, {}
+            }, {},
         );
     } else if (this_type !== 'string') {
         // Field names are always strings. If the value isn't a string, don't even try to change it.
@@ -240,7 +240,7 @@ function mutate_attrs(layout, selector, value_or_callable) {
     return mutate(
         layout,
         selector,
-        value_or_callable
+        value_or_callable,
     );
 }
 

@@ -193,11 +193,11 @@ describe('Layout helpers', function () {
         it('warns if layout or namespace-overrides are not objects', function () {
             assert.throws(
                 () => applyNamespaces(null, {}),
-                /as objects/
+                /as objects/,
             );
             assert.throws(
                 () => applyNamespaces({}, 42),
-                /as objects/
+                /as objects/,
             );
             assert.ok(applyNamespaces({}), 'If no namespaced provided, default value is used');
         });

@@ -32,14 +32,9 @@
  * @module LocusZoom_Adapters
  */
 
-import {BaseUrlAdapter} from 'undercomplicate';
+import {BaseUrlAdapter} from './undercomplicate';
 
 import {parseMarker} from '../helpers/parse';
-
-// NOTE: Custom adapters are annotated with `see` instead of `extend` throughout this file, to avoid clutter in the developer API docs.
-//  Most people using LZ data sources will never instantiate a class directly and certainly won't be calling internal
-//  methods, except when implementing a subclass. For most LZ users, it's usually enough to acknowledge that the
-//  private API methods exist in the base class.
 
 /**
  * Replaced with the BaseLZAdapter class.
@@ -64,17 +59,20 @@ class BaseApiAdapter extends BaseAdapter {}
 
 
 /**
- * @param {object} config
- * @param [config.cache_enabled=true]
- * @param [config.cache_size=3]
- * @param [config.url]
- * @param [config.prefix_namespace=true] Whether to modify the API response by prepending namespace to each field name.
- *   Most adapters will do this by default, so that each field is unambiguously defined based on where it comes from. (this helps to disambiguate two providers that return similar field names, like assoc:variant and catalog:variant)
- *   Typically, this is only disabled if the response payload is very unusual
- * @param {String[]} [limit_fields=null] If an API returns far more data than is needed, this can be used to simplify
- *   the payload by excluding unused fields. This can help to reduce memory usage for really big server responses like LD.
+ * @extends module:undercomplicate.BaseUrlAdapter
+ * @inheritDoc
  */
 class BaseLZAdapter extends BaseUrlAdapter {
+    /**
+     * @param [config.cache_enabled=true]
+     * @param [config.cache_size=3]
+     * @param [config.url]
+     * @param [config.prefix_namespace=true] Whether to modify the API response by prepending namespace to each field name.
+     *   Most adapters will do this by default, so that each field is unambiguously defined based on where it comes from. (this helps to disambiguate two providers that return similar field names, like assoc:variant and catalog:variant)
+     *   Typically, this is only disabled if the response payload is very unusual
+     * @param {String[]} [config.limit_fields=null] If an API returns far more data than is needed, this can be used to simplify
+     *   the payload by excluding unused fields. This can help to reduce memory usage for really big server responses like LD.
+     */
     constructor(config = {}) {
         if (config.params) {
             // Backwards-compat: prevent old sources from breaking in subtle ways because config options are no longer split between two places.
@@ -96,10 +94,11 @@ class BaseLZAdapter extends BaseUrlAdapter {
 
     /**
      * Determine how a particular request will be identified in cache. Most LZ requests are region based,
-     *   so the default is a string concatenation of `chr_start_end`
+     *   so the default is a string concatenation of `chr_start_end`. This adapter is "region aware"- if the user
+     *   zooms in, it won't trigger a network request because we alread have the data needed.
      * @param options Receives plot.state plus any other request options defined by this source
      * @returns {string}
-     * @private
+     * @public
      */
     _getCacheKey(options) {
         // Most LZ adapters are fetching REGION data, and it makes sense to treat zooming as a cache hit by default
@@ -125,7 +124,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
      * @param records
      * @param options
      * @returns {*}
-     * @private
+     * @public
      */
     _postProcessResponse(records, options) {
         if (!this._prefix_namespace || !Array.isArray(records)) {
@@ -146,7 +145,7 @@ class BaseLZAdapter extends BaseUrlAdapter {
                     }
                     return acc;
                 },
-                {}
+                {},
             );
         });
     }
@@ -177,11 +176,13 @@ class BaseLZAdapter extends BaseUrlAdapter {
 /**
  * The base adapter for the UMich Portaldev API server. This adds a few custom behaviors that handle idiosyncrasies
  *   of one particular web server.
+ * @extends module:LocusZoom_Adapters~BaseLZAdapter
+ * @inheritDoc
  */
 class BaseUMAdapter extends BaseLZAdapter {
     /**
      * @param {Object} config
-     * @param {String} [config.build] The genome build to be used by all requests for this adapter.
+     * @param {String} [config.build] The genome build to be used by all requests for this adapter. (UMich APIs are all genome build aware). "GRCh37" or "GRCh38"
      */
     constructor(config = {}) {
         super(config);
@@ -206,7 +207,7 @@ class BaseUMAdapter extends BaseLZAdapter {
      * @param response_text
      * @param options
      * @returns {Object[]}
-     * @private
+     * @public
      */
     _normalizeResponse(response_text, options) {
         let data = super._normalizeResponse(...arguments);
@@ -249,6 +250,7 @@ class BaseUMAdapter extends BaseLZAdapter {
  *  to a specific REST API.
  * @public
  * @see module:LocusZoom_Adapters~BaseUMAdapter
+ * @inheritDoc
  *
  * @param {Number} config.source The source ID for the dataset of interest, used to construct the request URL
  */
