@@ -1116,7 +1116,8 @@ class Plot {
             d3.select(this.container).classed('lz-container-responsive', true);
 
             // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
-            const resize_listener = () => this.rescaleSVG();
+            const resize_listener = () => window.requestAnimationFrame(() => this.rescaleSVG());
+
             window.addEventListener('resize', resize_listener);
             this.trackExternalListener(window, 'resize', resize_listener);
 
