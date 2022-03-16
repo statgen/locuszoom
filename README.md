@@ -2,19 +2,27 @@
 
 LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.
 
+
+For more information, see our paper:
+
+*Boughton, A. P. et al. LocusZoom.js: interactive and embeddable visualization of genetic association study results. Bioinformatics (2021) [doi:10.1093/bioinformatics/btab186](https://doi.org/10.1093/bioinformatics/btab186).*
+
+**This is a low level library aimed at developers who want to customize their own data sharing/visualization tools. If you are a genetics researcher who just wants to make a fast visualization of your research results, try our user-friendly plot-your-own data services built on LocusZoom.js: [my.locuszoom.org](https://my.locuszoom.org/) and [LocalZoom](https://statgen.github.io/localzoom/)**.
+
+
 ![Build Status](https://github.com/statgen/locuszoom/workflows/Unit%20tests/badge.svg?branch=develop)
 
 See [https://statgen.github.io/locuszoom/docs/](https://statgen.github.io/locuszoom/docs/) for full documentation and API reference.
 
 To see functional examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
 
-![LocusZoom.js Standard Association Plot](http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png)
+![LocusZoom.js Standard Association Plot](examples/locuszoom_standard_association_example.png)
 
-## Making a LocusZoom Plot
+## Making a LocusZoom Plot: Quickstart tutorial
 
 ### 1. Include Necessary JavaScript and CSS
 
-The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory:
+The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory (or preferably loaded via CDN):
 
 * `d3.js`  
   [D3.js](https://d3js.org/) v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded [via a CDN](https://cdn.jsdelivr.net/npm/d3@^5.16.0). It must be present before LocusZoom is loaded.
@@ -42,7 +50,7 @@ Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("assoc", ["AssociationLZ", { url: "http://server.com/api/", params: {source: 1} }]);
+data_sources.add("assoc", ["AssociationLZ", { url: "http://server.com/api/", source: 1 }]);
 ```
 
 The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "assoc".
@@ -73,7 +81,6 @@ var layout = {
          {
            id: "association",
            type: "scatter",
-           fields: ["assoc:position", "assoc:pvalue"],
            x_axis: { field: "assoc:position" },
            y_axis: { field: "assoc:pvalue" }
          }
@@ -96,33 +103,32 @@ A basic example may then look like this:
 ```html
 <html>
   <head>
-    <script src="locuszoom.app.min.js" type="text/javascript"></script>
-    <link rel="stylesheet" type="text/css" href="locuszoom.css"/>
+    <script src="dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="dist/locuszoom.css"/>
   </head>
   <body>
-    <div id="plot"></div>
+    <div id="lz-plot"></div>
     <script type="text/javascript">
-      var data_sources = new LocusZoom.DataSources();
-      data_sources.add("assoc", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
-      var layout = {
-        width: 500,
+      const data_sources = new LocusZoom.DataSources();
+      data_sources.add("assoc", ["AssociationLZ", { url: "https://server.com/api/single/", source: 1 }]);
+      const layout = {
+        width: 800,
         panels: [
           {
             id : "association",
-            height: 500,
+            height: 300,
             data_layers: [
               {
                 id: "association",
                 type: "scatter",
-                fields: ["assoc:position", "assoc:pvalue"],
                 x_axis: { field: "assoc:position" },
-                y_axis: { field: "assoc:pvalue" }
+                y_axis: { field: "assoc:log_pvalue" }
               }
             ]
           }
         ]
       };
-      var plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+      const plot = LocusZoom.populate("#lz-plot", data_sources, layout);
     </script>
   </body>
 </html>
@@ -132,11 +138,11 @@ A basic example may then look like this:
 
 #### Use a Predefined Layout
 
-The core LocusZoom library comes equipped with several predefined layouts, organized by type ("plot", "panel", "data_layer", and "toolbar"). You can see what layouts are predefined by reading the contents of `assets/js/app/Layouts.js` or in the browser by entering `LocusZoom.Layouts.list()` (or to list one specific type: `LocusZoom.Layouts.list(type)`).
+The core LocusZoom library comes equipped with several predefined layouts, organized by type ("plot", "panel", "data_layer", and "toolbar"). You can see what layouts are predefined by reading the [documentation](https://statgen.github.io/locuszoom/docs/api/module-LocusZoom_Layouts.html) or introspecting in the browser by entering `LocusZoom.Layouts.list()` (or to list one specific type, like "data_layer": `LocusZoom.Layouts.list(type)`).
 
 Get any predefined layout by type and name using `LocusZoom.Layouts.get(type, name)`.
 
-If your data matches the field names and formats of the [UMich PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints), these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary.
+If your data matches the field names and formats of the [UMich PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints), these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary. (for example, some LocusZoom features assume the presence of a field called `log_pvalue`)
   
 See the [guide to working with layouts](https://statgen.github.io/locuszoom/docs/guides/rendering_layouts.html) for further details.
 
@@ -150,7 +156,7 @@ const layout = {
   width: 1000,
   height: 500,
   panels: [
-    LocusZoom.Layouts.get("panel", "gwas"),
+    LocusZoom.Layouts.get("panel", "association"),
     {
       id: "custom_panel",
       ...options
@@ -166,24 +172,21 @@ const layout = {
 The `get()` function also accepts a partial layout to be merged with the predefined layout as a third argument, providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:
 
 ```javascript
-const changes = {
-  label_font_size: 20,
-  transition: false
-};
-LocusZoom.Layouts.get("data_layer", "genes", changes);
+const overrides = { label_font_size: 20 };
+LocusZoom.Layouts.get("data_layer", "genes", overrides);
 ```
 
 #### Predefining State by Building a State Object
 
-**State** is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the state object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization as a top-level parameter in the layout. For example:
+**State** is JSON-serializable object containing information that can affect the entire plot (including all data retrieval requests). State can be set before or after the plot is initialized. For example, the following special-named fields will cause the plot to be loaded to a specific region of interest on first render:
 
 ```javascript
 const layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
 ```
 
-#### Predefining State With `data-region`
+#### Alternate: setting the initial view via `data-region`
 
-You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the containing element before populating it, like so:
+You can also describe the locususing a `data-region` attribute of the containing element before populating it, like so:
 
 ```html
 <div id="lz-plot" data-region="10:114550452-115067678"></div>
@@ -192,7 +195,6 @@ You can also describe the locus query aspect of the State (chromosome, start, an
 When `LocusZoom.populate()` is executed on the element defined above it will automatically parse any `data-region` parameter to convert those values into the initial state.
 
 ## Development Setup
-
 ### Dependencies
 
 LocusZoom is an entirely client-side library designed to plug into arbitrary data sets, be they local files, APIs, or something else entirely. It has the following external dependencies:
@@ -218,8 +220,8 @@ This build process will also write sourcemaps, to help with debugging code even 
 * `npm run test` - Run unit tests (optional: `npm run test:coverage` to output a code coverage report)
 * `npm run dev` - Automatically rebuild the library whenever code changes (development mode)
 * `npm run build` - Run tests, and if they pass, build the library for release
-* `npm run css` - Rebuild the CSS using SASS
-* `npm run docs` - Build the library documentation
+* `npm run css` - Rebuild the CSS using SASS (CSS rarely changes, so this doesn't get done automatically in dev mode)
+* `npm run docs` - Build just the library documentation
 
 
 #### Automated Testing
@@ -231,9 +233,9 @@ LocusZoom runs code quality checks via [ESLint](http://eslint.org/), the rules f
 
 ## Help and Support
 
-Full documentation can be found here: [docs/](https://statgen.github.io/locuszoom/docs/)
+Full API documentation and prose guides are available at: [https://statgen.github.io/locuszoom/docs/](https://statgen.github.io/locuszoom/docs/)
 
-A LocusZoom discussion forum is available here: [groups.google.com/forum/#!forum/locuszoom](https://groups.google.com/forum/#!forum/locuszoom). 
+A LocusZoom discussion forum is available here: [https://groups.google.com/forum/#!forum/locuszoom](https://groups.google.com/forum/#!forum/locuszoom). 
 For the most effective help, please specify that your question  is about "LocusZoom.js".
 
 If you have questions or feedback please file an issue on the [LocusZoom.js GitHub repository](https://github.com/statgen/locuszoom/issues) or post at the discussion forum referenced above.

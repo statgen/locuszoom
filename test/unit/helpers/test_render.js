@@ -43,7 +43,7 @@ describe('Coordinate coalescing', function () {
             const actual = coalesce_scatter_points(
                 this.sample_data,
                 -Infinity, Infinity, 3,
-                0, 1, Infinity
+                0, 1, Infinity,
             );
             const expected = _addSymbols([
                 { x: 1, y: 0.9 },
@@ -61,7 +61,7 @@ describe('Coordinate coalescing', function () {
             const actual = coalesce_scatter_points(
                 this.sample_data,
                 -Infinity, Infinity, 1,
-                0, 1, Infinity
+                0, 1, Infinity,
             );
             const expected = _addSymbols([
                 { x: 0, y: 0.5 },
@@ -82,7 +82,7 @@ describe('Coordinate coalescing', function () {
             const actual = coalesce_scatter_points(
                 this.sample_data,
                 -Infinity, Infinity, 1.75,  // From sample data: verify that x = 0.5 and x = 2 don't combine
-                0, 1, Infinity
+                0, 1, Infinity,
             );
             const expected = _addSymbols([
                 { x: 0, y: 0.5 },
@@ -102,7 +102,7 @@ describe('Coordinate coalescing', function () {
             const actual = coalesce_scatter_points(
                 this.sample_data,
                 -Infinity, Infinity, 3,
-                0.0, 1, 0.5
+                0.0, 1, 0.5,
             );
             const expected = _addSymbols([
                 { x: 1, y: 0.9 },
@@ -126,7 +126,7 @@ describe('Coordinate coalescing', function () {
             const actual = coalesce_scatter_points(
                 sample_data,
                 -Infinity, Infinity, 3,
-                0, 1, Infinity
+                0, 1, Infinity,
             );
             assert.deepStrictEqual(actual, sample_data, 'Significant points do not coalesce');
         });

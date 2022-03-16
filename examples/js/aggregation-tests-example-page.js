@@ -32,6 +32,33 @@ const Observable = function () { // Allow UI elements to monitor changes in a va
     return handle_value;
 };
 
+// Format data in a particular way to look good in the tables on this page
+const agg_results_table_format = (state, [agg_data, gene_data]) => {
+    // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
+    const parsed = raremetal.helpers.parsePortalJSON(agg_data);
+    const groups = parsed[0];
+    const variants = parsed[1];
+
+    /////////
+    // Post-process this data with any annotations required by data tables on this page
+
+    // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
+    //  that to a human-friendly gene name (as displayed in the LZ plot)
+    const _genes_lookup = {};
+    gene_data.forEach(function (gene) {
+        const gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
+        _genes_lookup[gene_id] = gene.gene_name;
+    });
+    groups.data.forEach(function (one_result) {
+        const this_group = groups.getOne(one_result.mask, one_result.group);
+        // Add synthetic fields that are not part of the raw calculation results
+        one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
+        one_result.variant_count = this_group.variants.length;
+    });
+    return [groups, variants];
+};
+LocusZoom.DataFunctions.add('agg_results_table_format', agg_results_table_format);
+
 // Make a custom layout object
 function customizePlotLayout(layout) {
     // Customize an existing plot layout with the data for aggregation tests
@@ -40,12 +67,17 @@ function customizePlotLayout(layout) {
     // 2. Genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
     //  the gene track by aggregation test results
     const assocLayout = layout.panels[0].data_layers[2];
-    assocLayout.fields.unshift('aggregation: all');
+    assocLayout.namespace['aggregation'] = 'aggregation';
+    assocLayout.data_operations[0].from = ['aggregation', 'assoc(aggregation)', 'ld(assoc)'];
 
     const genesLayout = layout.panels[1].data_layers[0];
     genesLayout.namespace['aggregation'] = 'aggregation';
-    genesLayout.namespace['aggregation_genes'] = 'aggregation_genes';
-    genesLayout.fields.push('aggregation:all', 'aggregation_genes:all');
+    genesLayout.namespace['aggregation'] = 'aggregation';
+    genesLayout.data_operations.push({
+        type: 'gene_plus_aggregation',
+        requires: ['gene_constraint', 'aggregation'],
+    });
+
     const colorConfig = [
         {
             scale_function: 'if',
@@ -192,26 +224,20 @@ function createDisplayWidgets(label_store, context) {
         .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/v1/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
-            params: { id_field: 'variant' },
+            id_field: 'variant',
         }])
         .add('ld', ['LDServer', {
             url: 'https://portaldev.sph.umich.edu/ld/',
-            params: { source: '1000G', build: 'GRCh37', population: 'ALL' },
+            source: '1000G', build: 'GRCh37', population: 'ALL',
         }])
-        .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', params: { build: 'GRCh37' } }])
-        .add('aggregation_genes', ['GeneAggregationConnectorLZ', {
-            sources: {
-                aggregation_ns: 'aggregation',
-                gene_ns: 'gene',
-            },
-        }])
-        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
+        .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', build: 'GRCh37' }])
+        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', build: 'GRCh37' }])
         .add('constraint', ['GeneConstraintLZ', {
             url: 'https://gnomad.broadinstitute.org/api/',
-            params: { build: 'GRCh37' },
+            build: 'GRCh37',
         }]);
 
-    const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
+    const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end', ldrefvar: 'ld_variant' };
     let initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
         initialState = { chr: '19', start: 45312079, end: 45512079 };
@@ -326,45 +352,24 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
             aggregationTable.tableClearFilter(gene_column_name, selected_gene);
         }
     }.bind(this));
-
     plot.subscribeToData(
-        ['aggregation:all', 'gene:all'],
-        function (data) {
-            // chain.discrete provides distinct data from each source
-            const gene_source_data = data.gene;
-            const agg_source_data = data.aggregation;
-
-            const results = agg_source_data.results;
-
-            // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
-            const parsed = raremetal.helpers.parsePortalJSON(agg_source_data);
-            const groups = parsed[0];
-            const variants = parsed[1];
-
-            /////////
-            // Post-process this data with any annotations required by data tables on this page
-
-            // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
-            //  that to a human-friendly gene name (as displayed in the LZ plot)
-            const _genes_lookup = {};
-            gene_source_data.forEach(function (gene) {
-                const gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
-                _genes_lookup[gene_id] = gene.gene_name;
-            });
-            groups.data.forEach(function (one_result) {
-                const this_group = groups.getOne(one_result.mask, one_result.group);
-                // Add synthetic fields that are not part of the raw calculation results
-                one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
-                one_result.variant_count = this_group.variants.length;
-            });
-
+        {
+            namespace: {'aggregation': 'aggregation', 'gene': 'gene' },
+            data_operations: [{
+                type: 'agg_results_table_format',
+                requires: ['aggregation', 'gene'],
+            }],
+        },
+        (result) => {
+            // Data ops are designed to return one consolidated stream, so the data op above returns... a tuple
+            // This is old code and we're not investing heavily in bringing it up to modern spec
+            const [groups, variants] = result;
             // When new data has been received (and post-processed), pass it on to any UI elements that use that data
             resultStorage({
                 groups: groups,
                 variants: variants,
             });
-        },
-        { discrete: true }
+        }
     );
 
     // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists

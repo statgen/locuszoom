@@ -1142,7 +1142,7 @@ class MovePanelUp extends BaseWidget {
 class MovePanelDown extends BaseWidget {
     update () {
         if (this.button) {
-            const is_at_bottom = (this.parent_panel.layout.y_index === this.parent_plot.panel_ids_by_y_index.length - 1);
+            const is_at_bottom = (this.parent_panel.layout.y_index === this.parent_plot._panel_ids_by_y_index.length - 1);
             this.button.disable(is_at_bottom);
             return this;
         }

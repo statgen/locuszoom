@@ -14,7 +14,7 @@ Below is an example that defines how to retrieve the data for a "classic" LocusZ
 ```javascript
 const apiBase = 'https://portaldev.sph.umich.edu/api/v1/';
 const data_sources = new LocusZoom.DataSources()
-    .add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', params: { source: 45, id_field: 'variant' }}])
+    .add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', source: 45, id_field: 'variant' }])
     .add('ld', ['LDServer', { url: 'https://portaldev.sph.umich.edu/ld/', source: '1000G', population: 'ALL', build: 'GRCh37' }])
     .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', build: 'GRCh37' }])
     .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', build: 'GRCh37' }])
@@ -27,15 +27,15 @@ Of course, defining datasets is only half of the process; see the [Getting Start
 In the example above, a new data source is added via a line of code such as the following:
 
 ```javascript
-data_sources.add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', params: { source: 45, id_field: 'variant' }}]);
+data_sources.add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', source: 45, id_field: 'variant' }]);
 ```
 
 A lot is going on in this line!
 
 * `data_sources.add` defines a piece of information that *could* be used by the plot. (if no data layer asks for data from this source, then no API request will ever be made)
 * The first argument to the function is a *namespace name*. It is an arbitrary reference to this particular piece of data. For example, you might want to plot three association studies together in the same window, and they could be defined as `.add('mystudy', ...)`, `.add('somephenotype', ...)`, `.add('founditinthegwascatalog', ...)`
-  * In the [layouts guide](rendering_layouts.html), we will see how `data_layer.fields` uses these namespaces to identify what data to render.
-* The second argument to the function is a list of values: the name of a [predefined adapter](../api/module-LocusZoom_Adapters.html) that defines how to retrieve this data, followed by an object of  configuration options (like url and params) that control which data will be fetched. Each type of data has its own options; see the documentation for a guide to available choices.
+  * In the [layouts guide](rendering_layouts.html), we will see how **data layers** use these namespaces.
+* The second argument to the function is a list of values: the name of a [predefined adapter](../api/module-LocusZoom_Adapters.html) that defines how to retrieve this data, followed by an object of  configuration options (like url and source) that control which data will be fetched. Each type of data has its own options; see the documentation for a guide to available choices.
   * You are not limited to the types of data retrieval built into LocusZoom.js. See "creating your own adapter" for more information.
 
 ## The importance of genome build
@@ -44,9 +44,9 @@ You may notice that in the example above, many of the datasets specify `build: '
 We periodically update our API server. If you think new information is missing, please let us know.
 
 ## What should the data look like?
-In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layout to specify what fields should be used for the x and y axes.
+In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layer to specify what fields should be used for the x and y axes.
 
-In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the [UM PortalDev API docs](https://portaldev.sph.umich.edu/docs/api/v1/). This is the quickest way to get started.
+In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the [UM PortalDev API docs](https://portaldev.sph.umich.edu/docs/api/v1/). This is the quickest way to get started. Most layouts in the provided `LocusZoom.Layouts` registry will tell you what fields are expected (via the `_auto_fields` property), and most plots will log a console error message if the response is missing expected information.
 
 Most users will only need to implement their own way of retrieving GWAS summary statistics; the other annotations are standard datasets and can be freely used from our public API. For complex plots (like annotations of new data), see our [example gallery](https://statgen.github.io/locuszoom).
 
@@ -83,6 +83,22 @@ Each data adapter in the chain is largely independent, and it is entirely normal
 
 If a single data layer needs to combine two kinds of data (eg association and LD), you will achieve the best results if the sources have some common assumptions about data format. Adapters are highly modular, but because they do not enforce a specific contract of field names or payload structure, you are responsible for ensuring that the resulting data works with the assumptions of your layout. 
 
+## Every layer has its own, private, view of the data
+Each data layer in LocusZoom is intended to be independent of others. Thus, each layer must individually specify its own way to connect data together.
+
+Likewise, each layer defines a "local" way of identifying where to find the data it needs. For example, consider a layer layout as follows:
+
+```javascript
+{
+  namespace: {'assoc': 'mystudy'},
+  id_field: 'assoc:variant'
+}
+```
+
+The `namespace` is specified as a key-value pair of *local_name: global_data_source_name*. This instruction says: "whenever this layer asks for something from assoc, make a request to an item named mystudy". Every field in the layout refers to the local_name. This layer of indirection allows a layout to be used many times to plot different datasets, and only the namespace needs to be changed.
+
+Any changes made to the data within one layer should not affect copies of the same data in other places. This property makes it easier to display the same data in two different ways, without having to make a duplicate network request.
+
 ## What if my data doesn't fit the expected format?
 The built-in adapters are designed to work with a specific set of known REST APIs and fetch data over the web, but we provide mechanisms to customize every aspect of the data retrieval process, including how to construct the query sent to the server and how to modify the fields returned. See the guidance on "custom adapters" below.
 
@@ -93,37 +109,102 @@ In general, the more similar that your field names are to those used in premade 
 
 If the only difference is field names, you can customize the layout to tell it where to find the required information. (see: [guide to layouts and rendering](rendering_layouts.html) for details) [Transformation functions](../api/module-LocusZoom_TransformationFunctions.html) (like `neglog10`) can then be used to ensure that custom data is formatted in a way suitable for rendering and plotting.
 
+## Combining two kinds of data in one place
+Sometimes, a single data layer will depend on information from two different sources (like an association plot colored by LD information).
+
+### Data operations (layout directive)
+The act of combining two pieces of data is performed by *data operations*. In order to let the same piece of data be rendered in different ways, these instructions are placed within each data layer layout. *The decision on how to combine two pieces of information is specified at the point where the data is used*.
+
+A sample layout directive for data operations would be as follows:
+
+```javascript
+{
+    namespace: { 'assoc': 'mystudy', 'ld': 'some_ld' },
+    data_operations: [
+        {
+            type: 'fetch',
+            from: ['assoc', 'ld(assoc)'],
+        },
+        {
+            type: 'left_match',
+            name: 'assoc_plus_ld',
+            requires: ['assoc', 'ld'],
+            // Tell the join function which field names to be used for the join. Each join function has its own possible parameters.
+            params: ['assoc:position', 'ld:position2'], 
+        },
+    ]
+}
+```
+
+#### Dependencies
+The first instruction in the example above specifies how to retrieve the data: `{type: 'fetch', from: ['assoc', 'ld(assoc)'}` 
+
+A single "fetch" operation is used to specify all of the data retrieval. This specifies what information a data layer should retrieve. It refers to the "local" namespace name (like "assoc"), and tells locuszoom to make a request to the global datasource named "mystudy".
+
+Some adapters can not begin to define their request until they see the data from another adapter: eg LD information is retrieved relative to the most significant association variant in the region. This is a *dependency*, and one (or more) dependencies can be specified using the syntax `some_request(first_dependency, nth_dependency)`. LocusZoom will automatically reorder and parallelize requests based on the dependencies given. If several requests each have no dependencies, they will be performed in parallel.
+
+Each individual adapter will receive data it depends on as a function argument to `getData`. The string syntax reflects how the data is connected internally!  In the example above, "ld" is only retrieved after a request to "assoc" is complete, and the LD adapter received the assoc data to help define the next request.
+
+> NOTE: Sometimes it is useful to extend an existing layout to fetch additional kinds of data. It can be annoying to extend a "list" field like fetch.from, so LocusZoom has some magic to help out: if an item is specified as a source of data for this layer (eg `namespace: {'assoc': 'assoc'}`), it will automatically be added to the `fetch.from` instruction. This means that **everything listed in `data_layer.namespace` will trigger a data retrieval request**. You only need to modify the contents of `fetch.from` if you want to specify that the new item depends on something else, eg "don't fetch LD until assoc data is ready: `ld(assoc)`". All of the built in LZ layouts are verbose and explicit, in an effort to reduce the amount of "magic" and make the examples easier to understand.
+
+#### Joins ("Data functions")
+The second instruction in the example above is a *join*. It specifies how to compare multiple sets of data into one list of records ("one record per data point on the plot").
+
+Any function defined in `LocusZoom.DataFunctions` can be referenced. Several builtin joins are provided (including `left_match`, `inner_match`, and `full_outer_match`). Any arbitrary join function can be added to the `LocusZoom.DataFunctions` registry, with the call signature `({plot_state, data_layer}}, [recordsetA, recordsetB...], ...params) => combined_results`.
+
+Data operations are synchronous; they are used for data formatting and cleanup. Use adapters for asynchronous operations like network requests.
+
+The plot will receive the last item in the dependency graph (taking into account both adapters and joins). If something looks strange, make sure that you have specified how to join all your data sources together.
+
+> TIP: Because data functions are given access to plot.state and the data layer instance that initiated the request, they are able to do surprisingly powerful things, like filtering the returned data in response to a global plot_state parameter or auto-defining a layout (`data_layer.layout`) in response to dynamic data (axis labels, color scheme, etc). This is a very advanced usage and has the potential for side effects; use sparingly! See the LocusZoom unit tests for a few examples of what is possible.
+
 # Creating your own custom adapter
-## Re-using code via subclasses
+## Can I reuse existing code?
+The built-in LocusZoom adapters can be used as-is in many cases, so long as the returned payload matches the expected format. You may need to write your own custom code (adapter subclass) in the following scenarios:
+
+1. If an expression must be evaluated in order to retrieve data (eg constructing URLs based on query parameters, or LD requests where the reference variant is auto-selected from the most significant hit in a GWAS)
+2. If the actual headers, body, or request method must be customized in order to carry out the request. This happens when data is retrieved from a particular technology (REST vs GraphQL vs Tabix), or if the request must incorporate some form of authentication credentials.
+3. If some of the fields in your custom API format need to be transformed or renamed in order to match expectations in LZ code. For example, the LD adapter may try to suggest an LD reference variant by looking for the GWAS variant with the largest `log_pvalue`. (over time, built-in LZ adapters trend towards being more strict about field names; it is easier to write reliable code when not having to deal with unpredictable data!)
+
+## Customizing data retrieval via subclasses
 Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the UM PortalDev API, but a different way of constructing queries, you can change just one function and define a new data adapter:
 
 ```javascript
 const AssociationLZ = LocusZoom.Adapters.get('AssociationLZ');
 class CustomAssociation extends AssociationLZ {
-    getURL(state, chain, fields) {
-        // The inputs to the function can be used to influence what query is constructed. Eg, the current view region is stored in `plot.state`.
-        const {chr, start, end} = state;
+    _getURL(request_options) {
+        // Every adapter receives the info from plot.state, plus any additional request options calculated/added in the function `_buildRequestOptions`
+        // The inputs to the function can be used to influence what query is constructed. Eg, since the current view region is stored in `plot.state`:
+        const {chr, start, end} = request_options;
         // Fetch the region of interest from a hypothetical REST API that uses query parameters to define the region query, for a given study URL such as `data.example/gwas/<id>/?chr=_&start=_&end=_`
-        return `${this.url}/${this.params.study_id}/?chr=${encodeURIComponent(chr)}&start=${encodeURIComponent(start)}&end${encodeURIComponent(end)}`
+        return `${this._url}/${this.source}/?chr=${encodeURIComponent(chr)}&start=${encodeURIComponent(start)}&end${encodeURIComponent(end)}`
+  }
+  
+  _annotateRecords(records, options) {
+      // Imagine that your API returns a payload that mostly works, but a few fields are a little different than what is expected.
+      // Usually LocusZoom is pretty tolerant of changing field names- but because Association plots connect to so many extra annotations, certain magic features require a little extra attention to detail
+      records.forEach((item) => {
+          // LocusZoom connects assoc summstats to other datasets, by finding the most significant variant. To find that variant and ask for LD, it expects two special fields with very specific names, and sort of specific formats. If you already have these fields, great- if not, they can be manually added by custom code, even if no one will let you change the API server directly
+          item.log_pvalue = -Math.log10(item.pValue);  // It's better if you send log_pvalue from the server directly, not calculate it on the front end (JS is subject to numerical underflow, and sending pValue to the browser may cause numerical underflow problems)
+          item.variant = `${item.chrom}:${item.pos}_${item.ref}/${item.alt}`;
+      });
+      return records;
   }
 }
 // A custom adapter should be added to the registry before using it
 LocusZoom.Adapters.add('CustomAssociation', CustomAssociation);
 
 // From there, it can be used anywhere throughout LocusZoom, in the same way as any built-in adapter
-data_sources.add('mystudy', ['CustomAssociation', {url: 'https://data.example/gwas', params: { study_id: 42 }}]);
+data_sources.add('mystudy', ['CustomAssociation', {url: 'https://data.example/gwas', source: 42 }]);
 ```
 
-In the above example, an HTTP GET request will be sent to the server every time that new data is requested. If further control is required (like sending a POST request with custom body), you may need to override additional methods such as [fetchRequest](../api/module-LocusZoom_Adapters-BaseAdapter.html#fetchRequest). See below for more information, then consult the detailed developer documentation for details.
+In the above example, an HTTP GET request will be sent to the server every time that new data is requested. If further control is required (like sending a POST request with custom body), you may need to override additional methods such as [fetchRequest](../api/module-LocusZoom_Adapters-BaseLZAdapter.html#_performRequest). See below for more information, then consult the detailed developer documentation for details.
 
 Common types of data retrieval that are most often customized:
 
 * GWAS summary statistics
-  * This fetches the data directly with minor cleanup. You can customize the built-in association adapter, or swap in another way of fetching the data (like tabix).
-* User-provided linkage disequilibrium (LD)
-  * This contains special logic used to combine association data (from a previous request) with LD information. To ensure that the matching code works properly, we recommend matching the payload format of the public LDServer, but you can customize the `getURL` method to control where the data comes from.
-  * For performance reasons, connecting LD and association data together assumes that both datasets are sorted in order of increasing chromosome and position.
-* PheWAS results
+  * This fetches the data directly with minor cleanup. You can customize the built-in association adapter, or swap in another way of fetching the data (like tabix). You may want to ensure that a field called `log_pvalue` is present, and possibly customize other fields as well.
+* PheWAS results (not every server returns PheWAS results in the same format)
 
 ## What happens during a data request?
 The adapter performs many functions related to data retrieval: constructing the query, caching to avoid unnecessary network traffic, and parsing the data into a transformed representation suitable for use in rendering.
@@ -131,55 +212,52 @@ The adapter performs many functions related to data retrieval: constructing the 
  Methods are provided to override all or part of the process, called in roughly the order below:
 
 ```javascript
-getData(state, fields, outnames, transformations)
-    getRequest(state, chain, fields)
-	    getCacheKey(state, chain, fields)
-		fetchRequest(state, chain, fields)
-		    getURL(state, chain, fields)
-    parseResponse(resp, chain, fields, outnames, transformations)
-	    normalizeResponse(data)
-    	annotateData(data, chain)
-	    extractFields(data, fields, outnames, trans)
-	    combineChainBody(data, chain, fields, outnames)
+getData(plot_state, ...dependent_data)
+    _buildRequestOptions(plot_state, ...dependent_data)
+    _getCacheKey(request_options)
+    _performRequest(request_options)
+        _getURL(request_options)
+    // Parse JSON, convert columnar data to rows, etc
+    _normalizeResponse(raw_response, options)
+        cache.add(records)
+    // User-specified cleanup of the parsed response fields. Can be used for things like field renaming, record filtering, or adding new calculated fields on the fly
+    _annotateRecords(records, options)
+    // Usually not overridden: this method can be used to apply prefixes (assoc:id, catalog:id, etc) and to simplify down verbose responses to just a few `limit_fields` of interest
+    _postProcessResponse(records, options)
 ```
 
 The parameters passed to getData are as follows:
 
-* state - this is the current "state" of the plot. This contains information about the current region in view (`chr`, `start`, and `end`), which is often valuable in querying a remote data source for the data in a given region.
-* fields - this is an array of field names that have been requested from this data source. Note that the "namespace:" part of the name has been removed in this array. Note: **most data adapters will return *only* the fields that are requested by a data layer**. Each data layer can request a different set of fields, and thus **different parts of the plot may have a different view of the same data.**
-* outnames - this is an array with length equal to fields with the original requested field name. This value contains the data source namespace. The data output for each field should be given the name in this array. This is rarely used directly.
-* transformations - this is an array with length equal to fields with the collection of value transformations functions specified by the user to be run on the returned field. This is rarely used directly.
+* `plot_state`: Every adapter request contains a copy of `plot.state`, which stores global information (like view region chr/start/end) that can be used to customize the request.
+* `...dependent_data`: If the adapter depends on prior requests, the parsed records from each prior request will be passed to this function (each function argument would be one dependent request, represented as an array of row-based record objects: `[{'assoc:variant': '1:23_A/C', 'assoc:log_pvalue': 75 }]`)
 
-### Step 1: Fetching data from a remote server
-The first step of the process is to retrieve the data from an external location. `getRequest` is responsible for deciding whether the query can be satisfied by a previously cached request, and if not, sending the response to the server. At the conclusion of this step, we typically have a large unparsed string: eg REST APIs generally return JSON-formatted text, and tabix sources return lines of text for records in the region of interest.
+This function will return row-format data representing the response for just that request. It will use a cached response if feasible. By default, LocusZoom will apply certain transformation to the returned response so that it is easier to use with a data layer (see adapter documentation for details). All fields in the original response will be returned as given.
+
+### Step 1: Fetching data from a remote server and converting to records
+The first step of the process is to retrieve the data from an external location. `_buildRequestOptions` can be used to store any parameters that customize the request, including information from `plot.state`. If the response is cached, the cache value will be returned; otherwise, a request will be initiated. Once the request is complete, the result will be parsed and cached for future use.
+
+At the conclusion of this step, we typically have an array of records, one object per row of data. The field names and contents are very close to what was returned by the API.
 
 Most custom data sources will focus on customizing two things:
 
-* getURL (how to ask the external source for data)
-* getCacheKey (decide whether the request can be satisfied by local data)
+* `_getURL` (how to ask the external source for data)
+* `_getCacheKey` (decide whether the request can be satisfied by local data)
   * By default this returns a string based on the region in view: `'${state.chr}_${state.start}_${state.end}'`
   * You may need to customize this if your source has other inputs required to uniquely define the query (like LD reference variant, or calculation parameters for credible set annotation). 
   
-### Step 2: Formatting and parsing the data
-The `parseResponse` sequence handles the job of parsing the data. It can be used to convert many different API formats into a single standard form. There are four steps to the process:
+### Step 2: Transforming data into a form usable by LocusZoom
+In a prior step, the records were normalized, but kept in a form that is usually close to what the API returned. In this step, records are modified for use in the plot:
 
-* `normalizeResponse` - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data handling functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be adjusted to match the expected format.
+* `_normalizeResponse` - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data handling functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be adjusted to match the expected format.
   * Internally, most data layer rendering types assume that data is an array, with each datum element represented by an object: `[{a_field: 1, other_field: 1}]`
   * Some sources, such as the UM PortalDev API, represent the data in a column-oriented format instead. (`{a_field: [1], other_field: [1]}`) The default adapter will attempt to detect this and automatically transform those columns into the row-based one-record-per-datum format.
-* `annotateData` - This can be used to add custom calculated fields to the data. For example, if your data source does not provide a variant marker field, one can be generated in javascript (by concatenating chromosome:position_ref/alt), without having to modify the web server.
-* `extractFields` - Each data layer receives only the fields it asks for, and the data is  reformatted in a way that clearly identifies where they come from (the namespace is prefixed onto each field name, eg `{'mynamespace:a_field': 1}`).
-  * The most common reason to override this method is if the data uses an extremely complex payload format (like genes), and a custom data layer expects to receive that entire structure as-is. If you are working with layouts, the most common sign of an adapter that does this is that the data layer asks for a nonexistent field (`gene:all` - a synthetic value whose sole purpose is to indicate that the source is used)
-* `combineChainBody`: If a single data layer asks for data from more than one source, this function is responsible for combining several different pieces of information together. For example, in order to show an association plot with points colored by LD, the LD adapter implements custom code that annotates the association data with matching LD information. At the end of this function, the data layer will receive a single combined record per visualized data element. 
-
-#### Working with the data "chain"
-Each data layer is able to request data from multiple different sources. Internally, this process is referred to as the "chain" of linked data requested. LocusZoom.js assumes that every data layer is independent and decoupled: it follows that each data layer has its own chain of requests and its own parsing process.  
-
-This chain defines how to share information between different adapters. It contains of two key pieces:
-
-* `body` - the actual consolidated payload. Each subsequent link in the chain receives all the data from the previous step as `chain.body`
-* `headers` - this is a "meta" section used to store information used during the consolidation process. For example, the LD adapter needs to find the most significant variant from the previous step in the chain (association data) in order to query the API for LD. The name of that variant can be stored for subsequent use during the data retrieval process.
-
-Only `chain.body` is sent to the data layer. All other parts of the chain are discarded at the end of the data retrieval process.
+* `_annotateRecords` - This can be used to modify the data returned in many useful ways: filtering, renaming fields, or adding new calculated fields. Example scenarios:
+  * A field called `pValue` can be transformed into one called `log_pvalue`
+  * If a tabix file returns two categories of data at once, then the adapter could decide which to show according to a user-selected option stored in `plot.state` (So long as both datasets are not too big, this trick works well with the `set_state` toolbar widget: it provides a cheap way to toggle between datasets, without requiring an extra trip to the server!)
+  * Adding custom calculated fields to the data. For example, if your data source does not provide a variant marker field, one can be generated in javascript (by concatenating chromosome:position_ref/alt), without having to modify the web server.
+* `_postProcessResponse`: Most people don't customize this method. After all calculations are done, this is used to transform the data into a format useful by LocusZoom. Eg, field names are prefixed to reflect where the data came from, like `assoc:log_pvalue`. This happens last, so most custom code that modifies returned records doesn't have to deal with it. 
+  * Most of the behaviors in this method can be overridden using adapter options, without writing custom code. (see documentation for details)
+  
 
 # See also
 * LocusZoom.js is able to share its data with external widgets on the page, via event listeners that allow those widgets to update whenever the user interacts with the plot (eg panning or zooming to change the region in view). See `subscribeToData` in the [guide to interactivity](interactivity.html) for more information.  

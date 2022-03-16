@@ -23,7 +23,7 @@ class TransformationFunctionsRegistry extends RegistryBase {
         return (value) => {
             return funcs.reduce(
                 (acc, func) => func(acc),
-                value
+                value,
             );
         };
     }

@@ -212,44 +212,6 @@ Most built-in data layers will contain a tag that describes, in human-readable t
 
         <tr>
             
-                <td class="name"><code>layout.fields</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;String></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>A list of (namespaced) fields specifying what data is used by the layer. Only
-these fields will be made available to the data layer, and only data sources (namespaces) referred to in
-this array will be fetched. This represents the &quot;contract&quot; between what data is returned and what data is rendered.
-This fields array works in concert with the data retrieval method BaseAdapter.extractFields.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>layout.id_field</code></td>
             
 
@@ -281,7 +243,86 @@ This fields array works in concert with the data retrieval method BaseAdapter.ex
             
 
             <td class="description last"><p>The datum field used for unique element IDs when addressing DOM elements, mouse
-events, etc. This should be unique to the specified datum.</p></td>
+events, etc. This should be unique to the specified datum, and persistent across re-renders (because it is
+used to identify where to draw tooltips, eg, if the plot is dragged or zoomed). If no single field uniquely
+identifies all items, a template expression can be used to create an ID from multiple fields instead. (it is
+your job to assure that all of the expected fields are present in every element)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>layout.namespace</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>A set of key value pairs representing how to map the local usage of data (&quot;assoc&quot;)
+to the globally unique name for something defined in LocusZoom.DataSources.
+Namespaces allow a single layout to be reused to plot many tracks of the same type: &quot;given some form of association data, plot it&quot;.
+These pairs take the form of { local_name: global_name }. (and all data layer layouts provide a default) In order to reuse
+a layout with a new provider of data- like plotting two association studies stacked together-
+only the namespace section of the layout needs to be overridden.
+Eg, <code>LocusZoom.Layouts.get('data_layers', 'association_pvalues', { namespace: { assoc: 'assoc_study_2' }})</code></p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>layout.data_operations</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;<a href="module-LocusZoom_DataLayers.html#~DataOperation">module:LocusZoom_DataLayers~DataOperation</a>></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>A set of data operations that will be performed on the data returned from the data adapters specified in <code>namespace</code>. (see: <a href="module-LocusZoom_DataFunctions.html">module:LocusZoom_DataFunctions</a>)</p></td>
         </tr>
 
     
@@ -1544,7 +1585,7 @@ linking to a dynamic URL on click, etc.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line103">line 103</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line122">line 122</a>
     </li></ul></dd>
     
 
@@ -1594,7 +1635,7 @@ linking to a dynamic URL on click, etc.</p></td>
 
         
             
-<h4 class="name" id=".default_layout"><span class="type-signature">(protected, static, constant) </span>default_layout<span class="type-signature"> :Object</span></h4>
+<h4 class="name" id=".default_layout"><span class="type-signature">(protected, static, constant) </span>default_layout<span class="type-signature"></span></h4>
 
 
 
@@ -1604,16 +1645,6 @@ linking to a dynamic URL on click, etc.</p></td>
 </div>
 
 
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Object</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1648,7 +1679,7 @@ linking to a dynamic URL on click, etc.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line83">line 83</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line101">line 101</a>
     </li></ul></dd>
     
 
@@ -1722,7 +1753,7 @@ after re-render.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line278">line 278</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line304">line 304</a>
     </li></ul></dd>
     
 
@@ -1794,7 +1825,7 @@ after re-render.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line182">line 182</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line208">line 208</a>
     </li></ul></dd>
     
 
@@ -1869,7 +1900,7 @@ effectively.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line219">line 219</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line245">line 245</a>
     </li></ul></dd>
     
 
@@ -1937,7 +1968,7 @@ effectively.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line195">line 195</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line221">line 221</a>
     </li></ul></dd>
     
 
@@ -2005,7 +2036,7 @@ effectively.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line206">line 206</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line232">line 232</a>
     </li></ul></dd>
     
 
@@ -2271,7 +2302,7 @@ the data</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line689">line 689</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line763">line 763</a>
     </li></ul></dd>
     
 
@@ -2423,7 +2454,7 @@ explicit axis settings override. Useful for data layers where the data extent de
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line377">line 377</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line430">line 430</a>
     </li></ul></dd>
     
 
@@ -2586,7 +2617,7 @@ should override this method to position relative to the chosen data element or m
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line661">line 661</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line735">line 735</a>
     </li></ul></dd>
     
 
@@ -2698,7 +2729,7 @@ Most data layers will never need to use this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line501">line 501</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line577">line 577</a>
     </li></ul></dd>
     
 
@@ -2807,7 +2838,7 @@ the parent plot. This is also used for system-derived fields like &quot;matching
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line454">line 454</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line519">line 519</a>
     </li></ul></dd>
     
 
@@ -3008,7 +3039,7 @@ the parent plot. This is also used for system-derived fields like &quot;matching
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line839">line 839</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line913">line 913</a>
     </li></ul></dd>
     
 
@@ -3072,6 +3103,9 @@ the parent plot. This is also used for system-derived fields like &quot;matching
 <div class="description">
     <p>Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
 element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.</p>
+<p>The ID should also be stable across re-renders, so that tooltips and highlights may be reapplied to that
+element as we switch regions or drag left/right. If the element is not unique along a single field (eg PheWAS data),
+a unique ID can be generated via a template expression like <code>{{phewas:pheno}}-{{phewas:trait_label}}</code></p>
 </div>
 
 
@@ -3123,7 +3157,7 @@ element is bound. In general this element ID will be unique, allowing it to be a
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>The data associated with a particular element</p></td>
         </tr>
 
     
@@ -3164,7 +3198,7 @@ element is bound. In general this element ID will be unique, allowing it to be a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line393">line 393</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line450">line 450</a>
     </li></ul></dd>
     
 
@@ -3371,7 +3405,7 @@ and meanings of these parameters may vary between different data layers.</p></td
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line643">line 643</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line717">line 717</a>
     </li></ul></dd>
     
 
@@ -3486,7 +3520,7 @@ Other supported object keys:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line324">line 324</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line358">line 358</a>
     </li></ul></dd>
     
 
@@ -3592,7 +3626,7 @@ Other supported object keys:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line310">line 310</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line342">line 342</a>
     </li></ul></dd>
     
 
@@ -3635,6 +3669,96 @@ Other supported object keys:
 </dl>
 
     
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="mutateLayout"><span class="type-signature"></span>mutateLayout<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>A list of operations that should be run when the layout is mutated
+Typically, these are things done once when a layout is first specified, that would not automatically
+update when the layout was changed.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line408">line 408</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3694,7 +3818,7 @@ Other supported object keys:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line301">line 301</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line333">line 333</a>
     </li></ul></dd>
     
 
@@ -3884,7 +4008,7 @@ Sample use case: user clicks a tooltip to &quot;label this specific point&quot;.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line346">line 346</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line382">line 382</a>
     </li></ul></dd>
     
 
@@ -4019,7 +4143,7 @@ and reference via declarative filters.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line361">line 361</a>
+        <a href="components_data_layer_base.js.html">components/data_layer/base.js</a>, <a href="components_data_layer_base.js.html#line397">line 397</a>
     </li></ul></dd>
     
 
@@ -4065,13 +4189,13 @@ and reference via declarative filters.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-parsers.html">ext/lz-parsers</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataFunctions.html">LocusZoom_DataFunctions</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li><li><a href="module-undercomplicate.html">undercomplicate</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="LLNode.html">LLNode</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-data_requester-DataOperation.html">DataOperation</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseLZAdapter.html">BaseLZAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseUMAdapter.html">BaseUMAdapter</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_Adapters-UserTabixLD.html">UserTabixLD</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="module-undercomplicate.BaseAdapter.html">BaseAdapter</a></li><li><a href="module-undercomplicate.BaseUrlAdapter.html">BaseUrlAdapter</a></li><li><a href="module-undercomplicate.LRUCache.html">LRUCache</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_from_layer">data_from_layer</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clone">clone</a></li><li><a href="global.html#getLinkedData">getLinkedData</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a>
 </footer>
 
 <script> prettyPrint(); </script>

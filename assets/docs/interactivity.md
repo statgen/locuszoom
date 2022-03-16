@@ -63,7 +63,6 @@ Each LocusZoom rendering is controlled by a declarative set of layout options. I
 
 In practice, this is the key idea behind the `display_options` widget, a built-in feature that handles such mutations in a controlled fashion. If you are doing this using your own code, the following "gotchas" apply:
 
-* When the layout is defined before first render, it uses abstract syntax (eg `{{namespace[assoc]field}}`. To modify an existing plot layout after it has been rendered, you will need to use concrete syntax in which the namespace has been filled in: `assoc2_mystudy:field`.
 * LocusZoom layouts are nested and hierarchical (plot --> panels[] --> data_layers[]). See the helper functions below for advice on how to write mutations that are more readable and maintainable.
 * Be conservative in how many fields you allow to be changed. Layouts allow almost any aspect of the plot to be customized, but it can be difficult to test every possible combination. It's generally easier to code and maintain controlled options (like a list of preset views).
 
@@ -138,43 +137,17 @@ Using the same mechanisms and syntax as an LZ data layer, let arbitrary parts of
 
 Sample usage: 
 ```javascript
-const fields = ['aggregation:all', 'gene:all'];
+// Receives exactly the same data as the specified datalayer ID (avoids having to duplicate namespace and data operations code)
+const spec = { from_layer: 'panel1.layer1' };
 const success_callback = (data) => console.log(data);
 const opts = { onerror: (err) => console.log(err) };
 
-plot.subscribeToData(fields, success_callback, opts);
+plot.subscribeToData(spec, success_callback, opts);
 ```
-
 
 When data is received, calls *success_callback* with the resulting data (an array of objects, with each object representing one datapoint). `subscribeToData` can be used to draw tables or companion visualizations on the page, separate from LocusZoom but automatically updating to stay in sync as the user clicks or pans across the plot. Specify *onerror* as an option to provide an error handling callback.
 
-### Caveat: namespaces
-Note that the returned payload will contain namespaced fields: the data will appear in the same format as used internally by LocusZoom. Sometimes this is annoying because it means that any external widget using the data will need to account for LocusZoom's namespacing syntax.
-
-If you don't want to be bothered with namespacing, the following utility function may be useful:
-```javascript
-/**
-* Remove the `sourcename:` prefix from field names in the data returned by an LZ datasource
-*
-* This is a convenience method for writing external widgets (like tables) that subscribe to the
-* plot; typically we don't want to have to redefine the table layout every time someone selects
-* a different association study.
-* As with all convenience methods, it has limits: don't use it if the same field name is requested
-* from two different sources!
-* @param {Object} data An object representing the fields for one row of data
-* @param {String} [prefer] Sometimes, two sources provide a field with same name. Specify which
-* source will take precedence in the event of a conflict.
-*/
-function deNamespace(data, prefer) {
-    return Object.keys(data).reduce((acc, key) => {
-        const new_key = key.replace(/.*?:/, '');
-        if (!Object.prototype.hasOwnProperty.call(acc, new_key) || (!prefer || key.startsWith(prefer))) {
-            acc[new_key] = data[key];
-        }
-        return acc;
-    }, {});
-}
-```
+Sometimes you want exact control over what data is retrieved, rather than mirroring a data layer. In that case, replace `from_layer` with two options (`namespace` and `data_operations`) to manually specify how data is retrieved for this callback. See data layer documentation for syntax and usage.
 
 ### Advanced alternative
 Sometimes, the existing page already has several widgets sharing data, and it would be difficult to rewrite things after the fact in a way that ceded control of data to LocusZoom. In this case, some compromise needs to be reached: how can LocusZoom fetch what it needs (possibly rendering only a subset of the data available), without duplicating API calls to the server that have already been made elsewhere?

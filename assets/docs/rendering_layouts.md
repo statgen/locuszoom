@@ -60,10 +60,10 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    toolbar: LocusZoom.Layouts.get('toolbar_widgets', 'standard_plot'),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, height: 225 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, height: 225 })
+        LocusZoom.Layouts.get('panel', 'association', { height: 225 }),
+        LocusZoom.Layouts.get('panel', 'genes', { height: 225 })
     ]
 });
 ```
@@ -83,38 +83,22 @@ Consider this fragment of the standard association data layer, shown below:
 LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     type: 'scatter',
-    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
-    id_field: '{{namespace[assoc]}}variant',
+    id_field: 'assoc:variant',
     x_axis: {
-        field: '{{namespace[assoc]}}position'
+        field: 'assoc:position'
     }
 });
 ```
 
 Key things to notice are:
 
-1. The data layer will only see the fields requested by name. Even if a field is present in the API payload, it will not be visible in the data layer unless explicitly referenced in the `fields` array for that data layer.
-2. This layout is generic: the use of namespaces means "given association data from somewhere". See "using namespaces" below for more details on how to use an abstract layout with a specific dataset (via namespaces).
-3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax. But the field must always be requested in the `fields` array.
+1. The data layer will see all of the fields provided by the relevant data sources/adapters. Each field will be prefixed by the "local namespace" for that data (eg if both `assoc` and `ld` provide a field called `id`, both will be present and distinct in the joined data: `assoc:id` and `ld:id`)
+2. This layout is generic: the use of namespaces means "given association data from somewhere". See "using namespaces" below.
+3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax.
 
-You will sometimes see fields referenced elsewhere with an additional syntax, like `{{namespace[assoc]}}variant|htmlescape`. The `|htmlescape` is a [*transform*](../api/module-LocusZoom_TransformationFunctions.html) that affects value display. The fields array only needs to specify the names of fields; transforms can be applied at any time later.
+You will sometimes see fields referenced elsewhere with an additional syntax, like `assoc:variant|htmlescape`. The `|htmlescape` is a [*transform*](../api/module-LocusZoom_TransformationFunctions.html) that affects value display. Transforms can be applied anywhere that a field value is used.
 
-#### No system of notation survives contact with developers
-There are some exceptions to this rule- it is difficult to support every possible combination of data sources from every possible set of API conventions.
- 
-One place where this breaks down is *dependent* sources- eg, LD information is requested relative to the most significant variant in the association data. Differences in field formatting or nomenclature can sometimes break the ability to find the relevant information that the second data source requires; efforts are made to handle common use cases. These sources gradually become more generic over time based on user feedback and needs. 
- 
-The other main exception to the `fields` mechanism involves API endpoints that return complex nested objects (eg the list of genes in a region, a standard dataset that few people will ever need to customize directly). By notation convention, the default LocusZoom layouts will indicate that special behavior is in effect via a dummy field called `all`, eg 
- 
-```js
-{ 
-  fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'] 
-}
-```
-
-> Explanation: a data layer will not fetch from a source unless the fields array references at least one piece of data from that source. Since the genes source contains special code to bypass fetching explicit fields, the data layer uses a dummy field to trigger the request.
-  
-Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the `extractFields` method of `BaseAdapter`. (see: [guide to working with data](data_retrieval.html))
+Every data layer in the registry will contain an automatically-defined property called `_auto_fields`, describing the names of all fields expected by this layout object. This is a quick guide for a developer who wants to see a summary of what data is used.
 
 ### renameFields: resolving tiny differences in naming
 Sometimes, an existing layout is very close to the format of your data, but there are very small cosmetic differences. For example, your API might send a field `variant_name` instead of `variant`.
@@ -123,7 +107,7 @@ In this case, a helper function is provided this will recursively rename every u
 
 ```javascript
 // For abstract layouts
-layout = LocusZoom.Layouts.renameField(layout, '{{namespace[assoc]}}old_name', '{{namespace[assoc]}}new_name');
+layout = LocusZoom.Layouts.renameField(layout, 'assoc:old_name', 'assoc:new_name');
 
 // For concrete layouts
 layout = LocusZoom.Layouts.renameField(layout, 'my_assoc:old_name', 'my_assoc:new_name');
@@ -135,6 +119,8 @@ layout = LocusZoom.Layouts.renameField(layout, 'assoc:pvalue|neg_log10', 'assoc:
 
 > NOTE: Sometimes, the differences in data/field names are more than cosmetic: for example, renaming `pvalue|neg_log10` to `log_pvalue|neg_log10` would not make sense. This helper method will attempt to warn you if template transformation functions are being used on the field you are changing, so that you can ensure that the resulting layouts uses your data in a way that fits the intended meaning.
 
+> Over time, LocusZoom will become more stringent about what field names it expects to receive. As such, it may make more sense to rename certain fields from the server to match the layout (rather than renaming the layout to match the data). (the `_annotateRecords` method of a custom adapter can be used for this purpose) Most fields work either way; some, like `log_pvalue`, are a special case. 
+
 ## Working with the Registry
 Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a layout converts it from the abstract definition to one that works with a specific dataset.  
 
@@ -145,7 +131,7 @@ Since the registry just returns JSON-serializable objects, you could create a pl
 To see the list of pre-defined layouts (as well as any custom ones you have created):
 ```js
 > LocusZoom.Layouts.list();
-{plot: Array(4), panel: Array(7), data_layer: Array(9), dashboard: Array(4), dashboard_components: Array(1), tooltip: Array(5) }
+{plot: Array(4), panel: Array(7), data_layer: Array(9), toolbar: Array(4), toolbar_widgets: Array(1), tooltip: Array(5) }
 ```
 
 This will return a top level representation of the available types, showing the available categories. Note that even data layers are composed of smaller building blocks. This lets you use individual parts of a representation (like association tooltips) without committing to the other design choices for a common piece (like the association layer). 
@@ -159,44 +145,6 @@ Asking for just the plots shows a list of specific options. Typically, we try to
 
 You may find that the example gallery performs additional customizations on a layout, so this can be a source of ideas. Typically, we try very hard to not make major changes in a layout that is widely in use. Any backwards-incompatible changes will usually be identified in the [release notes](https://github.com/statgen/locuszoom/releases).  
 
-### Abstract vs concrete
-When a layout is first loaded into the registry, it is defined to work in the abstract- given any data. This allows the same layout to be re-used on two different association datasets. The syntax used is `{{namespace[assoc]}}variant`, where namespaces are replaced by a specific datasource name later on.
- 
-```js
-LocusZoom.Layouts.add('data_layer', 'association_pvalues', { // Define a new datalayer
-    namespace: { 'assoc': 'assoc', 'ld': 'ld' },  // Provides default namespaces, eg look for "assoc" data in a source called "assoc"
-    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
-});
-```
-
-It is the act of fetching the layout from the registry that turns it into a concrete one- "find the association data from a particular source". There are three ways to fetch something, and each behaves in a unique way:
-
-1. Fetch an existing layout, and tell it where to find the required data. (the third argument, "modifications", is given an explicit set of namespaces)
-
-    ```js
-    > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' } } );
-    {
-        fields: ["my_dataset_1:variant","my_dataset_1:position","my_dataset_1:log_pvalue","my_dataset_1:log_pvalue|logtoscinotation","my_dataset_1:ref_allele","ld:state","ld:isrefvar"]
-    }
-    ```
-2. Fetch an existing layout, and use the "default" data sources. If you follow the examples very closely (eg naming your data source "assoc" and "ld"), this will automatically find the right data.
-    
-    ```js
-    > LocusZoom.Layouts.get('data_layer', 'association_pvalues');
-    {
-        fields: ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"] 
-    }
-    ```
-
-3. Fetch an existing abstract layout for further modification, and keep it abstract. Note the special `unnamespaced: true` option, which causes the layout to be returned exactly as it appears in the registry (*abstract*). This option is used quite a lot in the LZ source code (`Layouts.js`), because it makes it easy to build a reusable abstract layout (like a panel) out of smaller reusable pieces (like datalayers).
- 
-    ```js
-    > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true });
-    {
-        namespace: { assoc: 'assoc', ld: 'ld' },
-        fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
-    }
-    ```
 
 ### Modifying all (or part) of a layout
 If you are building your own API aimed at use with LocusZoom, then the path of least resistance is to use the same field names as the pre-defined layouts.
@@ -214,18 +162,18 @@ Consider an association plot, where the only requested change is to use the righ
 
 The "modifications" object does not work as well for compound values, like a list, because this behavior is not well defined: changing the 5th element of a list could mean replacement, removal, or minor additions to fields... etc. In practice, this is quite often relevant... because panels and data layers are specified as lists. (order matters)
  
-For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via *self-calling functions* that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar (dashboard) that adds just one extra button to an existing layout:
+For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via *self-calling functions* that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar that adds just one extra button to an existing layout:
 
 ```js
 {
-    dashboard: (function () {
-        var base = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        base.components.push({
+    toolbar: (function () {
+        var base = LocusZoom.Layouts.get('toolbar', 'standard_panel');
+        base.widgets.push({
             type: 'toggle_legend',
             position: 'right'
         });
         return base;
-    })() // Function calls itself immediately, so "dashboard" is set to the return value
+    })() // Function calls itself immediately, so "toolbar" is set to the return value
 }
 ```
 
@@ -246,7 +194,7 @@ const data_layer = {
         // Name of a function specified in `LocusZoom.ScaleFunctions`
         scale_function: 'if',
         // The field whose value will be passed to the scale function
-        field: '{{namespace[ld]}}isrefvar',
+        field: 'lz_is_ld_refvar',
         // Options that will be passed to the scale function; see documentation for available options
         parameters: {
             field_value: 1,
@@ -255,7 +203,7 @@ const data_layer = {
     },
     {
         scale_function: 'numerical_bin',
-        field: '{{namespace[ld]}}state',
+        field: 'ld:correlation',
         parameters: {
             breaks: [0, 0.2, 0.4, 0.6, 0.8],
             values: ['#357ebd', '#46b8da', '#5cb85c', '#eea236', '#d43f3a'],
@@ -295,8 +243,9 @@ Consider the following example, which plots two association studies and a genes 
 ```js
 // Other standard sources (genes, LD) omitted for clarity
 data_sources
-  .add("assoc_study1", ["AssociationLZ", {url: "/api/association/", params: { source: 1 }}])
-  .add("assoc_study2", ["AssociationLZ", {url: "/api/association/", params: { source: 2 }}]);
+  .add("assoc_study1", ["AssociationLZ", {url: "/api/association/", source: 1 }])
+  .add("assoc_study2", ["AssociationLZ", {url: "/api/association/", source: 2 }])
+  .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }]);
 ```
 
 ```js
@@ -318,20 +267,13 @@ const plot_layout = LocusZoom.Layouts.get('plot', 'standard_association', { // O
             title: { text: 'Study 2' },
         }),
         // Even though genes are part of the original "standard association plot" layout, overriding the panels array means replacing *all* of the panels.
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, height: 400 })  // "unnamespaced" when using as a generic building block
+        LocusZoom.Layouts.get('panel', 'genes', { height: 400 })  // The layout provides a built-in default: "look for gene data in an adapter called gene". In this example, the default matches what sources were defined, so we don't need to override it.
     ]
 });
 ```
 
-Namespaces are not only external- they propagate through to how the layer actually sees its data internally. The field names inside the layer are a composite of `sourcename:fieldname`. For example, this allows the same data layer to work with two pieces of information (like summary stats and LD) even if both API endpoints provide a common field name like `id`. Namespacing ensures that duplicate field names do not collide.
+Namespaces are the only thing that needs to be changed in order to use a layout with a different source of data. Internally, things are referred to via the "local" name. Eg given `{ assoc: 'assoc_study2' }`, individual fields would be referenced as `assoc:some_field`, no matter where the data actually came from.
 
-From the example above, the second panel (which fetches association data from `assoc_study2`) converts a "generic" specification like `{{namespace[assoc]}}variant` into a "concrete" use of one dataset: `assoc_study2:variant`.
- 
-```js
-> var layer_data = Object.keys(plot.panels['assoc_study2'].data_layers['associationpvalues'].data);
-Object.keys(layer_data[0]); // See the field names used by the data for a single point
-["assoc_study2:variant", "assoc_study2:position", "assoc_study2:log_pvalue", "assoc_study2:log_pvalue|logtoscinotation", "assoc_study2:ref_allele", "ld:state", "ld:isrefvar"]
-```
 
 ### Adding panels
 The above example demonstrates how to add multiple studies at the time of plot creation. However, sites like the T2D Portal have many datasets, and it can be helpful to let the user interactively choose which other panels to show after first render. New panels can be added dynamically! When doing so, the plot will grow to accommodate the new panel.
@@ -347,43 +289,10 @@ var extra_panel_layout = LocusZoom.Layouts.get('panel', 'association', {
 
 // Must add both data sources and panels
 existing_datasources
-  .add("assoc_study3", ["AssociationLZ", {url: "/api/association/", params: { source: 3 }}]);
+  .add("assoc_study3", ["AssociationLZ", {url: "/api/association/", source: 3 }]);
 
 const new_panel = existing_plot.addPanel(extra_panel_layout); // Adds the panel and redraws plot
 ```
-
-### Common issues
-One of the most common issues in working with namespaced layouts is the difference between *abstract* and *concrete* layouts. For example, imagine if the page contained a button to toggle the display of labels on the plot. This button might work by changing the plot layout options, then triggering a re-render.
-
-Here is how label options would be specified when defining a layout in the registry (abstract), so that labels were present on the very first re-render for any dataset that used this layout. Note that it identifies the key fields using a generic `namespace` reference:
-
-```js
-const generic_layout_with_special_labels = {
-    // Other data layer fields omitted for clarity
-    label: {
-        text: '{{{{namespace[assoc]}}variant|htmlescape}}',
-        filters: [ // Only label points if they are above significance threshold
-            { field: '{{namespace[assoc]}}log_pvalue',  operator: '>', value: 7.301 },
-        ],
-        spacing: 6,
-    }
-};
-```
-
-However, once the final layout has been created and used to draw the plot, mutating the layout would require the actual field name (with namespace applied), specific to the panel being changed:
-
-```js
-plot.panels['assoc_study2'].data_layers['associationpvalues'].layout.label = {
-    text: '{{assoc_study2:variant|htmlescape}}', // Extra outer curly braces around name = Value of field
-    filters: [ // Only label points if they are above significance threshold
-        { field: 'assoc_study2:log_pvalue',  operator: '>', value: 7.301 }, // No curly braces: specifies name of field
-    ],
-    spacing: 6,
-};
-plot.applyState(); // to re-render with labels
-```
-
-When you are not sure what notation convention to use, check the rest of your layout- the JS console is a very powerful tool, and development is much easier when you can introspect the actual behavior of your code.
 
 ## Layouts also control behavior
 In this guide, we have mostly focused on Layouts as a tool for controlling how data is rendered. However, layouts also provide configuration directives to enable powerful behaviors such as zooming, matching, and filtering. See the [guide to interactivity](interactivity.html) for details.

@@ -42,7 +42,7 @@ describe('Transformation Functions', function() {
         it('should escape characters with special meaning in xml, and ignore others', function() {
             assert.equal(
                 htmlescape("<script type=\"application/javascript\">alert('yo & ' + `I`)</script>"),
-                '&lt;script type=&quot;application/javascript&quot;&gt;alert(&#039;yo &amp; &#039; + &#x60;I&#x60;)&lt;/script&gt;'
+                '&lt;script type=&quot;application/javascript&quot;&gt;alert(&#039;yo &amp; &#039; + &#x60;I&#x60;)&lt;/script&gt;',
             );
         });
     });
