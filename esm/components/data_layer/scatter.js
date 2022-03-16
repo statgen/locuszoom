@@ -133,18 +133,18 @@ class Scatter extends BaseDataLayer {
         };
         // Flip any going over the right edge from the right side to the left side
         // (all labels start on the right side)
-        data_layer.label_texts.each(function (d, i) {
+        data_layer._label_texts.each(function (d, i) {
             const a = this;
             const da = d3.select(a);
             const dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x) {
-                const dal = handle_lines ? d3.select(data_layer.label_lines.nodes()[i]) : null;
+                const dal = handle_lines ? d3.select(data_layer._label_lines.nodes()[i]) : null;
                 flip(da, dal);
             }
         });
         // Second pass to flip any others that haven't flipped yet if they collide with another label
-        data_layer.label_texts.each(function (d, i) {
+        data_layer._label_texts.each(function (d, i) {
             const a = this;
             const da = d3.select(a);
             if (da.style('text-anchor') === 'end') {
@@ -152,8 +152,8 @@ class Scatter extends BaseDataLayer {
             }
             let dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
-            const dal = handle_lines ? d3.select(data_layer.label_lines.nodes()[i]) : null;
-            data_layer.label_texts.each(function () {
+            const dal = handle_lines ? d3.select(data_layer._label_lines.nodes()[i]) : null;
+            data_layer._label_texts.each(function () {
                 const b = this;
                 const db = d3.select(b);
                 const bbound = db.node().getBoundingClientRect();
@@ -177,7 +177,7 @@ class Scatter extends BaseDataLayer {
     // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
     // TODO: Make labels also aware of data elements
     separate_labels() {
-        this.seperate_iterations++;
+        this._label_iterations++;
         const data_layer = this;
         const alpha = 0.5;
         if (!this.layout.label) {
@@ -186,12 +186,12 @@ class Scatter extends BaseDataLayer {
         }
         const spacing = this.layout.label.spacing;
         let again = false;
-        data_layer.label_texts.each(function () {
+        data_layer._label_texts.each(function () {
             // TODO: O(n2) algorithm; revisit performance?
             const a = this;
             const da = d3.select(a);
             const y1 = da.attr('y');
-            data_layer.label_texts.each(function () {
+            data_layer._label_texts.each(function () {
                 const b = this;
                 // a & b are the same element and don't collide.
                 if (a === b) {
@@ -250,14 +250,14 @@ class Scatter extends BaseDataLayer {
         if (again) {
             // Adjust lines to follow the labels
             if (data_layer.layout.label.lines) {
-                const label_elements = data_layer.label_texts.nodes();
-                data_layer.label_lines.attr('y2', (d, i) => {
+                const label_elements = data_layer._label_texts.nodes();
+                data_layer._label_lines.attr('y2', (d, i) => {
                     const label_line = d3.select(label_elements[i]);
                     return label_line.attr('y');
                 });
             }
             // After ~150 iterations we're probably beyond diminising returns, so stop recursing
-            if (this.seperate_iterations < 150) {
+            if (this._label_iterations < 150) {
                 setTimeout(() => {
                     this.separate_labels();
                 }, 1);
@@ -313,20 +313,20 @@ class Scatter extends BaseDataLayer {
             }
 
             // Render label groups
-            this.label_groups = this.svg.group
+            this._label_groups = this.svg.group
                 .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
                 .data(label_data, (d) => `${d[this.layout.id_field]}_label`);
 
             const style_class = `lz-data_layer-${this.layout.type}-label`;
-            const groups_enter = this.label_groups.enter()
+            const groups_enter = this._label_groups.enter()
                 .append('g')
                 .attr('class', style_class);
 
-            if (this.label_texts) {
-                this.label_texts.remove();
+            if (this._label_texts) {
+                this._label_texts.remove();
             }
 
-            this.label_texts = this.label_groups.merge(groups_enter)
+            this._label_texts = this._label_groups.merge(groups_enter)
                 .append('text')
                 .text((d) => parseFields(data_layer.layout.label.text || '', d, this.getElementAnnotation(d)))
                 .attr('x', (d) => {
@@ -340,10 +340,10 @@ class Scatter extends BaseDataLayer {
 
             // Render label lines
             if (data_layer.layout.label.lines) {
-                if (this.label_lines) {
-                    this.label_lines.remove();
+                if (this._label_lines) {
+                    this._label_lines.remove();
                 }
-                this.label_lines = this.label_groups.merge(groups_enter)
+                this._label_lines = this._label_groups.merge(groups_enter)
                     .append('line')
                     .attr('x1', (d) => d[xcs])
                     .attr('y1', (d) => d[ycs])
@@ -356,18 +356,18 @@ class Scatter extends BaseDataLayer {
                     .call(applyStyles, data_layer.layout.label.lines.style || {});
             }
             // Remove labels when they're no longer in the filtered data set
-            this.label_groups.exit()
+            this._label_groups.exit()
                 .remove();
         } else {
             // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
-            if (this.label_texts) {
-                this.label_texts.remove();
+            if (this._label_texts) {
+                this._label_texts.remove();
             }
-            if (this.label_lines) {
-                this.label_lines.remove();
+            if (this._label_lines) {
+                this._label_lines.remove();
             }
-            if (this.label_groups) {
-                this.label_groups.remove();
+            if (this._label_groups) {
+                this._label_groups.remove();
             }
         }
 
@@ -402,7 +402,7 @@ class Scatter extends BaseDataLayer {
         // Apply method to keep labels from overlapping each other
         if (this.layout.label) {
             this.flip_labels();
-            this.seperate_iterations = 0;
+            this._label_iterations = 0;
             this.separate_labels();
         }
 

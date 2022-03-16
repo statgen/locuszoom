@@ -56,7 +56,7 @@
           <div id="lz-plot"></div>
         </div>
       </div>
-      <p>To see other forms of LocusZoom.js in action take a look at <a href="https://my.locuszoom.org/">https://my.locuszoom.org</a> or the <a href="#examples">examples</a> on this page.</p>
+      <p>To see other forms of LocusZoom.js in action take a look at <a href="https://my.locuszoom.org/">https://my.locuszoom.org</a> or the <a href="#examples">examples</a> on this page. If you are trying to make your own plots but don't want to create a full web server backend, the <a href="examples/ext/tabix_tracks.html">Tabix Tracks</a> demo provides some useful pointers.</p>
 
       <hr>
 
@@ -76,7 +76,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.3/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.13.3/dist/locuszoom.css</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.14.0/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.14.0/dist/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions. Use <code>&lt;link crossorigin="anonymous" ...&gt;</code> to ensure that saving images works correctly.</i></small>
         </div>
@@ -96,7 +96,7 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.3/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.13.3/dist/locuszoom.app.min.js</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.14.0/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.14.0/dist/locuszoom.app.min.js</a></tt>
           <br>
         </div>
       </div>
@@ -126,15 +126,15 @@
 
       <div class="row">
         <div class="four columns example">
-          <a href="examples/interval_annotations.html">
+          <a href="examples/ext/interval_annotations.html">
             <h6><strong>Interval Annotations</strong></h6>
-            <img src="examples/interval_annotations.png" alt="Interval Annotations">
+            <img src="examples/ext/interval_annotations.png" alt="Interval Annotations">
           </a>
         </div>
         <div class="four columns example">
-          <a href="examples/phewas_forest.html">
+          <a href="examples/ext/phewas_forest.html">
             <h6><strong>PheWAS (Forest)</strong></h6>
-            <img src="examples/phewas_forest.png" alt="PheWAS (Forest)">
+            <img src="examples/ext/phewas_forest.png" alt="PheWAS (Forest)">
           </a>
         </div>
         <div class="four columns example">
@@ -147,15 +147,15 @@
 
       <div class="row">
         <div class="four columns example">
-          <a href="examples/aggregation_tests.html">
+          <a href="examples/ext/aggregation_tests.html">
             <h6><strong>Aggregation Tests</strong></h6>
-            <img src="examples/aggregation_tests.png" alt="Aggregation tests">
+            <img src="examples/ext/aggregation_tests.png" alt="Aggregation tests">
           </a>
         </div>
         <div class="four columns example">
-          <a href="examples/credible_sets.html">
+          <a href="examples/ext/credible_sets.html">
             <h6><strong>Credible Sets</strong></h6>
-            <img src="examples/credible_sets.png" alt="Credible Sets">
+            <img src="examples/ext/credible_sets.png" alt="Credible Sets">
           </a>
         </div>
         <div class="four columns example">
@@ -179,6 +179,13 @@
             <img src="examples/multiple_phenotypes_layered.png" alt="Multiple Phenotypes (Layered)">
           </a>
         </div>
+        <div class="four columns example" style="">
+          <a href="examples/ext/tabix_tracks.html">
+            <h6><strong>Tabix tracks</strong></h6>
+            <img src="examples/ext/tabix_tracks.png" alt="Plot your own data from tabix">
+          </a>
+        </div>
+
       </div>
 
       <hr>
@@ -202,27 +209,27 @@
     if (online) {
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
-        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+        .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", source: 45 }])
+        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "examples/data/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" , params: { build: 'GRCh37' }}])
+        .add("assoc", ["AssociationLZ", { url: apiBase + "assoc_10_114550452-115067678.json?", source: 45 }])
+        .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?", build: 'GRCh37' }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);
     }
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
-    var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+    var stateUrlMapping = {chr: "chrom", start: "start", end: "end", ldrefvar: 'ld_variant' };
     // Fetch initial position from the URL, or use some defaults
     var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
-        initialState = {chr: 10, start: 114550452, end: 115067678};
+        initialState = {chr: '10', start: 114550452, end: 115067678};
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
 

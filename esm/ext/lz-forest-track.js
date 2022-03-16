@@ -99,9 +99,9 @@ function install (LocusZoom) {
             const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
             // Generate confidence interval paths if fields are defined
-            if (this.layout.confidence_intervals
-                && this.layout.fields.includes(this.layout.confidence_intervals.start_field)
-                && this.layout.fields.includes(this.layout.confidence_intervals.end_field)) {
+            if (this.layout.confidence_intervals &&
+                this.layout.confidence_intervals.start_field &&
+                this.layout.confidence_intervals.end_field) {
                 // Generate a selection for all forest plot confidence intervals
                 const ci_selection = this.svg.group
                     .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')
@@ -121,8 +121,10 @@ function install (LocusZoom) {
                     return `translate(${x}, ${y})`;
                 };
                 const ci_width = (d) => {
-                    return this.parent[x_scale](d[this.layout.confidence_intervals.end_field])
-                        - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
+                    const {start_field, end_field} = this.layout.confidence_intervals;
+                    const scale = this.parent[x_scale];
+                    const result =  scale(d[end_field]) - scale(d[start_field]);
+                    return Math.max(result, 1);
                 };
                 const ci_height = 1;
                 // Create confidence interval rect elements
@@ -133,7 +135,7 @@ function install (LocusZoom) {
                     .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`)
                     .merge(ci_selection)
                     .attr('transform', ci_transform)
-                    .attr('width', ci_width)
+                    .attr('width', ci_width) // Math.max(ci_width, 1))
                     .attr('height', ci_height);
 
                 // Remove old elements as needed
@@ -210,12 +212,10 @@ function install (LocusZoom) {
     class CategoryForest extends Forest {
         _getDataExtent(data, axis_config) {
             // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
-            const ci_config = this.layout.confidence_intervals;
-            if (ci_config
-                && this.layout.fields.includes(ci_config.start_field)
-                && this.layout.fields.includes(ci_config.end_field)) {
-                const min = (d) => +d[ci_config.start_field];
-                const max = (d) => +d[ci_config.end_field];
+            const { confidence_intervals } = this.layout;
+            if (confidence_intervals && confidence_intervals.start_field && confidence_intervals.end_field) {
+                const min = (d) => +d[confidence_intervals.start_field];
+                const max = (d) => +d[confidence_intervals.end_field];
                 return [d3.min(data, min), d3.max(data, max)];
             }
 

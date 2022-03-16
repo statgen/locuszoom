@@ -27,12 +27,12 @@ describe('Interval annotation track', function () {
             const layout = LAYOUTS.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
-                track_split_field: '{{namespace[intervals]}}state_id',
+                track_split_field: 'intervals:state_id',
             });
             const instance = DATA_LAYERS.create('intervals', layout);
             this.instance = instance;
             this.color_config = find_color_options(instance._base_layout);
-            this.color_config.field = '{{namespace[intervals]}}state_id';
+            this.color_config.field = 'intervals:state_id';
             this.legend_config = instance._base_layout.legend;
         });
 
@@ -52,7 +52,7 @@ describe('Interval annotation track', function () {
             assert.deepEqual(
                 this.color_config,
                 // Note we are comparing base layout (before auto-gen) to dynamic layout (after)
-                find_color_options(this.instance.layout)
+                find_color_options(this.instance.layout),
             );
             assert.deepEqual(this.instance.layout.legend, this.instance._base_layout.legend);
         });
@@ -68,10 +68,10 @@ describe('Interval annotation track', function () {
             this.instance.data = [
                 // Interesting property of real data: sometimes two HMM models are assigned the same label.
                 //   State id is considered the unambiguous identifier.
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '#FF0000' },
-                { 'intervals:state_name': 'Weak enhancer', 'intervals:state_id': 2, 'intervals:itemRgb': '#00FF00' },
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '#FF0000' },
-                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 3, 'intervals:itemRgb': '#0000FF' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '255,0,0' },
+                { 'intervals:state_name': 'Weak enhancer', 'intervals:state_id': 2, 'intervals:itemRgb': '0,255,0' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 1, 'intervals:itemRgb': '255,0,0' },
+                { 'intervals:state_name': 'Strong enhancer', 'intervals:state_id': 3, 'intervals:itemRgb': '0,0,255' },
             ];
 
             this.instance._applyLayoutOptions();
@@ -81,15 +81,15 @@ describe('Interval annotation track', function () {
             const final_legend = this.instance.layout.legend;
             const final_colors = find_color_options(this.instance.layout);
             assert.deepEqual(final_colors.parameters.categories, [1, 2, 3], 'Unique categories are generated');
-            assert.deepEqual(final_colors.parameters.values, ['#FF0000', '#00FF00', '#0000FF'], 'Unique color options are tracked');
+            assert.deepEqual(final_colors.parameters.values, ['rgb(255,0,0)', 'rgb(0,255,0)', 'rgb(0,0,255)'], 'Unique color options are tracked');
             assert.deepEqual(
                 final_legend,
                 [
-                    { color: '#FF0000', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
-                    { color: '#00FF00', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
-                    { color: '#0000FF', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(255,0,0)', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(0,255,0)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
+                    { color: 'rgb(0,0,255)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
-                'Legend items map the correct stateID and colors together'
+                'Legend items map the correct stateID and colors together',
             );
         });
 
@@ -113,7 +113,7 @@ describe('Interval annotation track', function () {
             assert.deepEqual(
                 final_colors.parameters.values,
                 ['rgb(212,212,212)', 'rgb(192,192,192)', 'rgb(128,128,128)', 'rgb(189,183,107)', 'rgb(233,150,122)', 'rgb(205,92,92)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,0)', 'rgb(194,225,5)', 'rgb(0,100,0)', 'rgb(0,128,0)', 'rgb(50,205,50)', 'rgb(255,69,0)', 'rgb(255,0,0)'],
-                'The smallest preset color scheme that fits data size will be used'
+                'The smallest preset color scheme that fits data size will be used',
             );
             assert.deepEqual(
                 final_legend,
@@ -122,7 +122,7 @@ describe('Interval annotation track', function () {
                     { color: 'rgb(192,192,192)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
                     { color: 'rgb(128,128,128)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
-                'Legend items map the correct stateID and colors together'
+                'Legend items map the correct stateID and colors together',
             );
         });
     });
@@ -131,9 +131,11 @@ describe('Interval annotation track', function () {
         beforeEach(function() {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('intervals', ['StaticJSON', [
-                    { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
-                ]]);
+                .add('intervals', ['StaticJSON', {
+                    data: [
+                        { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
+                    ],
+                }]);
 
             const layout = {
                 panels: [ LAYOUTS.get('panel', 'intervals') ],

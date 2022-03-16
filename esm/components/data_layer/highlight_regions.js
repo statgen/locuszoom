@@ -56,7 +56,7 @@ class HighlightRegions extends BaseDataLayer {
             throw new Error('highlight_regions layer does not support mouse events');
         }
 
-        if (layout.regions && layout.regions.length && layout.fields && layout.fields.length) {
+        if (layout.regions.length && layout.namespace && Object.keys(layout.namespace).length) {
             throw new Error('highlight_regions layer can specify "regions" in layout, OR external data "fields", but not both');
         }
         super(...arguments);

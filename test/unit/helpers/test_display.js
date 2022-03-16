@@ -170,12 +170,12 @@ describe('Display and parsing helpers', function () {
             assert.equal(parseFields(html, data), expected_value);
             const data2 = {
                 'fieldA': '',
-                'fieldB': '',
+                'foo:fieldB': '',
             };
-            const html2 = '{{#if fieldA}}A1<br>{{/if}}'
-                + '{{#if fieldA|derp}}A2<br>{{/if}}'
-                + '{{#if foo:fieldB}}B1<br>{{/if}}'
-                + '{{#if foo:fieldB|derp}}B2<br>{{/if}}';
+            const html2 = `{{#if fieldA}}A1<br>{{/if}}\
+{{#if fieldA|derp}}A2<br>{{/if}}\
+{{#if foo:fieldB}}B1<br>{{/if}}\
+{{#if foo:fieldB|derp}}B2<br>{{/if}}`;
             const expected_value2 = 'A2<br>B2<br>';
             assert.equal(parseFields(html2, data2), expected_value2);
         });

@@ -69,9 +69,9 @@
     // Define base data sources
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/",  build: 'GRCh37' }])
+      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/",  build: 'GRCh37' }]);
 
     // Build the base layout
     var association_panel_mods = {
@@ -104,9 +104,8 @@
         { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 30 }
     ];
     phenos.forEach(function(pheno){
-        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: pheno.study_id, id_field: "variant" }}]);
+        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/",  source: pheno.study_id }]);
         var association_data_layer_mods = {
-            namespace: { "assoc": pheno.namespace },
             id: "associationpvalues_" + pheno.namespace,
             name: pheno.title,
             point_shape: "circle",
@@ -115,18 +114,23 @@
             legend: [
                 { shape: "circle", color: pheno.color, size: 40, label: pheno.title, class: "lz-data_layer-scatter" },
             ],
-            fields: [pheno.namespace+":variant", pheno.namespace+":position", pheno.namespace+":log_pvalue", pheno.namespace+":log_pvalue|logtoscinotation", pheno.namespace+":ref_allele"],
             tooltip: {
                 closable: true,
                 show: { or: ["highlighted", "selected"] },
                 hide: { and: ["unhighlighted", "unselected"] },
                 html: "<strong>" + pheno.title + "</strong><br>"
-                    + "<strong>{{" + pheno.namespace + ":variant|htmlescape}}</strong><br>"
-                    + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
-                    + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele|htmlescape}}</strong><br>"
+                    + "<strong>{{assoc:variant|htmlescape}}</strong><br>"
+                    + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                    + "Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>"
             }
         };
-        layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));
+        // Much like subclassing, overrides syntax isn't wel suited to removing things. Since we don't want to show
+        //  LD in this vis, we need to replace "namespace" and "data_operations" manually (if we put namespace in the overrides above,
+        //  it would merge the new namespaces with the old one, and LD would still be there)
+        const layer_layout = LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods);
+        layer_layout.namespace =  { "assoc": pheno.namespace };
+        layer_layout.data_operations = [];
+        layout.panels[0].data_layers.push(layer_layout);
     });
 
     // Generate the LocusZoom plot
