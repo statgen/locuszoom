@@ -21,52 +21,38 @@ const triangledown = {
 };
 
 /**
- * Apply namespaces to layout, recursively
+ * Apply shared namespaces to a layout, recursively.
+ *
+ * Overriding namespaces can be used to identify where to retrieve data from, but not to add new data sources to a layout.
+ *   For that, a key would have to be added to `layout.namespace` directly.
+ *
+ * Detail: This function is a bit magical. Whereas most layouts overrides are copied over verbatim (merging objects and nested keys), applyNamespaces will *only* copy
+ *  over keys that are relevant to that data layer. Eg, if overrides specifies a key called "red_herring",
+ *  an association data layer will ignore that data source entirely, and not copy it into `assoc_layer.namespace`.
+ *
+ * Only items under a key called `namespace` are given this special treatment. This allows a single call to `Layouts.get('plot'...)` to specify
+ *   namespace overrides for many layers in one convenient place, without accidentally telling every layer to request all possible data for itself.
  * @private
   */
-function applyNamespaces(element, namespace, default_namespace) {
-    if (namespace) {
-        if (typeof namespace == 'string') {
-            namespace = { default: namespace };
-        }
-    } else {
-        namespace = { default: '' };
+function applyNamespaces(layout, shared_namespaces) {
+    shared_namespaces = shared_namespaces || {};
+    if (!layout || typeof layout !== 'object' || typeof shared_namespaces !== 'object') {
+        throw new Error('Layout and shared namespaces must be provided as objects');
     }
-    if (typeof element == 'string') {
-        const re = /\{\{namespace(\[[A-Za-z_0-9]+\]|)\}\}/g;
-        let match, base, key, resolved_namespace;
-        const replace = [];
-        while ((match = re.exec(element)) !== null) {
-            base = match[0];
-            key = match[1].length ? match[1].replace(/(\[|\])/g, '') : null;
-            resolved_namespace = default_namespace;
-            if (namespace != null && typeof namespace == 'object' && typeof namespace[key] != 'undefined') {
-                resolved_namespace = namespace[key] + (namespace[key].length ? ':' : '');
-            }
-            replace.push({ base: base, namespace: resolved_namespace });
-        }
-        for (let r in replace) {
-            element = element.replace(replace[r].base, replace[r].namespace);
-        }
-    } else if (typeof element == 'object' && element != null) {
-        if (typeof element.namespace != 'undefined') {
-            const merge_namespace = (typeof element.namespace == 'string') ? { default: element.namespace } : element.namespace;
-            namespace = merge(namespace, merge_namespace);
-        }
-        let namespaced_element, namespaced_property;
-        for (let property in element) {
-            if (property === 'namespace') {
-                continue;
-            }
-            namespaced_element = applyNamespaces(element[property], namespace, default_namespace);
-            namespaced_property = applyNamespaces(property, namespace, default_namespace);
-            if (property !== namespaced_property) {
-                delete element[property];
-            }
-            element[namespaced_property] = namespaced_element;
+
+    for (let [field_name, item] of Object.entries(layout)) {
+        if (field_name === 'namespace') {
+            Object.keys(item).forEach((requested_ns) => {
+                const override = shared_namespaces[requested_ns];
+                if (override) {
+                    item[requested_ns] = override;
+                }
+            });
+        } else if (item !== null && (typeof item === 'object')) {
+            layout[field_name] = applyNamespaces(item, shared_namespaces);
         }
     }
-    return element;
+    return layout;
 }
 
 /**
@@ -118,6 +104,8 @@ function merge(custom_layout, default_layout) {
 }
 
 function deepCopy(item) {
+    // FIXME: initial attempt to replace this with a more efficient deep clone method caused merge() to break; revisit in future.
+    //   Replacing this with a proper clone would be the key blocker to allowing functions and non-JSON values (like infinity) in layout objects
     return JSON.parse(JSON.stringify(item));
 }
 
@@ -138,6 +126,52 @@ function nameToSymbol(shape) {
     const factory_name = `symbol${shape.charAt(0).toUpperCase() + shape.slice(1)}`;
     return d3[factory_name] || null;
 }
+
+
+/**
+ * Find all references to namespaced fields within a layout object. This is used to validate that a set of provided
+ *  data adapters will actually give all the information required to draw the plot.
+ * @param {Object} layout
+ * @param {Array|null} prefixes A list of allowed namespace prefixes. (used to differentiate between real fields,
+ *   and random sentences that match an arbitrary pattern.
+ * @param {RegExp|null} field_finder On recursive calls, pass the regexp we constructed the first time
+ * @return {Set}
+ */
+function findFields(layout, prefixes, field_finder = null) {
+    const fields = new Set();
+    if (!field_finder) {
+        if (!prefixes.length) {
+            // A layer that doesn't ask for external data does not need to check if the provider returns expected fields
+            return fields;
+        }
+        const all_ns = prefixes.join('|');
+
+        // Locates any reference within a template string to to `ns:field`, `{{ns:field}}`, or `{{#if ns:field}}`.
+        //  By knowing the list of allowed NS prefixes, we can be much more confident in avoiding spurious matches
+        field_finder = new RegExp(`(?:{{)?(?:#if *)?((?:${all_ns}):\\w+)`, 'g');
+    }
+
+    for (const value of Object.values(layout)) {
+        const value_type = typeof value;
+        let matches = [];
+        if (value_type === 'string') {
+            let a_match;
+            while ((a_match = field_finder.exec(value)) !== null) {
+                matches.push(a_match[1]);
+            }
+        } else if (value !== null && value_type === 'object') {
+            matches = findFields(value, prefixes, field_finder);
+        } else {
+            // Only look for field names in strings or compound values
+            continue;
+        }
+        for (let m of matches) {
+            fields.add(m);
+        }
+    }
+    return fields;
+}
+
 
 /**
  * A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
@@ -166,7 +200,7 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
             (acc, key) => {
                 acc[key] = renameField(layout[key], old_name, new_name, warn_transforms);
                 return acc;
-            }, {}
+            }, {},
         );
     } else if (this_type !== 'string') {
         // Field names are always strings. If the value isn't a string, don't even try to change it.
@@ -206,7 +240,7 @@ function mutate_attrs(layout, selector, value_or_callable) {
     return mutate(
         layout,
         selector,
-        value_or_callable
+        value_or_callable,
     );
 }
 
@@ -222,4 +256,4 @@ function query_attrs(layout, selector) {
     return query(layout, selector);
 }
 
-export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, renameField };
+export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, findFields, renameField };

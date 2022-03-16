@@ -41,7 +41,7 @@ describe('Toolbar widgets', function () {
     describe('Filter fields Widget', function () {
         beforeEach(function() {
             const datasources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 1, a: 12 }]]);
+                .add('d', ['StaticJSON', {data: [{ id: 1, a: 12 }] }]);
             const layout = {
                 panels: [{
                     id: 'p',
@@ -61,7 +61,7 @@ describe('Toolbar widgets', function () {
                     data_layers: [
                         {
                             id: 'd',
-                            fields: ['d:id', 'd:a'],
+                            namespace: {d: 'd'},
                             id_field: 'd:id',
                             type: 'scatter',
                         },
@@ -144,7 +144,7 @@ describe('Toolbar widgets', function () {
                 assert.equal(
                     this.widget._getValue(),
                     output,
-                    `Number conversion should convert input ${input} to output ${output}`
+                    `Number conversion should convert input ${input} to output ${output}`,
                 );
             });
         });

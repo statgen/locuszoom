@@ -51,7 +51,7 @@ describe('jsonpath query syntax', function () {
         assert.throws(
             () => query(sample_data, '$.panels[@.id !== "a" && @.id === "b"]'),
             /Cannot parse/,
-            'Warns on expression'
+            'Warns on expression',
         );
     });
 
@@ -59,7 +59,7 @@ describe('jsonpath query syntax', function () {
         assert.throws(
             () => query(sample_data, '$.panels[1]'),
             /Cannot parse/,
-            "Numeric indices are not allowed, because the whole point of this syntax is to write queries that won't break if the order of panels changes later"
+            "Numeric indices are not allowed, because the whole point of this syntax is to write queries that won't break if the order of panels changes later",
         );
     });
 });

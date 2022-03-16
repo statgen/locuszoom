@@ -226,7 +226,7 @@ function install(LocusZoom) {
             this.button.menu.setPopulate(() => {
                 this.button.menu.inner_selector.html('');
                 const table = this.button.menu.inner_selector.append('table');
-                this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach((id, idx) => {
+                this.parent_panel._data_layer_ids_by_z_index.slice().reverse().forEach((id, idx) => {
                     const data_layer = this.parent_panel.data_layers[id];
                     const name = (typeof data_layer.layout.name != 'string') ? data_layer.id : data_layer.layout.name;
                     const row = table.append('tr');
@@ -237,7 +237,7 @@ function install(LocusZoom) {
                         const status_idx = STATUS_ADJECTIVES.indexOf(status_adj);
                         const status_verb = STATUS_VERBS[status_idx];
                         let html, onclick, highlight;
-                        if (data_layer.global_statuses[status_adj]) {
+                        if (data_layer._global_statuses[status_adj]) {
                             html = STATUS_ANTIVERBS[status_idx];
                             onclick = `un${status_verb}AllElements`;
                             highlight = '-highlighted';
@@ -257,7 +257,7 @@ function install(LocusZoom) {
                     });
                     // Sort layer buttons
                     const at_top = (idx === 0);
-                    const at_bottom = (idx === (this.parent_panel.data_layer_ids_by_z_index.length - 1));
+                    const at_bottom = (idx === (this.parent_panel._data_layer_ids_by_z_index.length - 1));
                     const td = row.append('td');
                     td.append('a')
                         .attr('class', `lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-${this.layout.color}${at_bottom ? '-disabled' : ''}`)
@@ -297,13 +297,13 @@ function install(LocusZoom) {
     }
 
     const covariates_model_tooltip = function () {
-        const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association');
         covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
         return covariates_model_association;
     }();
 
     const covariates_model_plot = function () {
-        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true });
+        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association');
         covariates_model_plot_toolbar.widgets.push({
             type: 'covariates_model',
             button_html: 'Model',

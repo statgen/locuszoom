@@ -1,4 +1,4 @@
-import transforms from '../registry/transforms';
+import TRANSFORMS from '../registry/transforms';
 
 /**
  * Represents an addressable unit of data from a namespaced datasource, subject to specified value transformations.
@@ -15,20 +15,18 @@ import transforms from '../registry/transforms';
  */
 class Field {
     constructor(field) {
-        const parts = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/.exec(field);
-        /** @member {String} */
-        this.full_name = field;
-        /** @member {String} */
-        this.namespace = parts[1] || null;
-        /** @member {String} */
-        this.name = parts[2] || null;
-        /** @member {Array} */
-        this.transformations = [];
-
-        if (typeof parts[3] == 'string' && parts[3].length > 1) {
-            this.transformations = parts[3].substring(1).split('|');
-            this.transformations.forEach((transform, i) => this.transformations[i] = transforms.get(transform));
+        // Two scenarios: we are requesting a field by full name, OR there are transforms to apply
+        // `fieldname` or `namespace:fieldname` followed by `|filter1|filterN`
+        const field_pattern = /^(?:\w+:\w+|^\w+)(?:\|\w+)*$/;
+        if (!field_pattern.test(field)) {
+            throw new Error(`Invalid field specifier: '${field}'`);
         }
+
+        const [name, ...transforms] = field.split('|');
+
+        this.full_name = field; // fieldname + transforms
+        this.field_name = name; // just fieldname
+        this.transformations = transforms.map((name) => TRANSFORMS.get(name));
     }
 
     _applyTransformations(val) {
@@ -48,15 +46,14 @@ class Field {
      * @returns {*}
      */
     resolve(data, extra) {
+        // Four resolutions: a) This is cached, b) this can be calculated from a known field, c) this is a known annotation rather than from an API, d) This field doesn't exist and returns as null
         if (typeof data[this.full_name] == 'undefined') { // Check for cached result
             let val = null;
-            if (typeof (data[`${this.namespace}:${this.name}`]) != 'undefined') { // Fallback: value sans transforms
-                val = data[`${this.namespace}:${this.name}`];
-            } else if (typeof data[this.name] != 'undefined') { // Fallback: value present without namespace
-                val = data[this.name];
-            } else if (extra && typeof extra[this.full_name] != 'undefined') { // Fallback: check annotations
-                val = extra[this.full_name];
-            } // We should really warn if no value found, but many bad layouts exist and this could break compatibility
+            if (data[this.field_name] !== undefined) { // Fallback: value sans transforms
+                val = data[this.field_name];
+            } else if (extra && extra[this.field_name] !== undefined) { // Fallback: check annotations
+                val = extra[this.field_name];
+            } // Don't warn if no value found, because sometimes only certain rows will have a specific field (esp happens with annotations)
             data[this.full_name] = this._applyTransformations(val);
         }
         return data[this.full_name];

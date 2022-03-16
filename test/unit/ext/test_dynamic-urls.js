@@ -32,14 +32,14 @@ describe('LzDynamicUrls', function() {
             const query = '?numeric=1&boolean=false&short_boolean=0&no_value';
             const plotData = paramsFromUrl(
                 { numeric: 'numeric', boolean: 'boolean', short_boolean: 'short_boolean', no_value: 'no_value' },
-                query
+                query,
             );
 
             // Hack: deepStrictEqual behaving oddly in various scenarios; compare types separately
             assert.deepEqual(
                 plotData,
                 {numeric: '1', boolean: 'false', short_boolean: '0', no_value: ''},
-                'Numeric value deserialized as string'
+                'Numeric value deserialized as string',
             );
 
             assert.ok(typeof plotData['numeric'] === 'string', 'Numeric field represented as string');

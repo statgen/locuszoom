@@ -46,10 +46,10 @@ import * as d3 from 'd3';
  * @param {*} parameters.else  The value to return if the input value does not match the field value. Optional. If not
  *   defined this scale function will return null (or value of null_value parameter, if defined) when input value fails
  *   to match field_value.
- * @param {*} input value
+ * @param {*} value value
  */
-const if_value = (parameters, input) => {
-    if (typeof input == 'undefined' || parameters.field_value !== input) {
+const if_value = (parameters, value) => {
+    if (typeof value == 'undefined' || parameters.field_value !== value) {
         if (typeof parameters.else != 'undefined') {
             return parameters.else;
         } else {
@@ -72,17 +72,17 @@ const if_value = (parameters, input) => {
  *   equal length to breaks parameter. Each entry n represents the value to return if the input value is greater than
  *   or equal to break n and less than or equal to break n+1 (or break n+1 doesn't exist).
  * @param {*} parameters.null_value
- * @param {*} input value
+ * @param {*} value value
  * @returns {*}
  */
-const numerical_bin = (parameters, input) => {
+const numerical_bin = (parameters, value) => {
     const breaks = parameters.breaks || [];
     const values = parameters.values || [];
-    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+    if (typeof value == 'undefined' || value === null || isNaN(+value)) {
         return (parameters.null_value ? parameters.null_value : null);
     }
     const threshold = breaks.reduce(function (prev, curr) {
-        if (+input &lt; prev || (+input >= prev &amp;&amp; +input &lt; curr)) {
+        if (+value &lt; prev || (+value >= prev &amp;&amp; +value &lt; curr)) {
             return prev;
         } else {
             return curr;
@@ -119,6 +119,7 @@ const categorical_bin = (parameters, value) => {
  *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
  *
  *  See also: stable_choice.
+ * @function ordinal_cycle
  *  @param {Object} parameters
  *  @param {Array} parameters.values A list of option values
  * @return {*}
@@ -142,6 +143,9 @@ const ordinal_cycle = (parameters, value, index) => {
  *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
+ *
+ * @function stable_choice
+ *
  * @param parameters
  * @param {Array} [parameters.values] A list of options to choose from
  * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
@@ -195,19 +199,19 @@ let stable_choice = (parameters, value, index) => {
  *   colors, shapes, etc.
  * @parameters {*} parameters.null_value
  */
-const interpolate = (parameters, input) => {
+const interpolate = (parameters, value) => {
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
     var nullval = (parameters.null_value ? parameters.null_value : null);
     if (breaks.length &lt; 2 || breaks.length !== values.length) {
         return nullval;
     }
-    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
+    if (typeof value == 'undefined' || value === null || isNaN(+value)) {
         return nullval;
     }
-    if (+input &lt;= parameters.breaks[0]) {
+    if (+value &lt;= parameters.breaks[0]) {
         return values[0];
-    } else if (+input >= parameters.breaks[parameters.breaks.length - 1]) {
+    } else if (+value >= parameters.breaks[parameters.breaks.length - 1]) {
         return values[breaks.length - 1];
     } else {
         var upper_idx = null;
@@ -215,14 +219,14 @@ const interpolate = (parameters, input) => {
             if (!idx) {
                 return;
             }
-            if (breaks[idx - 1] &lt;= +input &amp;&amp; breaks[idx] >= +input) {
+            if (breaks[idx - 1] &lt;= +value &amp;&amp; breaks[idx] >= +value) {
                 upper_idx = idx;
             }
         });
         if (upper_idx === null) {
             return nullval;
         }
-        const normalized_input = (+input - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
+        const normalized_input = (+value - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
         if (!isFinite(normalized_input)) {
             return nullval;
         }
@@ -231,7 +235,54 @@ const interpolate = (parameters, input) => {
 };
 
 
-export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
+/**
+ * Calculate the effect direction based on beta, or the combination of beta and standard error.
+ *   Typically used with phewas plots, to show point shape based on the beta and stderr_beta fields.
+ *
+ * @function effect_direction
+ * @param parameters
+ * @param parameters.'+' The value to return if the effect direction is positive
+ * @param parameters.'-' The value to return if the effect direction is positive
+ * @param parameters.beta_field The name of the field containing beta
+ * @param parameters.stderr_beta_field The name of the field containing stderr_beta
+ * @param {Object} input This function should receive the entire datum object, rather than one single field
+ * @returns {null}
+ */
+function effect_direction(parameters, input) {
+    if (input === undefined) {
+        return null;
+    }
+
+    const { beta_field, stderr_beta_field, '+': plus_result = null, '-': neg_result = null } = parameters;
+
+    if (!beta_field || !stderr_beta_field) {
+        throw new Error(`effect_direction must specify how to find required 'beta' and 'stderr_beta' fields`);
+    }
+
+    const beta_val = input[beta_field];
+    const se_val = input[stderr_beta_field];
+
+    if (beta_val !== undefined) {
+        if (se_val !== undefined) {
+            if ((beta_val - 1.96 * se_val) > 0) {
+                return plus_result;
+            } else if ((beta_val + 1.96 * se_val) &lt; 0) {
+                return neg_result || null;
+            }
+        } else {
+            if (beta_val > 0) {
+                return plus_result;
+            } else if (beta_val &lt; 0) {
+                return neg_result;
+            }
+        }
+    }
+    // Note: The original PheWeb implementation allowed odds ratio in place of beta/se. LZ core is a bit more rigid
+    //   about expected data formats for layouts.
+    return null;
+}
+
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle, effect_direction };
 </code></pre>
         </article>
     </section>
@@ -242,13 +293,13 @@ export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, o
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-parsers.html">ext/lz-parsers</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataFunctions.html">LocusZoom_DataFunctions</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li><li><a href="module-undercomplicate.html">undercomplicate</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="LLNode.html">LLNode</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-data_requester-DataOperation.html">DataOperation</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseLZAdapter.html">BaseLZAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseUMAdapter.html">BaseUMAdapter</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_Adapters-UserTabixLD.html">UserTabixLD</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="module-undercomplicate.BaseAdapter.html">BaseAdapter</a></li><li><a href="module-undercomplicate.BaseUrlAdapter.html">BaseUrlAdapter</a></li><li><a href="module-undercomplicate.LRUCache.html">LRUCache</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_from_layer">data_from_layer</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clone">clone</a></li><li><a href="global.html#getLinkedData">getLinkedData</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a>
 </footer>
 
 <script> prettyPrint(); </script>

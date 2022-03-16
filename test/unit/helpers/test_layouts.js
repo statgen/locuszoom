@@ -1,9 +1,73 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import {renameField} from '../../../esm/helpers/layouts';
+import {findFields, renameField} from '../../../esm/helpers/layouts';
 
 describe('Layout helper functions', function () {
+    describe('findFields', function () {
+        it('does not try to find requested fields if there are no namespaces declared', function () {
+            const layout = {
+                x_field: 'assoc:position',
+                y_field: 'ld:correlation',
+                color: 'red',
+            };
+
+            const result = [...findFields(layout, [])];
+            assert.equal(result.length, 0, 'No fields looked for or found');
+        });
+
+        it('finds simple primitive values', function () {
+            const namespaces = ['assoc', 'ld'];
+            const layout = {
+                x_field: 'assoc:position',
+                y_field: 'ld:correlation',
+                label_field_with_filter: 'assoc:variant|htmlescape',
+                redundant_field: 'assoc:variant',
+                color: 'red',
+                spurious: 'X:2500_A/C',
+            };
+            const result = [...findFields(layout, namespaces)];
+            assert.sameMembers(result, ['assoc:position', 'assoc:variant', 'ld:correlation'], 'Finds all unique valid field names (and strips filter usages)');
+        });
+
+        it('finds values inside template syntax', function () {
+            const namespaces = ['assoc'];
+            const layout = {
+                y_field: 'ld:correlation',
+                text: '{{assoc:nearest_gene}} - {{#if assoc:rsid}} <a href="url.com/{{assoc:rsid|htmlescape}}" {/if}}',
+                color: 'red',
+                spurious: 'X:2500_A/C',
+            };
+            const result = [...findFields(layout, namespaces)];
+            assert.sameMembers(
+                result,
+                ['assoc:nearest_gene', 'assoc:rsid'],
+                'Finds all unique valid field names',
+            );
+        });
+
+        it('searches for field names in compound objects', function () {
+            const namespaces = ['phewas'];
+            const layout = {
+                color: [{
+                    field: 'phewas:trait_group',
+                    scale_function: 'categorical_bin',
+                    parameters: {
+                        categories: [],
+                        values: [],
+                        null_value: '#B8B8B8',
+                    },
+                }],
+            };
+            const result = [...findFields(layout, namespaces)];
+            assert.sameMembers(
+                result,
+                ['phewas:trait_group'],
+                'Finds nested field names',
+            );
+        });
+    });
+
     describe('renameFields', function () {
         beforeEach(function() {
             this.warn_spy = sinon.spy(console, 'warn');
@@ -18,7 +82,6 @@ describe('Layout helper functions', function () {
                 x_axis: { field: 'old_name' },
                 y_axis: { field: 'unrelated_thing' },
                 category_field_name: 'old_name',
-                fields: ['old_name'],
                 no_value: null,
             };
             base = renameField(base, 'old_name', 'moon_unit');
@@ -27,7 +90,6 @@ describe('Layout helper functions', function () {
                 x_axis: { field: 'moon_unit' },
                 y_axis: { field: 'unrelated_thing' },
                 category_field_name: 'moon_unit',
-                fields: ['moon_unit'],
                 no_value: null,
             });
         });
@@ -74,13 +136,13 @@ describe('Layout helper functions', function () {
 
         it('works with abstract layouts and namespace syntax', function () {
             let base = {
-                field: '{{namespace[family]}}old_name',
-                template: '{{{{namespace[family]}}old_name}} was here',
+                field: 'family:old_name',
+                template: '{{family:old_name}} was here',
             };
-            base = renameField(base, '{{namespace[family]}}old_name', '{{namespace[family]}}moon_unit');
+            base = renameField(base, 'family:old_name', 'family:moon_unit');
             assert.deepEqual(base, {
-                field: '{{namespace[family]}}moon_unit',
-                template: '{{{{namespace[family]}}moon_unit}} was here',
+                field: 'family:moon_unit',
+                template: '{{family:moon_unit}} was here',
             });
         });
 

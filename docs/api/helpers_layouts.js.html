@@ -49,52 +49,38 @@ const triangledown = {
 };
 
 /**
- * Apply namespaces to layout, recursively
+ * Apply shared namespaces to a layout, recursively.
+ *
+ * Overriding namespaces can be used to identify where to retrieve data from, but not to add new data sources to a layout.
+ *   For that, a key would have to be added to `layout.namespace` directly.
+ *
+ * Detail: This function is a bit magical. Whereas most layouts overrides are copied over verbatim (merging objects and nested keys), applyNamespaces will *only* copy
+ *  over keys that are relevant to that data layer. Eg, if overrides specifies a key called "red_herring",
+ *  an association data layer will ignore that data source entirely, and not copy it into `assoc_layer.namespace`.
+ *
+ * Only items under a key called `namespace` are given this special treatment. This allows a single call to `Layouts.get('plot'...)` to specify
+ *   namespace overrides for many layers in one convenient place, without accidentally telling every layer to request all possible data for itself.
  * @private
   */
-function applyNamespaces(element, namespace, default_namespace) {
-    if (namespace) {
-        if (typeof namespace == 'string') {
-            namespace = { default: namespace };
-        }
-    } else {
-        namespace = { default: '' };
+function applyNamespaces(layout, shared_namespaces) {
+    shared_namespaces = shared_namespaces || {};
+    if (!layout || typeof layout !== 'object' || typeof shared_namespaces !== 'object') {
+        throw new Error('Layout and shared namespaces must be provided as objects');
     }
-    if (typeof element == 'string') {
-        const re = /\{\{namespace(\[[A-Za-z_0-9]+\]|)\}\}/g;
-        let match, base, key, resolved_namespace;
-        const replace = [];
-        while ((match = re.exec(element)) !== null) {
-            base = match[0];
-            key = match[1].length ? match[1].replace(/(\[|\])/g, '') : null;
-            resolved_namespace = default_namespace;
-            if (namespace != null &amp;&amp; typeof namespace == 'object' &amp;&amp; typeof namespace[key] != 'undefined') {
-                resolved_namespace = namespace[key] + (namespace[key].length ? ':' : '');
-            }
-            replace.push({ base: base, namespace: resolved_namespace });
-        }
-        for (let r in replace) {
-            element = element.replace(replace[r].base, replace[r].namespace);
-        }
-    } else if (typeof element == 'object' &amp;&amp; element != null) {
-        if (typeof element.namespace != 'undefined') {
-            const merge_namespace = (typeof element.namespace == 'string') ? { default: element.namespace } : element.namespace;
-            namespace = merge(namespace, merge_namespace);
-        }
-        let namespaced_element, namespaced_property;
-        for (let property in element) {
-            if (property === 'namespace') {
-                continue;
-            }
-            namespaced_element = applyNamespaces(element[property], namespace, default_namespace);
-            namespaced_property = applyNamespaces(property, namespace, default_namespace);
-            if (property !== namespaced_property) {
-                delete element[property];
-            }
-            element[namespaced_property] = namespaced_element;
+
+    for (let [field_name, item] of Object.entries(layout)) {
+        if (field_name === 'namespace') {
+            Object.keys(item).forEach((requested_ns) => {
+                const override = shared_namespaces[requested_ns];
+                if (override) {
+                    item[requested_ns] = override;
+                }
+            });
+        } else if (item !== null &amp;&amp; (typeof item === 'object')) {
+            layout[field_name] = applyNamespaces(item, shared_namespaces);
         }
     }
-    return element;
+    return layout;
 }
 
 /**
@@ -146,6 +132,8 @@ function merge(custom_layout, default_layout) {
 }
 
 function deepCopy(item) {
+    // FIXME: initial attempt to replace this with a more efficient deep clone method caused merge() to break; revisit in future.
+    //   Replacing this with a proper clone would be the key blocker to allowing functions and non-JSON values (like infinity) in layout objects
     return JSON.parse(JSON.stringify(item));
 }
 
@@ -166,6 +154,52 @@ function nameToSymbol(shape) {
     const factory_name = `symbol${shape.charAt(0).toUpperCase() + shape.slice(1)}`;
     return d3[factory_name] || null;
 }
+
+
+/**
+ * Find all references to namespaced fields within a layout object. This is used to validate that a set of provided
+ *  data adapters will actually give all the information required to draw the plot.
+ * @param {Object} layout
+ * @param {Array|null} prefixes A list of allowed namespace prefixes. (used to differentiate between real fields,
+ *   and random sentences that match an arbitrary pattern.
+ * @param {RegExp|null} field_finder On recursive calls, pass the regexp we constructed the first time
+ * @return {Set}
+ */
+function findFields(layout, prefixes, field_finder = null) {
+    const fields = new Set();
+    if (!field_finder) {
+        if (!prefixes.length) {
+            // A layer that doesn't ask for external data does not need to check if the provider returns expected fields
+            return fields;
+        }
+        const all_ns = prefixes.join('|');
+
+        // Locates any reference within a template string to to `ns:field`, `{{ns:field}}`, or `{{#if ns:field}}`.
+        //  By knowing the list of allowed NS prefixes, we can be much more confident in avoiding spurious matches
+        field_finder = new RegExp(`(?:{{)?(?:#if *)?((?:${all_ns}):\\w+)`, 'g');
+    }
+
+    for (const value of Object.values(layout)) {
+        const value_type = typeof value;
+        let matches = [];
+        if (value_type === 'string') {
+            let a_match;
+            while ((a_match = field_finder.exec(value)) !== null) {
+                matches.push(a_match[1]);
+            }
+        } else if (value !== null &amp;&amp; value_type === 'object') {
+            matches = findFields(value, prefixes, field_finder);
+        } else {
+            // Only look for field names in strings or compound values
+            continue;
+        }
+        for (let m of matches) {
+            fields.add(m);
+        }
+    }
+    return fields;
+}
+
 
 /**
  * A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
@@ -194,7 +228,7 @@ function renameField(layout, old_name, new_name, warn_transforms = true) {
             (acc, key) => {
                 acc[key] = renameField(layout[key], old_name, new_name, warn_transforms);
                 return acc;
-            }, {}
+            }, {},
         );
     } else if (this_type !== 'string') {
         // Field names are always strings. If the value isn't a string, don't even try to change it.
@@ -234,7 +268,7 @@ function mutate_attrs(layout, selector, value_or_callable) {
     return mutate(
         layout,
         selector,
-        value_or_callable
+        value_or_callable,
     );
 }
 
@@ -250,7 +284,7 @@ function query_attrs(layout, selector) {
     return query(layout, selector);
 }
 
-export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, renameField };
+export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymbol, findFields, renameField };
 </code></pre>
         </article>
     </section>
@@ -261,13 +295,13 @@ export { applyNamespaces, deepCopy, merge, mutate_attrs, query_attrs, nameToSymb
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-ConnectorSource.html">ConnectorSource</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ext_lz-credible-sets.html">ext/lz-credible-sets</a></li><li><a href="module-ext_lz-dynamic-urls.html">ext/lz-dynamic-urls</a></li><li><a href="module-ext_lz-forest-track.html">ext/lz-forest-track</a></li><li><a href="module-ext_lz-intervals-enrichment.html">ext/lz-intervals-enrichment</a></li><li><a href="module-ext_lz-intervals-track.html">ext/lz-intervals-track</a></li><li><a href="module-ext_lz-parsers.html">ext/lz-parsers</a></li><li><a href="module-ext_lz-tabix-source.html">ext/lz-tabix-source</a></li><li><a href="module-ext_lz-widget-addons.html">ext/lz-widget-addons</a></li><li><a href="module-LocusZoom.html">LocusZoom</a></li><li><a href="module-LocusZoom_Adapters.html">LocusZoom_Adapters</a></li><li><a href="module-LocusZoom_DataFunctions.html">LocusZoom_DataFunctions</a></li><li><a href="module-LocusZoom_DataLayers.html">LocusZoom_DataLayers</a></li><li><a href="module-LocusZoom_Layouts.html">LocusZoom_Layouts</a></li><li><a href="module-LocusZoom_MatchFunctions.html">LocusZoom_MatchFunctions</a></li><li><a href="module-LocusZoom_ScaleFunctions.html">LocusZoom_ScaleFunctions</a></li><li><a href="module-LocusZoom_TransformationFunctions.html">LocusZoom_TransformationFunctions</a></li><li><a href="module-LocusZoom_Widgets.html">LocusZoom_Widgets</a></li><li><a href="module-undercomplicate.html">undercomplicate</a></li></ul><h3>Classes</h3><ul><li><a href="LayoutRegistry.html">LayoutRegistry</a></li><li><a href="Line.html">Line</a></li><li><a href="LLNode.html">LLNode</a></li><li><a href="module-components_legend-Legend.html">Legend</a></li><li><a href="module-data_requester-DataOperation.html">DataOperation</a></li><li><a href="module-ext_lz-widget-addons-covariates_model.html">covariates_model</a></li><li><a href="module-ext_lz-widget-addons-data_layers.html">data_layers</a></li><li><a href="module-LocusZoom_Adapters-AssociationLZ.html">AssociationLZ</a></li><li><a href="module-LocusZoom_Adapters-BaseAdapter.html">BaseAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseApiAdapter.html">BaseApiAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseLZAdapter.html">BaseLZAdapter</a></li><li><a href="module-LocusZoom_Adapters-BaseUMAdapter.html">BaseUMAdapter</a></li><li><a href="module-LocusZoom_Adapters-CredibleSetLZ.html">CredibleSetLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneConstraintLZ.html">GeneConstraintLZ</a></li><li><a href="module-LocusZoom_Adapters-GeneLZ.html">GeneLZ</a></li><li><a href="module-LocusZoom_Adapters-GwasCatalogLZ.html">GwasCatalogLZ</a></li><li><a href="module-LocusZoom_Adapters-IntervalLZ.html">IntervalLZ</a></li><li><a href="module-LocusZoom_Adapters-LDServer.html">LDServer</a></li><li><a href="module-LocusZoom_Adapters-PheWASLZ.html">PheWASLZ</a></li><li><a href="module-LocusZoom_Adapters-RecombLZ.html">RecombLZ</a></li><li><a href="module-LocusZoom_Adapters-StaticSource.html">StaticSource</a></li><li><a href="module-LocusZoom_Adapters-TabixUrlSource.html">TabixUrlSource</a></li><li><a href="module-LocusZoom_Adapters-UserTabixLD.html">UserTabixLD</a></li><li><a href="module-LocusZoom_DataLayers-annotation_track.html">annotation_track</a></li><li><a href="module-LocusZoom_DataLayers-arcs.html">arcs</a></li><li><a href="module-LocusZoom_DataLayers-BaseDataLayer.html">BaseDataLayer</a></li><li><a href="module-LocusZoom_DataLayers-category_forest.html">category_forest</a></li><li><a href="module-LocusZoom_DataLayers-category_scatter.html">category_scatter</a></li><li><a href="module-LocusZoom_DataLayers-forest.html">forest</a></li><li><a href="module-LocusZoom_DataLayers-genes.html">genes</a></li><li><a href="module-LocusZoom_DataLayers-highlight_regions.html">highlight_regions</a></li><li><a href="module-LocusZoom_DataLayers-intervals.html">intervals</a></li><li><a href="module-LocusZoom_DataLayers-intervals_enrichment.html">intervals_enrichment</a></li><li><a href="module-LocusZoom_DataLayers-orthogonal_line.html">orthogonal_line</a></li><li><a href="module-LocusZoom_DataLayers-scatter.html">scatter</a></li><li><a href="module-LocusZoom_Widgets-_Button.html">_Button</a></li><li><a href="module-LocusZoom_Widgets-BaseWidget.html">BaseWidget</a></li><li><a href="module-LocusZoom_Widgets-display_options.html">display_options</a></li><li><a href="module-LocusZoom_Widgets-download_png.html">download_png</a></li><li><a href="module-LocusZoom_Widgets-download_svg.html">download_svg</a></li><li><a href="module-LocusZoom_Widgets-filter_field.html">filter_field</a></li><li><a href="module-LocusZoom_Widgets-menu.html">menu</a></li><li><a href="module-LocusZoom_Widgets-move_panel_down.html">move_panel_down</a></li><li><a href="module-LocusZoom_Widgets-move_panel_up.html">move_panel_up</a></li><li><a href="module-LocusZoom_Widgets-region_scale.html">region_scale</a></li><li><a href="module-LocusZoom_Widgets-remove_panel.html">remove_panel</a></li><li><a href="module-LocusZoom_Widgets-resize_to_data.html">resize_to_data</a></li><li><a href="module-LocusZoom_Widgets-set_state.html">set_state</a></li><li><a href="module-LocusZoom_Widgets-shift_region.html">shift_region</a></li><li><a href="module-LocusZoom_Widgets-title.html">title</a></li><li><a href="module-LocusZoom_Widgets-toggle_legend.html">toggle_legend</a></li><li><a href="module-LocusZoom_Widgets-toggle_split_tracks.html">toggle_split_tracks</a></li><li><a href="module-LocusZoom_Widgets-zoom_region.html">zoom_region</a></li><li><a href="module-LocusZoom-DataSources.html">DataSources</a></li><li><a href="module-registry_base-RegistryBase.html">RegistryBase</a></li><li><a href="module-undercomplicate.BaseAdapter.html">BaseAdapter</a></li><li><a href="module-undercomplicate.BaseUrlAdapter.html">BaseUrlAdapter</a></li><li><a href="module-undercomplicate.LRUCache.html">LRUCache</a></li><li><a href="Panel.html">Panel</a></li><li><a href="Plot.html">Plot</a></li><li><a href="TransformationFunctionsRegistry.html">TransformationFunctionsRegistry</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:any_lz_event">any_lz_event</a></li><li><a href="global.html#event:data_from_layer">data_from_layer</a></li><li><a href="global.html#event:data_rendered">data_rendered</a></li><li><a href="global.html#event:data_requested">data_requested</a></li><li><a href="global.html#event:element_clicked">element_clicked</a></li><li><a href="global.html#event:element_selection">element_selection</a></li><li><a href="global.html#event:layout_changed">layout_changed</a></li><li><a href="global.html#event:match_requested">match_requested</a></li><li><a href="global.html#event:panel_removed">panel_removed</a></li><li><a href="global.html#event:region_changed">region_changed</a></li><li><a href="global.html#event:set_ldrefvar">set_ldrefvar</a></li><li><a href="global.html#event:state_changed">state_changed</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_display_options_choice">widget_display_options_choice</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_filter_field_action">widget_filter_field_action</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_png">widget_save_png</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_save_svg">widget_save_svg</a></li><li><a href="module-LocusZoom_Widgets.html#~event:widget_set_state_choice">widget_set_state_choice</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clone">clone</a></li><li><a href="global.html#getLinkedData">getLinkedData</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a>
 </footer>
 
 <script> prettyPrint(); </script>

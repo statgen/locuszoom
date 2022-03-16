@@ -1,4 +1,4 @@
-import widgets from '../../registry/widgets';
+import WIDGETS from '../../registry/widgets';
 import * as d3 from 'd3';
 
 /**
@@ -60,21 +60,14 @@ class Toolbar {
      */
     initialize() {
         // Parse layout to generate widget instances
-        // In LZ 0.12, `dashboard.components` was renamed to `toolbar.widgets`. Preserve a backwards-compatible alias.
-        const options = (this.parent.layout.dashboard && this.parent.layout.dashboard.components) || this.parent.layout.toolbar.widgets;
+        const options = this.parent.layout.toolbar.widgets;
         if (Array.isArray(options)) {
             options.forEach((layout) => {
-                try {
-                    const widget = widgets.create(layout.type, layout, this);
-                    this.widgets.push(widget);
-                } catch (e) {
-                    console.warn('Failed to create widget');
-                    console.error(e);
-                }
+                this.addWidget(layout);
             });
         }
 
-        // Add mouseover event handlers to show/hide panel toolbar
+        // Add mouseover event handlers to show/hide panel toolbar (plot toolbar will always be shown)
         if (this.type === 'panel') {
             d3.select(this.parent.parent.svg.node().parentNode)
                 .on(`mouseover.${this.id}`, () => {
@@ -94,6 +87,26 @@ class Toolbar {
     }
 
     /**
+     * Add a new widget to the toolbar.
+     * FIXME: Kludgy to use. In the very rare cases where a widget is added dynamically, the caller will need to:
+     *  - add the widget to plot.layout.toolbar.widgets, AND calling it with the same object reference here.
+     *  - call widget.show() to ensure that the widget is initialized and rendered correctly
+     *  When creating an existing plot defined in advance, neither of these actions is needed and so we don't do this by default.
+     * @param {Object} layout The layout object describing the desired widget
+     * @returns {layout.type}
+     */
+    addWidget(layout) {
+        try {
+            const widget = WIDGETS.create(layout.type, layout, this);
+            this.widgets.push(widget);
+            return widget;
+        } catch (e) {
+            console.warn('Failed to create widget');
+            console.error(e);
+        }
+    }
+
+    /**
      * Whether to persist the toolbar. Returns true if at least one widget should persist, or if the panel is engaged
      *   in an active drag event.
      * @returns {boolean}
@@ -108,7 +121,7 @@ class Toolbar {
             persist = persist || widget.shouldPersist();
         });
         // Persist if in a parent drag event
-        persist = persist || (this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.dragging);
+        persist = persist || (this.parent_plot._panel_boundaries.dragging || this.parent_plot._interaction.dragging);
         return !!persist;
     }
 

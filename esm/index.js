@@ -14,11 +14,12 @@ import { populate } from './helpers/display';
 import {
     ADAPTERS as Adapters,
     DATA_LAYERS as DataLayers,
-    WIDGETS as Widgets,
+    DATA_OPS as DataFunctions,
     LAYOUTS as Layouts,
     MATCHERS as MatchFunctions,
     SCALABLE as ScaleFunctions,
     TRANSFORMS as TransformationFunctions,
+    WIDGETS as Widgets,
 } from './registry';
 
 
@@ -30,6 +31,7 @@ const LocusZoom = {
     // Registries for plugin system
     Adapters,
     DataLayers,
+    DataFunctions,
     Layouts,
     MatchFunctions,
     ScaleFunctions,

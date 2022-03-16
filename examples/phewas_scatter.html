@@ -195,19 +195,19 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
           dataSources
             .add("phewas", ["PheWASLZ", {
                 url: "https://portaldev.sph.umich.edu/" + "api/v1/statistic/phewas/",
-                params: { build: ["GRCh37"] }
+                build: ["GRCh37"]
             }])
-            .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-            .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
+            .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+            .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
         } else {
           apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "data/";
           dataSources
             .add("phewas", ["PheWASLZ", {
                 url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",
-                params: { build: ["GRCh37"] }
+                build: ["GRCh37"]
             }])
-            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", params: { build: 'GRCh37' } }])
-            .add("constraint", ["GeneConstraintLZ", { url: apiBase + "gene_constraints_10_114508349-115008349.json", params: { build: 'GRCh37' } }]);
+            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", build: 'GRCh37' }])
+            .add("constraint", ["GeneConstraintLZ", { url: apiBase + "gene_constraints_10_114508349-115008349.json", build: 'GRCh37' }]);
         }
 
         // Define the layout
@@ -236,17 +236,17 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
 
         // Modify the tooltips for PheWAS result data layer points to contain more data. The fields in this sample
         //   tooltip are specific to the LZ-Portal API, and are not guaranteed to be in other PheWAS datasources.
-        LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].fields', (fields) => fields.concat(["phewas:pmid", "phewas:description", "phewas:study"]));
         LocusZoom.Layouts.mutate_attrs(layout, '$..data_layers[?(@.tag === "phewas")].tooltip.html', [
             "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
             "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
-            "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>",
-
+            "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}",
+            "{{#if phewas:beta|is_numeric}}<br><strong>&beta;:</strong> {{phewas:beta|scinotation|htmlescape}}{{/if}}",
+            "{{#if phewas:se|is_numeric}}<br><strong>SE (&beta;):</strong> {{phewas:se|scinotation|htmlescape}}{{/if}}",
             "{{#if phewas:study}}",
-              "<strong>Study:</strong> {{phewas:study|htmlescape}}<br>",
+              "<br><br></b><strong>Study:</strong> {{phewas:study|htmlescape}}",
             "{{/if}}",
             "{{#if phewas:pmid}} {{#if phewas:description}}",
-                '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
+                '<br><strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
             "{{/if}} {{/if}}"
         ].join(""));
 

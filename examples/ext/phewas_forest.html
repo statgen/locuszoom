@@ -7,11 +7,11 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
     <!-- Necessary includes for LocusZoom.js -->
-    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
-    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
     <!-- Helpers that use an extension to add functionality to LocusZoom -->
-    <script src="../dist/ext/lz-forest-track.min.js" type="text/javascript"></script>
+    <script src="../../dist/ext/lz-forest-track.min.js" type="text/javascript"></script>
 
     <title>LocusZoom.js ~ PheWAS (Forest) Example</title>
 
@@ -34,7 +34,7 @@
       <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
       <h3 style="float: left; color: #777">PheWAS (Forest) Example</h3>
-      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
 
       <hr style="clear: both;">
 
@@ -55,7 +55,7 @@
         // TODO: Write a real data source to fetch and parse data from an API in the future. For now this fetches a
         //  JSON file with a sample payload.
         var data_sources = new LocusZoom.DataSources()
-          .add("phewas", ["PheWASLZ", { url: "data/phewas_forest.json", params: { build: ["GRCh37"] } } ]);
+          .add("phewas", ["PheWASLZ", { url: "../data/phewas_forest.json", build: ["GRCh37"] } ]);
 
         // Define a reusable layout, and then retrieve it so that the namespaces get filled in
         LocusZoom.Layouts.add("plot", "phewas_forest", {
@@ -78,7 +78,7 @@
                     axes: {
                         x: {
                             label: "Beta",
-                            label_offset: 33
+                            label_offset: 34
                         },
                         y2: {
                             ticks: {  // Dynamically generated ticks, but specify custom options/styles to be used in every tick
@@ -102,7 +102,7 @@
                             point_shape: "square",
                             point_size: {
                                 scale_function: "interpolate",
-                                field: "{{namespace[phewas]}}log_pvalue",
+                                field: 'phewas:log_pvalue',
                                 parameters: {
                                     breaks: [0, 10],
                                     values: [60, 160],
@@ -111,7 +111,7 @@
                             },
                             color: {
                                 scale_function: "interpolate",
-                                field: "{{namespace[phewas]}}log_pvalue",
+                                field: 'phewas:log_pvalue',
                                 parameters: {
                                     breaks: [0, 10],
                                     values: ["#fee8c8","#b30000"],
@@ -127,21 +127,20 @@
                                 { shape: "square", class: "lz-data_layer-forest", color: "#d7301f", size: 140, label: "8 - 10" },
                                 { shape: "square", class: "lz-data_layer-forest", color: "#b30000", size: 160, label: "10+" }
                             ],
-                            id_field: "{{namespace[phewas]}}phenotype",
-                            fields: ["{{namespace[phewas]}}phenotype", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}log_pvalue|logtoscinotation", "{{namespace[phewas]}}beta", "{{namespace[phewas]}}ci_start", "{{namespace[phewas]}}ci_end"],
+                            id_field: 'phewas:phenotype',
                             x_axis: {
-                                field: "{{namespace[phewas]}}beta",
+                                field: 'phewas:beta',
                                 lower_buffer: 0.1,
                                 upper_buffer: 0.1
                             },
                             y_axis: {
                                 axis: 2,
-                                category_field: "{{namespace[phewas]}}phenotype",  // Labels
-                                field: "{{namespace[phewas]}}y_offset",  // Positions (dynamically added)
+                                category_field: 'phewas:phenotype',  // Labels
+                                field: 'lz_auto_y_offset',  // Positions (dynamically added by category_forest layer)
                             },
                             confidence_intervals: {
-                                start_field: "{{namespace[phewas]}}ci_start",
-                                end_field: "{{namespace[phewas]}}ci_end"
+                                start_field: 'phewas:ci_start',
+                                end_field: 'phewas:ci_end'
                             },
                             behaviors: {
                                 onmouseover: [
@@ -162,10 +161,10 @@
                                 closable: true,
                                 show: { or: ["highlighted", "selected"] },
                                 hide: { and: ["unhighlighted", "unselected"] },
-                                html: "<strong>{{{{namespace[phewas]}}phenotype|htmlescape}}</strong><br>"
-                                    + "P Value: <strong>{{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
-                                    + "Odds Ratio: <strong>{{{{namespace[phewas]}}beta|htmlescape}}</strong><br>"
-                                    + "95% Conf. Interval: <strong>[ {{{{namespace[phewas]}}ci_start|htmlescape}} {{{{namespace[phewas]}}ci_end|htmlescape}} ]</strong>"
+                                html: "<strong>{{phewas:phenotype|htmlescape}}</strong><br>"
+                                    + "P Value: <strong>{{phewas:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                                    + "Odds Ratio: <strong>{{phewas:beta|htmlescape}}</strong><br>"
+                                    + "95% Conf. Interval: <strong>[ {{phewas:ci_start|htmlescape}} {{phewas:ci_end|htmlescape}} ]</strong>"
                             }
                         },
                         {

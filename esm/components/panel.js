@@ -59,7 +59,7 @@ const default_layout = {
  */
 class Panel {
     /**
-     * @param {string} [layout.id=''] An identifier string that must be unique across all panels in the plot
+     * @param {string} layout.id An identifier string that must be unique across all panels in the plot. Required.
      * @param {string} [layout.tag='custom_data_type'] Tags have no functional purpose, but they can be used
      *   as a semantic label for what is being displayed in this element. This makes it easy to write custom code like "find every panel
      *   that shows association scatter plots, anywhere": even if the IDs are different, the tag can be the same.
@@ -103,7 +103,8 @@ class Panel {
      *   genomic coordinates, eg 23423456 => 23.42 (Mb)
      * @param {Array} [layout.axes.x.ticks] An array of custom ticks that will override any automatically generated)
      * @param {string} [layout.axes.y1.label] Label text for the provided axis
-     * @param {number} [layout.axes.y1.label_offset]
+     * @param {number} [layout.axes.y1.label_offset] The distance between the axis title and the axis. Use this to prevent
+     *  the title from overlapping with tick mark labels. If there is not enough space for the label, be sure to increase the panel margins (left or right) accordingly.
      * @param {boolean} [layout.axes.y1.render=false] Whether to render this axis
      * @param {Array} [layout.axes.y1.ticks] An array of custom ticks that will override any automatically generated)
      * @param {string} [layout.axes.y2.label] Label text for the provided axis
@@ -137,20 +138,8 @@ class Panel {
          */
         this.parent_plot = parent;
 
-        // Ensure a valid ID is present. If there is no valid ID then generate one
-        if (typeof layout.id !== 'string' || !layout.id.length) {
-            if (!this.parent) {
-                layout.id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
-            } else {
-                const generateID = () => {
-                    let id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
-                    if (id === null || typeof this.parent.panels[id] != 'undefined') {
-                        id = generateID();
-                    }
-                    return id;
-                };
-                layout.id = generateID();
-            }
+        if (typeof layout.id !== 'string' || !layout.id) {
+            throw new Error('Panel layouts must specify "id"');
         } else if (this.parent) {
             if (typeof this.parent.panels[layout.id] !== 'undefined') {
                 throw new Error(`Cannot create panel with id [${layout.id}]; panel with that id already exists`);
@@ -166,13 +155,13 @@ class Panel {
          * @private
          * @member {Boolean}
          */
-        this.initialized = false;
+        this._initialized = false;
         /**
          * The index of this panel in the parent plot's `layout.panels`
          * @private
          * @member {number}
          * */
-        this.layout_idx = null;
+        this._layout_idx = null;
         /**
          * @private
          * @member {Object}
@@ -198,11 +187,11 @@ class Panel {
              *  @private
              *  @member {String}
              */
-            this.state_id = this.id;
-            this.state[this.state_id] = this.state[this.state_id] || {};
+            this._state_id = this.id;
+            this.state[this._state_id] = this.state[this._state_id] || {};
         } else {
             this.state = null;
-            this.state_id = null;
+            this._state_id = null;
         }
 
         /**
@@ -215,14 +204,14 @@ class Panel {
          * @private
          * @member {String[]}
          */
-        this.data_layer_ids_by_z_index = [];
+        this._data_layer_ids_by_z_index = [];
 
         /**
          * Track data requests in progress
          * @member {Promise[]}
          * @private
          */
-        this.data_promises = [];
+        this._data_promises = [];
 
         /**
          * @private
@@ -277,7 +266,7 @@ class Panel {
          * @private
          * @member {number}
          */
-        this.zoom_timeout = null;
+        this._zoom_timeout = null;
 
         /**
          * Known event hooks that the panel can respond to
@@ -285,7 +274,7 @@ class Panel {
          * @protected
          * @member {Object}
          */
-        this.event_hooks = {};
+        this._event_hooks = {};
 
         // Initialize the layout
         this.initializeLayout();
@@ -316,11 +305,11 @@ class Panel {
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
         }
-        if (!this.event_hooks[event]) {
+        if (!this._event_hooks[event]) {
             // We do not validate on known event names, because LZ is allowed to track and emit custom events like "widget button clicked".
-            this.event_hooks[event] = [];
+            this._event_hooks[event] = [];
         }
-        this.event_hooks[event].push(hook);
+        this._event_hooks[event].push(hook);
         return hook;
     }
 
@@ -332,14 +321,14 @@ class Panel {
      * @returns {Panel}
      */
     off(event, hook) {
-        const theseHooks = this.event_hooks[event];
+        const theseHooks = this._event_hooks[event];
         if (typeof event != 'string' || !Array.isArray(theseHooks)) {
             throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
             // Deregistering all hooks for this event may break basic functionality, and should only be used during
             //  cleanup operations (eg to prevent memory leaks)
-            this.event_hooks[event] = [];
+            this._event_hooks[event] = [];
         } else {
             const hookMatch = theseHooks.indexOf(hook);
             if (hookMatch !== -1) {
@@ -380,9 +369,9 @@ class Panel {
         const sourceID = this.getBaseId();
         const eventContext = { sourceID: sourceID, target: this, data: eventData || null };
 
-        if (this.event_hooks[event]) {
+        if (this._event_hooks[event]) {
             // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
-            this.event_hooks[event].forEach((hookToRun) => {
+            this._event_hooks[event].forEach((hookToRun) => {
                 // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
                 // registered as a handler, the previously bound `this` will override anything provided to `call` below.
                 hookToRun.call(this, eventContext);
@@ -445,13 +434,12 @@ class Panel {
      * @returns {BaseDataLayer}
      */
     addDataLayer(layout) {
-
         // Sanity checks
         if (typeof layout !== 'object' || typeof layout.id !== 'string' || !layout.id.length) {
             throw new Error('Invalid data layer layout');
         }
         if (typeof this.data_layers[layout.id] !== 'undefined') {
-            throw new Error(`Cannot create data_layer with id [${layout.id}]; data layer with that id already exists in the panel`);
+            throw new Error(`Cannot create data_layer with id '${layout.id}'; data layer with that id already exists in the panel`);
         }
         if (typeof layout.type !== 'string') {
             throw new Error('Invalid data layer type');
@@ -470,17 +458,17 @@ class Panel {
 
         // If a discrete z_index was set in the layout then adjust other data layer z_index values to accommodate this one
         if (data_layer.layout.z_index !== null && !isNaN(data_layer.layout.z_index)
-            && this.data_layer_ids_by_z_index.length > 0) {
+            && this._data_layer_ids_by_z_index.length > 0) {
             // Negative z_index values should count backwards from the end, so convert negatives to appropriate values here
             if (data_layer.layout.z_index < 0) {
-                data_layer.layout.z_index = Math.max(this.data_layer_ids_by_z_index.length + data_layer.layout.z_index, 0);
+                data_layer.layout.z_index = Math.max(this._data_layer_ids_by_z_index.length + data_layer.layout.z_index, 0);
             }
-            this.data_layer_ids_by_z_index.splice(data_layer.layout.z_index, 0, data_layer.id);
-            this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
+            this._data_layer_ids_by_z_index.splice(data_layer.layout.z_index, 0, data_layer.id);
+            this._data_layer_ids_by_z_index.forEach((dlid, idx) => {
                 this.data_layers[dlid].layout.z_index = idx;
             });
         } else {
-            const length = this.data_layer_ids_by_z_index.push(data_layer.id);
+            const length = this._data_layer_ids_by_z_index.push(data_layer.id);
             this.data_layers[data_layer.id].layout.z_index = length - 1;
         }
 
@@ -495,7 +483,7 @@ class Panel {
         if (layout_idx === null) {
             layout_idx = this.layout.data_layers.push(this.data_layers[data_layer.id].layout) - 1;
         }
-        this.data_layers[data_layer.id].layout_idx = layout_idx;
+        this.data_layers[data_layer.id]._layout_idx = layout_idx;
 
         return this.data_layers[data_layer.id];
     }
@@ -507,30 +495,31 @@ class Panel {
      * @returns {Panel}
      */
     removeDataLayer(id) {
-        if (!this.data_layers[id]) {
+        const target_layer = this.data_layers[id];
+        if (!target_layer) {
             throw new Error(`Unable to remove data layer, ID not found: ${id}`);
         }
 
         // Destroy all tooltips for the data layer
-        this.data_layers[id].destroyAllTooltips();
+        target_layer.destroyAllTooltips();
 
         // Remove the svg container for the data layer if it exists
-        if (this.data_layers[id].svg.container) {
-            this.data_layers[id].svg.container.remove();
+        if (target_layer.svg.container) {
+            target_layer.svg.container.remove();
         }
 
         // Delete the data layer and its presence in the panel layout and state
-        this.layout.data_layers.splice(this.data_layers[id].layout_idx, 1);
-        delete this.state[this.data_layers[id].state_id];
+        this.layout.data_layers.splice(target_layer._layout_idx, 1);
+        delete this.state[target_layer._state_id];
         delete this.data_layers[id];
 
         // Remove the data_layer id from the z_index array
-        this.data_layer_ids_by_z_index.splice(this.data_layer_ids_by_z_index.indexOf(id), 1);
+        this._data_layer_ids_by_z_index.splice(this._data_layer_ids_by_z_index.indexOf(id), 1);
 
         // Update layout_idx and layout.z_index values for all remaining data_layers
         this.applyDataLayerZIndexesToDataLayerLayouts();
         this.layout.data_layers.forEach((data_layer_layout, idx) => {
-            this.data_layers[data_layer_layout.id].layout_idx = idx;
+            this.data_layers[data_layer_layout.id]._layout_idx = idx;
         });
 
         return this;
@@ -542,7 +531,7 @@ class Panel {
      * @returns {Panel}
      */
     clearSelections() {
-        this.data_layer_ids_by_z_index.forEach((id) => {
+        this._data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].setAllElementStatus('selected', false);
         });
         return this;
@@ -555,7 +544,6 @@ class Panel {
      * @returns {Panel}
      */
     render() {
-
         // Position the panel container
         this.svg.container.attr('transform', `translate(${this.layout.origin.x}, ${this.layout.origin.y})`);
 
@@ -564,12 +552,15 @@ class Panel {
             .attr('width', this.parent_plot.layout.width)
             .attr('height', this.layout.height);
 
+        const { cliparea } = this.layout;
+
         // Set and position the inner border, style if necessary
+        const { margin } = this.layout;
         this.inner_border
-            .attr('x', this.layout.margin.left)
-            .attr('y', this.layout.margin.top)
-            .attr('width', this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right))
-            .attr('height', this.layout.height - (this.layout.margin.top + this.layout.margin.bottom));
+            .attr('x', margin.left)
+            .attr('y', margin.top)
+            .attr('width', this.parent_plot.layout.width - (margin.left + margin.right))
+            .attr('height', this.layout.height - (margin.top + margin.bottom));
         if (this.layout.inner_border) {
             this.inner_border
                 .style('stroke-width', 1)
@@ -609,41 +600,44 @@ class Panel {
 
         // Define default and shifted ranges for all axes
         const ranges = {};
+        const axes_config = this.layout.axes;
         if (this.x_extent) {
             const base_x_range = { start: 0, end: this.layout.cliparea.width };
-            if (this.layout.axes.x.range) {
-                base_x_range.start = this.layout.axes.x.range.start || base_x_range.start;
-                base_x_range.end = this.layout.axes.x.range.end || base_x_range.end;
+            if (axes_config.x.range) {
+                base_x_range.start = axes_config.x.range.start || base_x_range.start;
+                base_x_range.end = axes_config.x.range.end || base_x_range.end;
             }
             ranges.x = [base_x_range.start, base_x_range.end];
             ranges.x_shifted = [base_x_range.start, base_x_range.end];
         }
         if (this.y1_extent) {
-            const base_y1_range = { start: this.layout.cliparea.height, end: 0 };
-            if (this.layout.axes.y1.range) {
-                base_y1_range.start = this.layout.axes.y1.range.start || base_y1_range.start;
-                base_y1_range.end = this.layout.axes.y1.range.end || base_y1_range.end;
+            const base_y1_range = { start: cliparea.height, end: 0 };
+            if (axes_config.y1.range) {
+                base_y1_range.start = axes_config.y1.range.start || base_y1_range.start;
+                base_y1_range.end = axes_config.y1.range.end || base_y1_range.end;
             }
             ranges.y1 = [base_y1_range.start, base_y1_range.end];
             ranges.y1_shifted = [base_y1_range.start, base_y1_range.end];
         }
         if (this.y2_extent) {
-            const base_y2_range = { start: this.layout.cliparea.height, end: 0 };
-            if (this.layout.axes.y2.range) {
-                base_y2_range.start = this.layout.axes.y2.range.start || base_y2_range.start;
-                base_y2_range.end = this.layout.axes.y2.range.end || base_y2_range.end;
+            const base_y2_range = { start: cliparea.height, end: 0 };
+            if (axes_config.y2.range) {
+                base_y2_range.start = axes_config.y2.range.start || base_y2_range.start;
+                base_y2_range.end = axes_config.y2.range.end || base_y2_range.end;
             }
             ranges.y2 = [base_y2_range.start, base_y2_range.end];
             ranges.y2_shifted = [base_y2_range.start, base_y2_range.end];
         }
 
         // Shift ranges based on any drag or zoom interactions currently underway
-        if (this.parent.interaction.panel_id && (this.parent.interaction.panel_id === this.id || this.parent.interaction.linked_panel_ids.includes(this.id))) {
+        let { _interaction } = this.parent;
+        const current_drag = _interaction.dragging;
+        if (_interaction.panel_id && (_interaction.panel_id === this.id || _interaction.linked_panel_ids.includes(this.id))) {
             let anchor, scalar = null;
-            if (this.parent.interaction.zooming && typeof this.x_scale == 'function') {
+            if (_interaction.zooming && typeof this.x_scale == 'function') {
                 const current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
                 const current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
-                let zoom_factor = this.parent.interaction.zooming.scale;
+                let zoom_factor = _interaction.zooming.scale;
                 const potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
                 if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)) {
                     zoom_factor = 1 / (Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
@@ -651,38 +645,38 @@ class Panel {
                     zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
                 }
                 const new_extent_size = Math.floor(current_extent_size * zoom_factor);
-                anchor = this.parent.interaction.zooming.center - this.layout.margin.left - this.layout.origin.x;
-                const offset_ratio = anchor / this.layout.cliparea.width;
+                anchor = _interaction.zooming.center - margin.left - this.layout.origin.x;
+                const offset_ratio = anchor / cliparea.width;
                 const new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
                 ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
-            } else if (this.parent.interaction.dragging) {
-                switch (this.parent.interaction.dragging.method) {
+            } else if (current_drag) {
+                switch (current_drag.method) {
                 case 'background':
-                    ranges.x_shifted[0] = +this.parent.interaction.dragging.dragged_x;
-                    ranges.x_shifted[1] = this.layout.cliparea.width + this.parent.interaction.dragging.dragged_x;
+                    ranges.x_shifted[0] = +current_drag.dragged_x;
+                    ranges.x_shifted[1] = cliparea.width + current_drag.dragged_x;
                     break;
                 case 'x_tick':
                     if (d3.event && d3.event.shiftKey) {
-                        ranges.x_shifted[0] = +this.parent.interaction.dragging.dragged_x;
-                        ranges.x_shifted[1] = this.layout.cliparea.width + this.parent.interaction.dragging.dragged_x;
+                        ranges.x_shifted[0] = +current_drag.dragged_x;
+                        ranges.x_shifted[1] = cliparea.width + current_drag.dragged_x;
                     } else {
-                        anchor = this.parent.interaction.dragging.start_x - this.layout.margin.left - this.layout.origin.x;
-                        scalar = constrain(anchor / (anchor + this.parent.interaction.dragging.dragged_x), 3);
+                        anchor = current_drag.start_x - margin.left - this.layout.origin.x;
+                        scalar = constrain(anchor / (anchor + current_drag.dragged_x), 3);
                         ranges.x_shifted[0] = 0;
-                        ranges.x_shifted[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
+                        ranges.x_shifted[1] = Math.max(cliparea.width * (1 / scalar), 1);
                     }
                     break;
                 case 'y1_tick':
                 case 'y2_tick': {
-                    const y_shifted = `y${this.parent.interaction.dragging.method[1]}_shifted`;
+                    const y_shifted = `y${current_drag.method[1]}_shifted`;
                     if (d3.event && d3.event.shiftKey) {
-                        ranges[y_shifted][0] = this.layout.cliparea.height + this.parent.interaction.dragging.dragged_y;
-                        ranges[y_shifted][1] = +this.parent.interaction.dragging.dragged_y;
+                        ranges[y_shifted][0] = cliparea.height + current_drag.dragged_y;
+                        ranges[y_shifted][1] = +current_drag.dragged_y;
                     } else {
-                        anchor = this.layout.cliparea.height - (this.parent.interaction.dragging.start_y - this.layout.margin.top - this.layout.origin.y);
-                        scalar = constrain(anchor / (anchor - this.parent.interaction.dragging.dragged_y), 3);
-                        ranges[y_shifted][0] = this.layout.cliparea.height;
-                        ranges[y_shifted][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
+                        anchor = cliparea.height - (current_drag.start_y - margin.top - this.layout.origin.y);
+                        scalar = constrain(anchor / (anchor - current_drag.dragged_y), 3);
+                        ranges[y_shifted][0] = cliparea.height;
+                        ranges[y_shifted][1] = cliparea.height - (cliparea.height * (1 / scalar));
                     }
                 }
                 }
@@ -734,7 +728,7 @@ class Panel {
                 if (delta === 0) {
                     return;
                 }
-                this.parent.interaction = {
+                this.parent._interaction = {
                     panel_id: this.id,
                     linked_panel_ids: this.getLinkedPanelIds('x'),
                     zooming: {
@@ -743,14 +737,16 @@ class Panel {
                     },
                 };
                 this.render();
-                this.parent.interaction.linked_panel_ids.forEach((panel_id) => {
+                // Redefine b/c might have been changed during call to parent re-render
+                _interaction = this.parent._interaction;
+                _interaction.linked_panel_ids.forEach((panel_id) => {
                     this.parent.panels[panel_id].render();
                 });
-                if (this.zoom_timeout !== null) {
-                    clearTimeout(this.zoom_timeout);
+                if (this._zoom_timeout !== null) {
+                    clearTimeout(this._zoom_timeout);
                 }
-                this.zoom_timeout = setTimeout(() => {
-                    this.parent.interaction = {};
+                this._zoom_timeout = setTimeout(() => {
+                    this.parent._interaction = {};
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }, 500);
             };
@@ -762,7 +758,7 @@ class Panel {
         }
 
         // Render data layers in order by z-index
-        this.data_layer_ids_by_z_index.forEach((data_layer_id) => {
+        this._data_layer_ids_by_z_index.forEach((data_layer_id) => {
             this.data_layers[data_layer_id].draw().render();
         });
 
@@ -788,7 +784,7 @@ class Panel {
      * @returns {Panel}
      */
     addBasicLoader(show_immediately = true) {
-        if (this.layout.show_loading_indicator && this.initialized) {
+        if (this.layout.show_loading_indicator && this._initialized) {
             // Prior to LZ 0.13, this function was called only after the plot was first rendered. Now, it is run by default.
             //   Some older pages could thus end up adding a loader twice: to avoid duplicate render events,
             //   short-circuit if a loader is already present after the first render has finished.
@@ -812,7 +808,7 @@ class Panel {
     /************* Private interface: only used internally */
     /** @private */
     applyDataLayerZIndexesToDataLayerLayouts () {
-        this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
+        this._data_layer_ids_by_z_index.forEach((dlid, idx) => {
             this.data_layers[dlid].layout.z_index = idx;
         });
     }
@@ -858,13 +854,14 @@ class Panel {
         this.y2_range = [this.layout.cliparea.height, 0];
 
         // Initialize panel axes
-        ['x', 'y1', 'y2'].forEach((axis) => {
-            if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false) {
+        ['x', 'y1', 'y2'].forEach((id) => {
+            const axis = this.layout.axes[id];
+            if (!Object.keys(axis).length || axis.render === false) {
                 // The default layout sets the axis to an empty object, so set its render boolean here
-                this.layout.axes[axis].render = false;
+                axis.render = false;
             } else {
-                this.layout.axes[axis].render = true;
-                this.layout.axes[axis].label = this.layout.axes[axis].label || null;
+                axis.render = true;
+                axis.label = axis.label || null;
             }
         });
 
@@ -887,21 +884,22 @@ class Panel {
      * @returns {Panel}
      */
     setDimensions(width, height) {
+        const layout = this.layout;
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
                 this.parent.layout.width = Math.round(+width);
                 // Ensure that the requested height satisfies all minimum values
-                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+                layout.height = Math.max(Math.round(+height), layout.min_height);
             }
         }
-        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
+        layout.cliparea.width = Math.max(this.parent_plot.layout.width - (layout.margin.left + layout.margin.right), 0);
+        layout.cliparea.height = Math.max(layout.height - (layout.margin.top + layout.margin.bottom), 0);
         if (this.svg.clipRect) {
             this.svg.clipRect
                 .attr('width', this.parent.layout.width)
-                .attr('height', this.layout.height);
+                .attr('height', layout.height);
         }
-        if (this.initialized) {
+        if (this._initialized) {
             this.render();
             this.curtain.update();
             this.loader.update();
@@ -928,7 +926,7 @@ class Panel {
         if (!isNaN(y) && y >= 0) {
             this.layout.origin.y = Math.max(Math.round(+y), 0);
         }
-        if (this.initialized) {
+        if (this._initialized) {
             this.render();
         }
         return this;
@@ -945,38 +943,39 @@ class Panel {
      */
     setMargin(top, right, bottom, left) {
         let extra;
-        if (!isNaN(top)    && top    >= 0) {
-            this.layout.margin.top = Math.max(Math.round(+top), 0);
+        const { cliparea, margin } = this.layout;
+        if (!isNaN(top) && top >= 0) {
+            margin.top = Math.max(Math.round(+top), 0);
         }
         if (!isNaN(right)  && right  >= 0) {
-            this.layout.margin.right = Math.max(Math.round(+right), 0);
+            margin.right = Math.max(Math.round(+right), 0);
         }
         if (!isNaN(bottom) && bottom >= 0) {
-            this.layout.margin.bottom = Math.max(Math.round(+bottom), 0);
+            margin.bottom = Math.max(Math.round(+bottom), 0);
         }
         if (!isNaN(left)   && left   >= 0) {
-            this.layout.margin.left = Math.max(Math.round(+left), 0);
+            margin.left = Math.max(Math.round(+left), 0);
         }
         // If the specified margins are greater than the available width, then shrink the margins.
-        if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
-            extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
-            this.layout.margin.top -= extra;
-            this.layout.margin.bottom -= extra;
+        if (margin.top + margin.bottom > this.layout.height) {
+            extra = Math.floor(((margin.top + margin.bottom) - this.layout.height) / 2);
+            margin.top -= extra;
+            margin.bottom -= extra;
         }
-        if (this.layout.margin.left + this.layout.margin.right > this.parent_plot.layout.width) {
-            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.parent_plot.layout.width) / 2);
-            this.layout.margin.left -= extra;
-            this.layout.margin.right -= extra;
+        if (margin.left + margin.right > this.parent_plot.layout.width) {
+            extra = Math.floor(((margin.left + margin.right) - this.parent_plot.layout.width) / 2);
+            margin.left -= extra;
+            margin.right -= extra;
         }
         ['top', 'right', 'bottom', 'left'].forEach((m) => {
-            this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+            margin[m] = Math.max(margin[m], 0);
         });
-        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
-        this.layout.cliparea.origin.x = this.layout.margin.left;
-        this.layout.cliparea.origin.y = this.layout.margin.top;
+        cliparea.width = Math.max(this.parent_plot.layout.width - (margin.left + margin.right), 0);
+        cliparea.height = Math.max(this.layout.height - (margin.top + margin.bottom), 0);
+        cliparea.origin.x = margin.left;
+        cliparea.origin.y = margin.top;
 
-        if (this.initialized) {
+        if (this._initialized) {
             this.render();
         }
         return this;
@@ -989,7 +988,6 @@ class Panel {
      * @returns {Panel}
      */
     initialize() {
-
         // Append a container group element to house the main panel group element and the clip path
         // Position with initial layout parameters
         const base_id = this.getBaseId();
@@ -1078,7 +1076,7 @@ class Panel {
         }
 
         // Initialize child Data Layers
-        this.data_layer_ids_by_z_index.forEach((id) => {
+        this._data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].initialize();
         });
 
@@ -1110,7 +1108,7 @@ class Panel {
      */
     resortDataLayers() {
         const sort = [];
-        this.data_layer_ids_by_z_index.forEach((id) => {
+        this._data_layer_ids_by_z_index.forEach((id) => {
             sort.push(this.data_layers[id].layout.z_index);
         });
         this.svg.group
@@ -1135,7 +1133,7 @@ class Panel {
         if (!this.layout.interaction[`${axis}_linked`]) {
             return linked_panel_ids;
         }
-        this.parent.panel_ids_by_y_index.forEach((panel_id) => {
+        this.parent._panel_ids_by_y_index.forEach((panel_id) => {
             if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[`${axis}_linked`]) {
                 linked_panel_ids.push(panel_id);
             }
@@ -1149,11 +1147,13 @@ class Panel {
      * @returns {Panel}
      */
     moveUp() {
-        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]) {
-            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
-            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
-            this.parent.applyPanelYIndexesToPanelLayouts();
-            this.parent.positionPanels();
+        const { parent } = this;
+        const y_index = this.layout.y_index;
+        if (parent._panel_ids_by_y_index[y_index - 1]) {
+            parent._panel_ids_by_y_index[y_index] = parent._panel_ids_by_y_index[y_index - 1];
+            parent._panel_ids_by_y_index[y_index - 1] = this.id;
+            parent.applyPanelYIndexesToPanelLayouts();
+            parent.positionPanels();
         }
         return this;
     }
@@ -1164,9 +1164,10 @@ class Panel {
      * @returns {Panel}
      */
     moveDown() {
-        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]) {
-            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
-            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+        const { _panel_ids_by_y_index } = this.parent;
+        if (_panel_ids_by_y_index[this.layout.y_index + 1]) {
+            _panel_ids_by_y_index[this.layout.y_index] = _panel_ids_by_y_index[this.layout.y_index + 1];
+            _panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
             this.parent.applyPanelYIndexesToPanelLayouts();
             this.parent.positionPanels();
         }
@@ -1184,23 +1185,23 @@ class Panel {
      */
     reMap() {
         this.emit('data_requested');
-        this.data_promises = [];
+        this._data_promises = [];
 
         // Remove any previous error messages before attempting to load new data
         this.curtain.hide();
         // Trigger reMap on each Data Layer
         for (let id in this.data_layers) {
             try {
-                this.data_promises.push(this.data_layers[id].reMap());
+                this._data_promises.push(this.data_layers[id].reMap());
             } catch (error) {
                 console.error(error);
                 this.curtain.show(error.message || error);
             }
         }
         // When all finished trigger a render
-        return Promise.all(this.data_promises)
+        return Promise.all(this._data_promises)
             .then(() => {
-                this.initialized = true;
+                this._initialized = true;
                 this.render();
                 this.emit('layout_changed', true);
                 this.emit('data_rendered');
@@ -1217,7 +1218,6 @@ class Panel {
      * @returns {Panel}
      */
     generateExtents() {
-
         // Reset extents
         ['x', 'y1', 'y2'].forEach((axis) => {
             this[`${axis}_extent`] = null;
@@ -1225,7 +1225,6 @@ class Panel {
 
         // Loop through the data layers
         for (let id in this.data_layers) {
-
             const data_layer = this.data_layers[id];
 
             // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
@@ -1267,7 +1266,6 @@ class Panel {
      *     * color: string or LocusZoom scalable parameter object
      */
     generateTicks(axis) {
-
         // Parse an explicit 'ticks' attribute in the axis layout
         if (this.layout.axes[axis].ticks) {
             const layout = this.layout.axes[axis];
@@ -1287,7 +1285,7 @@ class Panel {
                 // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
                 const config = { position: baseTickConfig.position };
 
-                const combinedTicks = this.data_layer_ids_by_z_index.reduce((acc, data_layer_id) => {
+                const combinedTicks = this._data_layer_ids_by_z_index.reduce((acc, data_layer_id) => {
                     const nextLayer = self.data_layers[data_layer_id];
                     return acc.concat(nextLayer.getTicks(axis, config));
                 }, []);
@@ -1315,7 +1313,6 @@ class Panel {
      * @returns {Panel}
      */
     renderAxis(axis) {
-
         if (!['x', 'y1', 'y2'].includes(axis)) {
             throw new Error(`Unable to render axis; invalid axis identifier: ${axis}`);
         }
@@ -1488,7 +1485,7 @@ class Panel {
     scaleHeightToData(target_height) {
         target_height = +target_height || null;
         if (target_height === null) {
-            this.data_layer_ids_by_z_index.forEach((id) => {
+            this._data_layer_ids_by_z_index.forEach((id) => {
                 const dh = this.data_layers[id].getAbsoluteDataHeight();
                 if (+dh) {
                     if (target_height === null) {
@@ -1515,7 +1512,7 @@ class Panel {
      * @param {Boolean} toggle
      */
     setAllElementStatus(status, toggle) {
-        this.data_layer_ids_by_z_index.forEach((id) => {
+        this._data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].setAllElementStatus(status, toggle);
         });
     }

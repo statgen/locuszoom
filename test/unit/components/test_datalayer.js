@@ -12,6 +12,76 @@ import DataSources from '../../../esm/data';
  Test composition of the LocusZoom.Panel object and its base classes
  */
 describe('LocusZoom.DataLayer', function () {
+    describe('getElementId generates unique IDs for elements', function () {
+        it('generates unique IDs when id_field is an exact field reference with a value', function () {
+            const layer = new BaseDataLayer({ id: 'layername', id_field: 'exact_field' });
+            let actual = layer.getElementId({ exact_field: 12 });
+            assert.equal(actual, 'layername-12', 'Generates ID from exact field value');
+
+
+            assert.throws(
+                () => layer.getElementId({ not_much_to_go_on: 12 }),
+                /Unable to generate/,
+                'Cannot generate ID field if no value is present for that field',
+            );
+        });
+
+        it('generates unique IDs when id_field is a valid template expression', function () {
+            const layer = new BaseDataLayer({ id: 'layername', id_field: 'element_{{some_field}}_{{other_field}}' });
+
+            let actual = layer.getElementId({ some_field: 'carbon', other_field: '12' });
+            assert.equal(actual, 'layername-element_carbon_12', 'Generates ID from template string');
+
+            layer.layout.id_field = 'partial_{{some_field}}_{{other_field}}';
+            actual = layer.getElementId({ some_field: 'carbon' });
+            assert.equal(actual, 'layername-partial_carbon_', 'Template values do not warn when some fields are missing (which might be awkward)');
+
+            layer.layout.id_field = 'neither-template-nor-field';
+            assert.throws(
+                () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
+                /Unable to generate/,
+                'Not using a field name in the data, and expression is not recognized as a template',
+            );
+
+            layer.layout.id_field = '';
+            assert.throws(
+                () => layer.getElementId({ some_field: 'carbon', other_field: '12' }),
+                /Unable to generate/,
+                'An empty template does not evaluate to a useful element ID',
+            );
+        });
+    });
+
+
+    describe('data contract parsing and validation', function () {
+        beforeEach(function () {
+            const layer = this.layer = new BaseDataLayer({ id: 'something' });
+            layer.parent_plot = { state: {} };
+            layer._data_contract = new Set(['assoc:variant', 'assoc:rsid']);
+        });
+
+        afterEach(function() {
+            sinon.restore();
+        });
+
+        it('warns if the data received does not match the inferred fields contract', function () {
+            let spy = sinon.spy(console, 'debug');
+            this.layer.data = [{ 'assoc:variant': '1:23_A/B', 'assoc:position': 23 }];
+            this.layer.applyDataMethods();
+            assert.ok(spy.calledOnce, 'Console.debug was called with data contract errors');
+            assert.ok(spy.firstCall.args[0].match(/Missing fields are: assoc:rsid/), 'Developer message identifies the missing fields');
+        });
+
+        it('will treat the fields contract as satisfied if the field is in at least one record of the response', function () {
+            let spy = sinon.spy(console, 'warn');
+            this.layer.data = [
+                { 'assoc:variant': '1:23_A/B', 'assoc:position': 23 },
+                { 'assoc:variant': '1:24_A/B', 'assoc:position': 24, 'assoc:rsid': 'rsYuppers' },
+            ];
+            this.layer.applyDataMethods();
+            assert.ok(spy.notCalled, 'Console.warn was not called with contract errors');
+        });
+    });
 
     describe('Z-index sorting', function () {
         beforeEach(function () {
@@ -33,53 +103,56 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, layout);
         });
+
         afterEach(function () {
             d3.select('#plot').remove();
             this.plot = null;
         });
+
         it('should have a chainable method for moving layers up that stops at the top', function () {
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
 
             this.plot.panels.panel0.data_layers.layerB.moveForward().moveForward();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
         });
+
         it('should have a chainable method for moving layers down that stops at the bottom', function () {
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
             this.plot.panels.panel0.data_layers.layerC.moveBack().moveBack();
-            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
+            assert.deepEqual(this.plot.panels.panel0._data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
@@ -97,6 +170,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(this.layout.scale, {}), 17);
             assert.equal(datalayer.resolveScalableParameter(this.layout.scale, { foo: 'bar' }), 17);
         });
+
         it('executes a scale function for the data provided', function () {
             const datalayer = new BaseDataLayer({ id: 'test' });
             const layout = {
@@ -113,6 +187,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'manatee' }), null);
             assert.equal(datalayer.resolveScalableParameter(layout.scale, {}), null);
         });
+
         it('can operate in a state-aware manner based on index in data[]', function () {
             SCALABLE.add('fake', (parameters, input, index) => index);
             const datalayer = new BaseDataLayer({ id: 'test' });
@@ -124,6 +199,7 @@ describe('LocusZoom.DataLayer', function () {
             // Clean up/ deregister scale function when done
             SCALABLE.remove('fake');
         });
+
         it('supports operating on an entire data element in the absence of a specified field', function () {
             SCALABLE.add('test_effect_direction', function (parameters, input) {
                 if (typeof input == 'undefined') {
@@ -155,6 +231,7 @@ describe('LocusZoom.DataLayer', function () {
             // Clean up/ deregister scale function when done
             SCALABLE.remove('test_effect_direction');
         });
+
         it('iterates over an array of options until exhausted or a non-null value is found', function () {
             const datalayer = new BaseDataLayer({ id: 'test' });
             const layout = {
@@ -183,6 +260,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'witch' }), 'munchkin');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, {}), 'munchkin');
         });
+
         it('can resolve based on an annotation field, even when no point data field by that name is present', function () {
             const layout = {
                 id: 'somelayer',
@@ -217,6 +295,7 @@ describe('LocusZoom.DataLayer', function () {
                 datalayer.getAxisExtent('y1');
             });
         });
+
         it('generates an accurate extent array for arbitrary data sets', function () {
             const layout = {
                 id: 'test',
@@ -247,6 +326,7 @@ describe('LocusZoom.DataLayer', function () {
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [undefined, undefined]);
         });
+
         it('applies upper and lower buffers to extents as defined in the layout', function () {
             let layout = {
                 id: 'test',
@@ -286,6 +366,7 @@ describe('LocusZoom.DataLayer', function () {
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-95, 412]);
         });
+
         it('applies a minimum extent as defined in the layout', function () {
             let layout = {
                 id: 'test',
@@ -329,6 +410,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.deepEqual(datalayer.getAxisExtent('x'), [-1.48, 10.74], 'Padding is enforced on both sides when data is close to both boundaries');
 
         });
+
         it('applies hard floor and ceiling as defined in the layout', function () {
             let layout = {
                 id: 'test',
@@ -375,7 +457,6 @@ describe('LocusZoom.DataLayer', function () {
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [4, 6]);
         });
-
     });
 
     describe('Layout Parameters', function () {
@@ -391,20 +472,23 @@ describe('LocusZoom.DataLayer', function () {
             };
             d3.select('body').append('div').attr('id', 'plot');
         });
+
         afterEach(function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for explicitly setting data layer z_index', function () {
             this.layout.panels[0].data_layers = [
                 { id: 'd1', type: 'line', z_index: 1 },
                 { id: 'd2', type: 'line', z_index: 0 },
             ];
             this.plot = populate('#plot', null, this.layout);
-            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d2', 'd1']);
+            assert.deepEqual(this.plot.panels.p1._data_layer_ids_by_z_index, ['d2', 'd1']);
             assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 1);
             assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 0);
         });
+
         it('should allow for explicitly setting data layer z_index with a negative value', function () {
             this.layout.panels[0].data_layers = [
                 { id: 'd1', type: 'line' },
@@ -413,7 +497,7 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd4', type: 'line', z_index: -1 },
             ];
             this.plot = populate('#plot', null, this.layout);
-            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
+            assert.deepEqual(this.plot.panels.p1._data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
             assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 0);
             assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 1);
             assert.equal(this.plot.panels.p1.data_layers.d3.layout.z_index, 3);
@@ -425,15 +509,15 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
                         id: 'p',
                         data_layers: [
                             {
+                                namespace: { d: 'd' },
                                 id: 'd',
-                                fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 highlighted: { onmouseover: 'toggle' },
@@ -445,14 +529,16 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);
         });
+
         afterEach(function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for highlighting and unhighlighting a single element', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const state_id = this.plot.panels.p.data_layers.d._state_id;
                     const layer_state = this.plot.state[state_id];
                     const d = this.plot.panels.p.data_layers.d;
                     const a = d.data[0];
@@ -482,24 +568,25 @@ describe('LocusZoom.DataLayer', function () {
                     assert.equal(highlight_flags.size, 0);
                 });
         });
-        it('should allow for highlighting and unhighlighting all elements', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
-                .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
-                    const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a_id = d.getElementId(d.data[0]);
-                    const b_id = d.getElementId(d.data[1]);
-                    const c_id = d.getElementId(d.data[2]);
 
-                    this.plot.panels.p.data_layers.d.highlightAllElements();
+        it('should allow for highlighting and unhighlighting all elements', function () {
+            return this.plot.applyState()
+                .then(() => {
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer._state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const a_id = layer.getElementId(layer.data[0]);
+                    const b_id = layer.getElementId(layer.data[1]);
+                    const c_id = layer.getElementId(layer.data[2]);
+
+                    layer.highlightAllElements();
                     const highlight_flags = layer_state.status_flags.highlighted;
                     assert.equal(highlight_flags.size, 3);
                     assert.ok(highlight_flags.has(a_id));
                     assert.ok(highlight_flags.has(b_id));
                     assert.ok(highlight_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unhighlightAllElements();
+                    layer.unhighlightAllElements();
                     assert.equal(layer_state.status_flags.highlighted.size, 0);
                 });
         });
@@ -509,7 +596,7 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
@@ -517,7 +604,7 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
-                                fields: ['d:id'],
+                                namespace: { d: 'd' },
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 selected: { onclick: 'toggle' },
@@ -529,61 +616,64 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);
         });
+
         afterEach(function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for selecting and unselecting a single element', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
+            return this.plot.applyState()
                 .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer._state_id;
                     const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a = d.data[0];
-                    const a_id = d.getElementId(a);
-                    const b = d.data[1];
-                    const c = d.data[2];
-                    const c_id = d.getElementId(c);
+                    const a = layer.data[0];
+                    const a_id = layer.getElementId(a);
+                    const b = layer.data[1];
+                    const c = layer.data[2];
+                    const c_id = layer.getElementId(c);
 
                     const selected_flags = layer_state.status_flags.selected;
                     assert.equal(selected_flags.size, 0);
 
-                    this.plot.panels.p.data_layers.d.selectElement(a);
+                    layer.selectElement(a);
                     assert.equal(selected_flags.size, 1);
                     assert.ok(selected_flags.has(a_id));
 
-                    this.plot.panels.p.data_layers.d.unselectElement(a);
+                    layer.unselectElement(a);
                     assert.equal(selected_flags.size, 0);
 
-                    this.plot.panels.p.data_layers.d.selectElement(c);
+                    layer.selectElement(c);
                     assert.equal(selected_flags.size, 1);
                     assert.ok(selected_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unselectElement(b);
+                    layer.unselectElement(b);
                     assert.equal(selected_flags.size, 1);
 
-                    this.plot.panels.p.data_layers.d.unselectElement(c);
+                    layer.unselectElement(c);
                     assert.equal(selected_flags.size, 0);
                 });
         });
-        it('should allow for selecting and unselecting all elements', function () {
-            return this.plot.lzd.getData({}, ['d:id'])
-                .then(() => {
-                    const state_id = this.plot.panels.p.data_layers.d.state_id;
-                    const layer_state = this.plot.state[state_id];
-                    const d = this.plot.panels.p.data_layers.d;
-                    const a_id = d.getElementId(d.data[0]);
-                    const b_id = d.getElementId(d.data[1]);
-                    const c_id = d.getElementId(d.data[2]);
 
-                    this.plot.panels.p.data_layers.d.selectAllElements();
+        it('should allow for selecting and unselecting all elements', function () {
+            return this.plot.applyState()
+                .then(() => {
+                    const layer = this.plot.panels.p.data_layers.d;
+                    const state_id = layer._state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const a_id = layer.getElementId(layer.data[0]);
+                    const b_id = layer.getElementId(layer.data[1]);
+                    const c_id = layer.getElementId(layer.data[2]);
+
+                    layer.selectAllElements();
                     const selected_flags = layer_state.status_flags.selected;
                     assert.equal(selected_flags.size, 3);
                     assert.ok(selected_flags.has(a_id));
                     assert.ok(selected_flags.has(b_id));
                     assert.ok(selected_flags.has(c_id));
 
-                    this.plot.panels.p.data_layers.d.unselectAllElements();
+                    layer.unselectAllElements();
                     assert.equal(layer_state.status_flags.selected.size, 0);
                 });
         });
@@ -614,10 +704,12 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, this.layout);
         });
+
         afterEach(function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
+
         it('should allow for creating and destroying tool tips', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
             this.plot.panels.p.data_layers.d.positionTooltip = function () {
@@ -626,18 +718,19 @@ describe('LocusZoom.DataLayer', function () {
             const a = this.plot.panels.p.data_layers.d.data[0];
             const a_id = this.plot.panels.p.data_layers.d.getElementId(a);
             const a_id_q = `#${  (`${a_id  }-tooltip`).replace(/(:|\.|\[|\]|,)/g, '\\$1')}`;
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 0);
 
             this.plot.panels.p.data_layers.d.createTooltip(a);
-            assert.isObject(this.plot.panels.p.data_layers.d.tooltips[a_id]);
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 1);
+            assert.isObject(this.plot.panels.p.data_layers.d._tooltips[a_id]);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 1);
             assert.equal(d3.select(a_id_q).empty(), false);
 
             this.plot.panels.p.data_layers.d.destroyTooltip(a_id);
-            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
-            assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], 'undefined');
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d._tooltips).length, 0);
+            assert.equal(typeof this.plot.panels.p.data_layers.d._tooltips[a_id], 'undefined');
             assert.equal(d3.select(a_id_q).empty(), true);
         });
+
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
             this.plot.panels.p.data_layers.d.positionTooltip = function () {
@@ -649,36 +742,37 @@ describe('LocusZoom.DataLayer', function () {
             const b = d.data[1];
             const b_id = d.getElementId(b);
             // Make sure the tooltips object is there
-            assert.isObject(d.tooltips);
+            assert.isObject(d._tooltips);
             // Test highlighted OR selected
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
 
             d.highlightElement(a);
-            assert.isObject(d.tooltips[a_id]);
+            assert.isObject(d._tooltips[a_id]);
 
             d.unhighlightElement(a);
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
 
             d.selectElement(a);
-            assert.isObject(d.tooltips[a_id]);
+            assert.isObject(d._tooltips[a_id]);
 
             d.unselectElement(a);
-            assert.isUndefined(d.tooltips[a_id]);
+            assert.isUndefined(d._tooltips[a_id]);
             // Test highlight AND selected
-            assert.isUndefined(d.tooltips[b_id]);
+            assert.isUndefined(d._tooltips[b_id]);
 
             d.highlightElement(b);
             d.selectElement(b);
-            assert.isObject(d.tooltips[b_id]);
+            assert.isObject(d._tooltips[b_id]);
 
             d.unhighlightElement(b);
             d.unselectElement(b);
-            assert.isUndefined(d.tooltips[b_id]);
+            assert.isUndefined(d._tooltips[b_id]);
         });
+
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
             const layer = this.plot.panels.p.data_layers.d;
-            const status_flags = layer.layer_state.status_flags;
+            const status_flags = layer._layer_state.status_flags;
 
             const item_a = { id: 'a' };
             const internal_id = layer.getElementId(item_a);
@@ -695,11 +789,11 @@ describe('LocusZoom.DataLayer', function () {
                 layer.setElementStatus('selected', item_a, true, true);
                 const internal_id = layer.getElementId(item_a);
 
-                assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
+                assert.ok(layer._tooltips[internal_id], 'Tooltip created on selection');
                 assert.ok(status_flags['selected'].has(internal_id), 'Item was initially selected');
 
                 layer.destroyTooltip(item_a);
-                assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
+                assert.ok(!layer._tooltips[internal_id], 'Tooltip was destroyed by user close event');
 
                 assert.ok(status_flags['selected'].has(internal_id), 'Point remains selected after closing tooltip');
                 assert.ok(!status_flags['has_tooltip'].has(internal_id), 'Tooltip was destroyed by user close event');
@@ -715,7 +809,7 @@ describe('LocusZoom.DataLayer', function () {
     describe('data element behaviors', function () {
         beforeEach(function() {
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 2, y:0 }, { id: 'c', x: 3, y:1 }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 2, y:0 }, { id: 'c', x: 3, y:1 }] }]);
 
             const layout = {
                 panels: [
@@ -724,8 +818,8 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
+                                namespace: { d: 'd'},
                                 type: 'scatter',
-                                fields: ['d:id', 'd:x', 'd:y'],
                                 id_field: 'd:id',
                                 x_axis: { field:  'd:x' },
                                 y_axis: { field: 'd:y'},
@@ -743,6 +837,7 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);
         });
+
         it('can link to an external website', function () {
             // NOTE: Not all variants of this behavior are tested. This only tests opening links in another window.
             //  This is because JSDom sometimes has issues mocking window.location.
@@ -759,6 +854,7 @@ describe('LocusZoom.DataLayer', function () {
                 assert.ok(openStub.calledWith('https://dev.example/a', '_blank'), 'The URL can incorporate parameters from the specified data element');
             });
         });
+
         it('applies status-based styles when an item receives mouse events', function () {
             // Since sequence is important, this test exercises multiple scenarios in a specific order
             return this.plot.applyState().then(() => {
@@ -783,6 +879,7 @@ describe('LocusZoom.DataLayer', function () {
                 assert.notOk(second.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is removed on mouseout');
             });
         });
+
         it('recognizes keyboard modifiers as distinct events', function () {
             return this.plot.applyState().then(() => {
                 const openStub = sinon.stub(window, 'open');
@@ -797,6 +894,7 @@ describe('LocusZoom.DataLayer', function () {
                 assert.ok(datapoint.node().classList.contains('lz-data_layer-scatter-selected'), 'Style is applied appropriately');
             });
         });
+
         afterEach(function () {
             sinon.restore();
         });
@@ -884,7 +982,9 @@ describe('LocusZoom.DataLayer', function () {
             beforeEach(function () {
                 this.plot = null;
                 const data_sources = new DataSources()
-                    .add('d', ['StaticJSON', [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }]]);
+                    .add('d', ['StaticJSON', {
+                        data: [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }],
+                    }]);
                 const layout = {
                     panels: [
                         {
@@ -892,7 +992,7 @@ describe('LocusZoom.DataLayer', function () {
                             data_layers: [
                                 {
                                     id: 'd',
-                                    fields: ['d:id', 'd:a'],
+                                    namespace: { d: 'd'},
                                     id_field: 'd:id',
                                     type: 'scatter',
                                     filters: null,
@@ -970,7 +1070,7 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             const data_sources = new DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', { data: [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }] }]);
             const layout = {
                 panels: [
                     {
@@ -978,7 +1078,7 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
-                                fields: ['d:id', 'd:some_field'],
+                                namespace: { d: 'd'},
                                 id_field: 'd:id',
                                 type: 'scatter',
                                 selected: { onclick: 'toggle' },
@@ -1002,7 +1102,7 @@ describe('LocusZoom.DataLayer', function () {
             data_layer.setElementAnnotation(datum, 'custom_field', 'some_value');
 
             // Find the element annotation for this point via several different ways
-            assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
+            assert.equal(data_layer._layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
             assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
             assert.equal(data_layer.getElementAnnotation({'d:id': 'b'}, 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
             assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
@@ -1019,16 +1119,16 @@ describe('LocusZoom.DataLayer', function () {
         it('can use custom markings in layout directives', function () {
             const self = this;
             const data_layer = this.plot.panels.p.data_layers.d;
-            assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
+            assert.equal(data_layer._label_groups, undefined, 'No labels on first render');
             data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', true);
 
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn because of annotations');
+                assert.equal(data_layer._label_groups.size(), 1, 'Labels are drawn because of annotations');
                 // After turning labels on, confirm that we can cycle them off and influence rendering
                 data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups.size(), 0, 'Labels are removed because of annotations');
+                assert.equal(data_layer._label_groups.size(), 0, 'Labels are removed because of annotations');
             });
         });
 
@@ -1039,12 +1139,12 @@ describe('LocusZoom.DataLayer', function () {
 
             // Rerender once so the modified layout takes effect
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
+                assert.equal(data_layer._label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
                 // Introduce an annotation that conflicts with the data field from the API
                 data_layer.setElementAnnotation({'d:id': 'b'}, 'd:some_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');
+                assert.equal(data_layer._label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');
             });
         });
     });
