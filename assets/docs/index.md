@@ -107,7 +107,8 @@ See the full [developer documentation](../api/global.html#event:baseLZEvent) for
 ## Separation of concerns
 Visualizations are responsible for displaying the information given. Each element is intended to be largely isolated and decoupled: for the most part, pieces can be mixed and matched without needing to know about (or influence) the internal behavior of other pieces.
 
-Operations on data are performed by the following elements,
+Operations on data are performed by the following elements:
+
 * [Adapters](../api/module-LocusZoom_Adapters.html) coordinate the formatting and retrieval of data (see: [guide to working with data](data_retrieval.html))
 * Various function registries provide a way to modify the display or behavior of elements by injecting custom user-defined code into existing reusable elements:  
   * [Matching functions](../api/module-LocusZoom_MatchFunctions.html) coordinate filter and match operations that affect which items are displayed across different panels (see: [guide to interactivity](interactivity.html)).
