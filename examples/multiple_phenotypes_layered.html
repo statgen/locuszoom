@@ -89,6 +89,8 @@
     layout = {
         width: 800,
         responsive_resize: true,
+        max_region_scale: 1e6,
+        min_region_scale: 20000,
         panels: [
             LocusZoom.Layouts.get("panel", "association", association_panel_mods),
             LocusZoom.Layouts.get("panel", "genes", { namespace: { "gene": "gene" } })

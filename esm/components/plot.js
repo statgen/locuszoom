@@ -18,8 +18,8 @@ const default_layout = {
     state: {},
     width: 800,
     min_width: 400,
-    min_region_scale: null,
-    max_region_scale: null,
+    min_region_scale: 20000,
+    max_region_scale: 1e6,
     responsive_resize: false,
     panels: [],
     toolbar: {
@@ -215,8 +215,8 @@ class Plot {
      *   to specify initial region view
      * @param {number} [layout.width=800] The width of the plot and all child panels
      * @param {number} [layout.min_width=400] Do not allow the panel to be resized below this width
-     * @param {number} [layout.min_region_scale] The minimum region width (do not allow the user to zoom smaller than this region size)
-     * @param {number} [layout.max_region_scale] The maximum region width (do not allow the user to zoom wider than this region size)
+     * @param {number} [layout.min_region_scale=20e3] The minimum region width (do not allow the user to zoom smaller than this region size)
+     * @param {number} [layout.max_region_scale=1e6] The maximum region width (do not allow the user to zoom wider than this region size)
      * @param {boolean} [layout.responsive_resize=false] Whether to resize plot width as the screen is resized
      * @param {Object[]} [layout.panels] Configuration options for each panel to be added
      * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each widget to place on the

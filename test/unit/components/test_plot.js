@@ -409,11 +409,11 @@ describe('LocusZoom.Plot', function() {
         });
 
         it('Should apply basic start/end state validation when necessary', function() {
-            this.layout.state = { chr: 1, start: -60, end: 10300050 };
+            this.layout.state = { chr: 1, start: -60, end: 500500 };
             this.plot = populate('#plot', this.datasources, this.layout);
             return Promise.all(this.plot._remap_promises).then(() => {
                 assert.equal(this.plot.state.start, 1);
-                assert.equal(this.plot.state.end, 10300050);
+                assert.equal(this.plot.state.end, 500500);
             });
         });
 
