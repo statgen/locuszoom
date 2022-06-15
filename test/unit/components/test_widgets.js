@@ -159,4 +159,78 @@ describe('Toolbar widgets', function () {
             assert.equal(this.data_layer.layout.filters.length, 0, 'Filter has been removed');
         });
     });
+
+    describe('set_state widget', function () {
+        beforeEach(function() {
+            const datasources = new DataSources()
+                .add('d', ['StaticJSON', {data: [{ id: 1, a: 12 }] }]);
+            const layout = {
+                toolbar: {
+                    widgets: [
+                        {
+                            type: 'set_state',
+                            tag: 'test_widget',
+                            position: 'right',
+                            button_html: 'Your choice: ',
+                            show_selected: true,
+                            custom_event_name: 'test_choice',
+                            state_field: 'chosen_state',
+                            options: [
+                                { display_name: 'ALL (default)', value: 'ALL' },
+                                { display_name: 'Custom', value: 'CUSTOM' },
+                            ],
+                        },
+                    ],
+                },
+                panels: [{
+                    id: 'p',
+                    data_layers: [
+                        {
+                            id: 'd',
+                            namespace: {d: 'd'},
+                            id_field: 'd:id',
+                            type: 'scatter',
+                        },
+                    ],
+                }],
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = populate('#plot', datasources, layout);
+            this.data_layer = this.plot.panels['p'].data_layers['d'];
+            this.widget = this.plot.toolbar.widgets[0];
+        });
+        afterEach(function() {
+            d3.select('#plot').remove();
+            this.plot = null;
+        });
+
+        it('Updates plot state when a choice is selected', function () {
+            this.widget.button.menu.show(); // show menu so that clickable radios are present
+            // Simulate user click on one element
+            this.plot.container.querySelector('* [name^="set-state"][value="1"]').click();
+
+            return this.plot.applyState().then(() => {
+                assert.equal(this.widget._selected_item, 'CUSTOM', 'clicking item changes internal selection');
+                assert.equal(this.plot.state.chosen_state, 'CUSTOM', 'plot state updated to reflect user click');
+                assert.equal(this.widget.button.html, 'Your choice: CUSTOM', 'Selection (or default) is reflected in button text');
+            });
+        });
+
+        it('Shows user selection as part of button text', function () {
+            assert.equal(this.widget.button.html, 'Your choice: ALL', 'Selection (or default) is reflected in button text');
+        });
+
+        it('Fires an event describing the item selected', function (done) {
+            this.plot.on('test_choice', (event) => {
+                assert.deepEqual(event.data, { choice_name: 'Custom', choice_value: 'CUSTOM', state_field: 'chosen_state'});
+                done();
+            });
+
+
+            this.widget.button.menu.show();
+
+            // Simulate user click on one element. Should trigger the callback defined above.
+            this.plot.container.querySelector('* [name^="set-state"][value="1"]').click();
+        });
+    });
 });

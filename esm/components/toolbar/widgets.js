@@ -1561,7 +1561,6 @@ class SetState extends BaseWidget {
             // Check only gets run at widget creation, but generally this widget is assumed to be an exclusive list of options
             throw new Error('There is an existing state value that does not match the known values in this widget');
         }
-
         // Define the button + menu that provides the real functionality for this toolbar widget
         this.button = new Button(this)
             .setColor(layout.color)
@@ -1605,11 +1604,36 @@ class SetState extends BaseWidget {
             layout.options.forEach((item, index) => renderRow(item.display_name, item.value, index));
             return this;
         });
+
+        // Allow the button to react to external changes so that the menu stays in sync. This assumes a fair bit of
+        //  trust in the external code, which you hope uses a state value that matches something known to the
+        //  "list of options" defined for this menu.
+        //
+        // If the plot.state value wouldn't fit the options: on plot creation, the widget breaks with an error
+        //  because that was never going to work. But if state != options at a later point, we will quietly let it
+        //  happen and the button will just look weird. (strict validation at this stage would break the page after render)
+        this._update_listener = this.parent_plot.on('state_changed', (event) => {
+            const new_value = event.data[layout.state_field];
+            if (new_value !== undefined && new_value !== this._selected_item) {
+                this._selected_item = new_value;
+
+                this.button
+                    .setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''));
+                this.update();
+            }
+        });
     }
 
     update() {
         this.button.show();
         return this;
+    }
+
+    destroy(force) {
+        // In theory, set_state is a plot-level widget, and so the entire plot is destroyed at same time this button is.
+        //  But people copy and paste a lot, so we will demonstrate good practice by cleaning up event listeners.
+        this.parent_plot.off('state_changed', this._update_listener);
+        return super.destroy(force);
     }
 }
 
