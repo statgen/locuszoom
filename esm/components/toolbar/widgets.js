@@ -10,7 +10,6 @@ import {positionIntToString} from '../../helpers/display';
 import {applyStyles, debounce} from '../../helpers/common';
 import {deepCopy} from '../../helpers/layouts';
 
-
 /**
  *
  * A widget is an empty div rendered on a toolbar that can display custom
@@ -861,6 +860,9 @@ class FilterField extends BaseWidget {
 
 /**
  * Button to export current plot to an SVG image
+ *
+ * This widget can only be attached to a plot, not to a panel
+ *
  * @alias module:LocusZoom_Widgets~download_svg
  * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
@@ -877,6 +879,10 @@ class DownloadSVG extends BaseWidget {
         this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
         this._event_name = layout.custom_event_name || 'widget_save_svg';
+
+        if (this.parent_panel) {
+            throw new Error(`The "${layout.type}" widget is designed to download the whole plot as an image, so it can only be attached to the top (plot) level`);
+        }
     }
 
     update() {
@@ -1027,6 +1033,9 @@ class DownloadSVG extends BaseWidget {
 
 /**
  * Button to export current plot to a PNG image
+ *
+ * This widget can only be attached to a plot, not to a panel
+ *
  * @alias module:LocusZoom_Widgets~download_png
  * @extends module:LocusZoom_Widgets~download_svg
  * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
@@ -1161,6 +1170,9 @@ class MovePanelDown extends BaseWidget {
 
 /**
  * Button to shift plot region forwards or back by a `step` increment provided in the layout
+ *
+ * This widget can only be attached to a plot, not to a panel
+ *
  * @alias module:LocusZoom_Widgets~shift_region
  * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
@@ -1184,6 +1196,10 @@ class ShiftRegion extends BaseWidget {
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
             throw new Error('Unable to add shift_region toolbar widget: plot state does not have region bounds');
+        }
+
+        if (this.parent_panel) {
+            throw new Error(`The "${layout.type}" widget is designed to change the region for all panels, so it can only be attached to the top (plot) level`);
         }
 
 
@@ -1210,6 +1226,9 @@ class ShiftRegion extends BaseWidget {
 
 /**
  * Zoom in or out on the plot, centered on the middle of the plot region, by the specified amount
+ *
+ * This widget can only be attached to a plot, not to a panel
+ *
  * @alias module:LocusZoom_Widgets~zoom_region
  * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
@@ -1233,6 +1252,10 @@ class ZoomRegion extends BaseWidget {
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
             throw new Error('Unable to add zoom_region toolbar widget: plot state does not have region bounds');
+        }
+
+        if (this.parent_panel) {
+            throw new Error(`The "${layout.type}" widget is designed to change the region for all panels, so it can only be attached to the top (plot) level`);
         }
     }
 
@@ -1520,6 +1543,8 @@ class DisplayOptions extends BaseWidget {
  *
  * For example, the LDServer data adapter can use it to change LD reference population (for all panels) after render
  *
+ * This widget can only be attached to a plot, not to a panel
+ *
  * @alias module:LocusZoom_Widgets~set_state
  * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
  * @param {String} [layout.button_title="Choose an option to customize the plot"] Hover text for the toolbar button
@@ -1539,11 +1564,12 @@ class SetState extends BaseWidget {
 
         super(layout, parent);
 
-        if (this.parent_panel) {
-            throw new Error('This widget is designed to set global options, so it can only be used at the top (plot) level');
-        }
         if (!layout.state_field) {
             throw new Error('Must specify the `state_field` that this widget controls');
+        }
+
+        if (this.parent_panel) {
+            throw new Error(`The "${layout.type}" widget changes the plot state, so it can only be attached to the top (plot) level`);
         }
 
         this._event_name = layout.custom_event_name || 'widget_set_state_choice';
