@@ -51,7 +51,7 @@ In order to ensure that each rendering is totally isolated and de-coupled, all *
 
 # Working with layouts
 ## How to read a layout
-A good way to practice reading layouts (as a combination of several pieces) is to look at the [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js) where standard layouts are defined. Consider the `standard_association` plot:
+A good way to practice reading layouts (as a combination of several pieces) is to look at the [source code](https://github.com/statgen/locuszoom/blob/master/esm/layouts/index.js) where standard layouts are defined. Consider the `standard_association` plot:
 
 ```js
 LocusZoom.Layouts.add('plot', 'standard_association', {
@@ -225,7 +225,7 @@ LocusZoom.ScaleFunctions.add('myfunction', (parameters, field_value) => calculat
 ## Documentation by example
 Composition of smaller pieces is a powerful strategy- but it also means that no single documentation page can explain every feature (because important behavior emerges when two building blocks are combined). As such, examples are a key and explicit part of how LocusZoom usage is documented. 
 
-We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js)) as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with [example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice.  The full [developer documentation](../api) enumerates every possible layout configuration option for each plot, panel, data layer rendering type, or rule.
+We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/master/esm/layouts/index.js)) as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with [example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice.  The full [developer documentation](../api) enumerates every possible layout configuration option for each plot, panel, data layer rendering type, or rule.
 
 Lastly: LocusZoom works with evolving datasets, and pieces were contributed by different authors. For every hard and fast "rule", there is always an exception! If you find gaps in the documentation, please contact the developers (or [mailing list](https://groups.google.com/forum/#!forum/locuszoom)) and we will make improvements. 
 
@@ -298,4 +298,4 @@ const new_panel = existing_plot.addPanel(extra_panel_layout); // Adds the panel 
 In this guide, we have mostly focused on Layouts as a tool for controlling how data is rendered. However, layouts also provide configuration directives to enable powerful behaviors such as zooming, matching, and filtering. See the [guide to interactivity](interactivity.html) for details.
 
 ## Where to find more information
- We also provide other tools (such as [LocalZoom](https://github.com/statgen/localzoom/blob/develop/src/util/lz-helpers.js)), which demonstrate higher-order concepts like adding multiple panels to the same plot. Note that this code base is very heavily oriented around the idea of composition, with functions like `createStudyLayout`, `createStudyTabixSources`, and `addPanels`. Instead of defining the entire layout, this structure is focused on creating each piece required and combining them as appropriate. The same process is used to create layouts for the first study track as for the fourth.
+ We also provide other tools (such as [LocalZoom](https://github.com/statgen/localzoom/blob/master/src/util/lz-helpers.js)), which demonstrate higher-order concepts like adding multiple panels to the same plot. Note that this code base is very heavily oriented around the idea of composition, with functions like `createStudyLayout`, `createStudyTabixSources`, and `addPanels`. Instead of defining the entire layout, this structure is focused on creating each piece required and combining them as appropriate. The same process is used to create layouts for the first study track as for the fourth.
