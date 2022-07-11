@@ -1568,10 +1568,6 @@ class SetState extends BaseWidget {
             throw new Error('Must specify the `state_field` that this widget controls');
         }
 
-        if (this.parent_panel) {
-            throw new Error(`The "${layout.type}" widget changes the plot state, so it can only be attached to the top (plot) level`);
-        }
-
         this._event_name = layout.custom_event_name || 'widget_set_state_choice';
 
         /**
