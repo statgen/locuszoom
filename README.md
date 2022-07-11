@@ -222,6 +222,7 @@ This build process will also write sourcemaps, to help with debugging code even 
 * `npm run build` - Run tests, and if they pass, build the library for release
 * `npm run css` - Rebuild the CSS using SASS (CSS rarely changes, so this doesn't get done automatically in dev mode)
 * `npm run docs` - Build just the library documentation
+* `npm run format` - Format the JavaScript code using ESLint
 
 
 #### Automated Testing

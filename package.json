@@ -32,6 +32,7 @@
   "scripts": {
     "echo_version": "echo \"export default '${npm_package_version}';\" > esm/version.js",
     "test": "eslint esm/ test/ && mocha --recursive test",
+    "format": "eslint --fix esm/ test/",
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
