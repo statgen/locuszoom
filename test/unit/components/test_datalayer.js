@@ -65,7 +65,7 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('warns if the data received does not match the inferred fields contract', function () {
-            let spy = sinon.spy(console, 'debug');
+            let spy = sinon.spy(console, 'warn');
             this.layer.data = [{ 'assoc:variant': '1:23_A/B', 'assoc:position': 23 }];
             this.layer.applyDataMethods();
             assert.ok(spy.calledOnce, 'Console.debug was called with data contract errors');
