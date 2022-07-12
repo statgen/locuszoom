@@ -94,6 +94,48 @@ describe('Layout helper functions', function () {
             });
         });
 
+        it('renames a layout in place', function () {
+            // This is a weird scenario with practical applications:
+            //  1. When the plot is first created, each data layer stores a reference to its part of the parent layout.
+            //      (one nested object from `plot_layout.panels[].data_layers[]`)
+            // 2. Sometimes we want a toggle button to change everything in the plot at once.
+            //      But if we replace `plot.layout` with a new copy of the object, data layers are still storing a
+            //      reference to the chunk of the old layout. They don't receive their new changes.
+            // 3. This test verifies that a layout is changed in place. It simulates whether a data layer would pick
+            //      up changes to the parent layout.
+            const base = {
+                top_level_key: 'old_name',
+                panels: [
+                    {
+                        id: 'a',
+                        panel_key: 'old_name',
+                        data_layers: [
+                            {id: 'a', layer_key: '{{old_name}}'},
+                            {id: 'b', layer_key: 'other'}],
+                    },
+                ],
+            };
+
+            const layer_reference = base.panels[0].data_layers[0]; // simulate DataLayer instance stashing a ref to part of the parent layout when first initialized
+
+            // Don't reassign here: we're testing in place mods
+            renameField(base, 'old_name', 'moon_unit');
+            const expected = {
+                top_level_key: 'moon_unit',
+                panels: [
+                    {
+                        id: 'a',
+                        panel_key: 'moon_unit',
+                        data_layers: [
+                            {id: 'a', layer_key: '{{moon_unit}}'},
+                            {id: 'b', layer_key: 'other'}],
+                    },
+                ],
+            };
+            //
+            assert.deepEqual(base, expected, 'The original top level layout object is mutated');
+            assert.equal(layer_reference.layer_key, '{{moon_unit}}', 'A data layer would receive this change');
+        });
         it('will handle filters and partial fragments appropriately', function () {
             let base = {
                 field1: 'old_name',

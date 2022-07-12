@@ -175,7 +175,7 @@ function findFields(layout, prefixes, field_finder = null) {
 
 /**
  * A utility helper for customizing one part of a pre-made layout. Whenever a primitive value is found (eg string),
- *  replaces *exact match*
+ *  replaces *exact match*. The layout object is mutated in place.
  *
  * This method works by comparing whether strings are a match. As a result, the "old" and "new" names must match
  *  whatever namespacing is used in the input layout.
@@ -188,20 +188,23 @@ function findFields(layout, prefixes, field_finder = null) {
  * @param {string} new_name The new field name that will be substituted in
  * @param {boolean} [warn_transforms=true] Sometimes, a field name is used with transforms appended, eg `label|htmlescape`.
  *   In some cases a rename could change the meaning of the field, and by default this method will print a warning to
- *   the console, encouraging the developer to check the relevant usages. This warning can be silenced via an optional function argument.
+ *   the console, encouraging the developer to check the relevant usages. In production, you might not want to clutter
+ *   the console with warnings that you verified are safe to ignore, so this can be silenced via an optional function argument.
+ * @return {object} The original layout object, which will be mutated in-place with the new field names
  */
 function renameField(layout, old_name, new_name, warn_transforms = true) {
     const this_type = typeof layout;
     // Handle nested types by recursion (in which case, `layout` may be something other than an object)
     if (Array.isArray(layout)) {
-        return layout.map((item) => renameField(item, old_name, new_name, warn_transforms));
+        // Mutate arrays in place (forEach) instead of creating a new one (map).
+        //   This allows us to change the entire plot at once (plot.layout) and propagate down to where plot.panels[].data_layers[] has already stored references to the original layout.
+        layout.forEach((item, index) => {
+            layout[index] = renameField(item, old_name, new_name, warn_transforms);
+        });
+        return layout;
     } else if (this_type === 'object' && layout !== null) {
-        return Object.keys(layout).reduce(
-            (acc, key) => {
-                acc[key] = renameField(layout[key], old_name, new_name, warn_transforms);
-                return acc;
-            }, {},
-        );
+        Object.keys(layout).forEach((key) => layout[key] = renameField(layout[key], old_name, new_name, warn_transforms));
+        return layout;
     } else if (this_type !== 'string') {
         // Field names are always strings. If the value isn't a string, don't even try to change it.
         return layout;
