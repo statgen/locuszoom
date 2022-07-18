@@ -5,7 +5,7 @@
 /**
  * @private
  */
-const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
+const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?([A-Za-z]+)?[/_:|-]?([^_]+)?_?(.*)?/;
 
 /**
  * Parse a single marker, cleaning up values as necessary

@@ -6,7 +6,7 @@ import { parseMarker } from '../../../esm/helpers/parse';
 describe('REGEX_MARKER', () => {
     it('handles various marker formats', () => {
         const has_chr_pos = ['chr1:23', 'chrX:23', '1:23', 'X:23'];
-        const has_chr_pos_refalt = ['chr1:23_A/C', '1:23_A/C', 'chr:1:23:AAAA:G', '1:23_A|C', 'chr1:281876_AC/A'];
+        const has_chr_pos_refalt = ['chr1:23_A/C', '1:23_A/C', 'chr1:23:AAAA:G', '1:23_A|C', 'chr1:281876_AC/A', 'chr1_23_A_C'];
         const has_chr_pos_refalt_extra = [
             'chr1:23_A/C_gibberish', '1:23_A/C_gibberish', '1:23_A|C_gibberish',
             '1:51873951_G/GT_1:51873951_G/GT',
@@ -20,7 +20,7 @@ describe('REGEX_MARKER', () => {
         has_chr_pos_refalt.forEach((item) => {
             const match = parseMarker(item);
             assert.ok(match, `Match found for ${item}`);
-            assert.lengthOf(match.filter((e) => !!e), 4, `Found chr:pos_ref/alt for ${item}`);
+            assert.lengthOf(match.filter((e) => !!e), 4, `Found chr:pos_ref/alt for ${item}- actual ${match}`);
         });
         has_chr_pos_refalt_extra.forEach((item) => {
             const match = parseMarker(item);
