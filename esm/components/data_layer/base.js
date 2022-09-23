@@ -156,7 +156,7 @@ class BaseDataLayer {
      * @param {number} [layout.x_axis.floor] The low end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
      * @param {number} [layout.x_axis.ceiling] The high end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
      * @param {Number[]} [layout.x_axis.min_extent] The smallest possible range [min, max] of the x-axis. If the actual values lie outside the extent, the actual data takes precedence.
-     * @param {number} [layout.x_axis.field] The datum field to look at when determining data extent along the x-axis.
+     * @param {string} [layout.x_axis.field] The datum field to look at when determining data extent along the x-axis.
      * @param {number} [layout.x_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
      * @param {number} [layout.x_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
      * @param {boolean} [layout.y_axis.decoupled=false] If true, the data in this layer will not influence the y-extent of the panel.
@@ -164,7 +164,7 @@ class BaseDataLayer {
      * @param {number} [layout.y_axis.floor] The low end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
      * @param {number} [layout.y_axis.ceiling] The high end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
      * @param {Number[]} [layout.y_axis.min_extent] The smallest possible range [min, max] of the y-axis. Actual lower or higher data values will take precedence.
-     * @param {number} [layout.y_axis.field] The datum field to look at when determining data extent along the y-axis.
+     * @param {string} [layout.y_axis.field] The datum field to look at when determining data extent along the y-axis.
      * @param {number} [layout.y_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
      * @param {number} [layout.y_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
      * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
