@@ -1,5 +1,6 @@
 import {assert} from 'chai';
 import * as d3 from 'd3';
+import clone from 'just-clone';
 import sinon from 'sinon';
 
 import { MATCHERS, SCALABLE } from '../../../esm/registry';
@@ -906,7 +907,8 @@ describe('LocusZoom.DataLayer', function () {
             const options = [{ field: 'a', operator: '>', value: 12 }];
             const data = [{ a: 12 }, { a: 11 }, { a: 13 }];
 
-            const result = data.filter(layer.filter.bind(layer, options));
+            let result = data.filter(layer.filter.bind(layer, options));
+            result = clone(result); // exclude LZ internal symbols from data tests
             assert.equal(result.length, 1);
             assert.deepEqual(result, [{ a: 13 }]);
         });
@@ -916,7 +918,8 @@ describe('LocusZoom.DataLayer', function () {
             const options = [{ field: 'a', operator: '>', value: 12 }, { field: 'a', operator: '<=', value: 14 }];
             const data = [{ a: 12 }, { a: 11 }, { a: 13 }, { a: 15 }, { a: 14 }];
 
-            const result = data.filter(layer.filter.bind(layer, options));
+            let result = data.filter(layer.filter.bind(layer, options));
+            result = clone(result); // exclude LZ internal symbols from data tests
             assert.equal(result.length, 2);
             assert.deepEqual(result, [{ a: 13 }, { a: 14 }]);
         });
@@ -926,7 +929,8 @@ describe('LocusZoom.DataLayer', function () {
             const options = [{ field: 'a', operator: '=', value: 'exact' }];
             const data = [{ a: 'inexact' }, { a: 'exactly' }, { a: 'exact' }];
 
-            const result = data.filter(layer.filter.bind(layer, options));
+            let result = data.filter(layer.filter.bind(layer, options));
+            result = clone(result); // exclude LZ internal symbols from data tests
             assert.equal(result.length, 1);
             assert.deepEqual(result, [{ a: 'exact' }]);
         });
@@ -937,7 +941,8 @@ describe('LocusZoom.DataLayer', function () {
             const options = [{ field: 'a', operator: 'near_to', value: 200 }];
             const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
 
-            const result = data.filter(layer.filter.bind(layer, options));
+            let result = data.filter(layer.filter.bind(layer, options));
+            result = clone(result); // exclude LZ internal symbols from data tests
             assert.equal(result.length, 2);
             assert.deepEqual(result, [{ a: 200 }, {a: 250 }]);
 
@@ -952,7 +957,7 @@ describe('LocusZoom.DataLayer', function () {
             const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
 
             data.filter(layer.filter.bind(layer, options));
-            assert.deepEqual(spy.firstCall.args[0], { a: 50 }, 'Filter was called with object instead of scalar');
+            assert.deepEqual(clone(spy.firstCall.args[0]), { a: 50 }, 'Filter was called with object instead of scalar');
             MATCHERS.remove('filter_spy');
         });
 
@@ -961,7 +966,8 @@ describe('LocusZoom.DataLayer', function () {
             const options = [{ field: 'a|scinotation', operator: '=', value: '1.000' }];
             const data = [{ a: 1 }, { a: 0 }, { a: 1 }];
 
-            const result = data.filter(layer.filter.bind(layer, options));
+            let result = data.filter(layer.filter.bind(layer, options));
+            result = clone(result); // exclude LZ internal symbols from data tests
             assert.equal(result.length, 2);
             // Note that transform results are cached, so they will show up in the internal representation of the data
             //  after fetching

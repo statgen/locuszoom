@@ -4,7 +4,6 @@ const webpack = require('webpack');
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 
 
 const PACKAGE = require('./package.json');
@@ -47,7 +46,6 @@ module.exports = {
             cleanOnceBeforeBuildPatterns: ['**/*', '!locuszoom.css*'],
         }),
         new webpack.BannerPlugin(`Locuszoom ${PACKAGE.version}`), // add after uglify step
-        new FriendlyErrorsWebpackPlugin(),
         new ESLintPlugin(),
     ],
     resolve: {
