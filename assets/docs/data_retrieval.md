@@ -12,12 +12,12 @@ All data retrieval is performed by *adapters*: special objects whose job is to f
 Below is an example that defines how to retrieve the data for a "classic" LocusZoom plot, in which GWAS, LD, and recombination rate are overlaid on a scatter plot, with genes and gnomAD constraint information on another track below. In total, five REST API endpoints are used to create this plot: four standard datasets, and one user-provided summary statistics file.
 
 ```javascript
-const apiBase = 'https://portaldev.sph.umich.edu/api/v1/';
+const apiBase = 'https://services.locuszoom.org';
 const data_sources = new LocusZoom.DataSources()
-    .add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', source: 45, id_field: 'variant' }])
-    .add('ld', ['LDServer', { url: 'https://portaldev.sph.umich.edu/ld/', source: '1000G', population: 'ALL', build: 'GRCh37' }])
-    .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', build: 'GRCh37' }])
-    .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', build: 'GRCh37' }])
+    .add('assoc', ['MyLZOrgAssociation', { url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023, id_field: 'variant' }])
+    .add('ld', ['LDServer', { url: `${apiBase}/ld/`, source: '1000G', population: 'ALL', build: 'GRCh37' }])
+    .add('recomb', ['RecombLZ', { url: `${apiBase}/api/v1/annotation/recomb/results/`, build: 'GRCh37' }])
+    .add('gene', ['GeneLZ', { url: `${apiBase}/api/v1/annotation/genes/`, build: 'GRCh37' }])
     .add('constraint', ['GeneConstraintLZ', { url: 'https://gnomad.broadinstitute.org/api/', build: 'GRCh37' }]);
 ```
 
@@ -27,7 +27,7 @@ Of course, defining datasets is only half of the process; see the [Getting Start
 In the example above, a new data source is added via a line of code such as the following:
 
 ```javascript
-data_sources.add('assoc', ['AssociationLZ', {url: apiBase + 'statistic/single/', source: 45, id_field: 'variant' }]);
+data_sources.add('assoc', ['MyLZOrgAssociation', { url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023, id_field: 'variant' }]);
 ```
 
 A lot is going on in this line!
@@ -46,7 +46,7 @@ We periodically update our API server. If you think new information is missing, 
 ## What should the data look like?
 In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layer to specify what fields should be used for the x and y axes.
 
-In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the [UM PortalDev API docs](https://portaldev.sph.umich.edu/docs/api/v1/). This is the quickest way to get started. Most layouts in the provided `LocusZoom.Layouts` registry will tell you what fields are expected (via the `_auto_fields` property), and most plots will log a console error message if the response is missing expected information.
+In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the [LocusZoom API docs](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md). This is the quickest way to get started. Most layouts in the provided `LocusZoom.Layouts` registry will tell you what fields are expected (via the `_auto_fields` property), and most plots will log a console error message if the response is missing expected information.
 
 Most users will only need to implement their own way of retrieving GWAS summary statistics; the other annotations are standard datasets and can be freely used from our public API. For complex plots (like annotations of new data), see our [example gallery](https://statgen.github.io/locuszoom).
 
@@ -167,7 +167,7 @@ The built-in LocusZoom adapters can be used as-is in many cases, so long as the 
 3. If some of the fields in your custom API format need to be transformed or renamed in order to match expectations in LZ code. For example, the LD adapter may try to suggest an LD reference variant by looking for the GWAS variant with the largest `log_pvalue`. (over time, built-in LZ adapters trend towards being more strict about field names; it is easier to write reliable code when not having to deal with unpredictable data!)
 
 ## Customizing data retrieval via subclasses
-Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the UM PortalDev API, but a different way of constructing queries, you can change just one function and define a new data adapter:
+Most custom sites will only need to change very small things to work with their data. For example, if your REST API uses the same payload format as the LocusZoom API, but a different way of constructing queries, you can change just one function and define a new data adapter:
 
 ```javascript
 const AssociationLZ = LocusZoom.Adapters.get('AssociationLZ');
@@ -250,7 +250,7 @@ In a prior step, the records were normalized, but kept in a form that is usually
 
 * `_normalizeResponse` - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data handling functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be adjusted to match the expected format.
   * Internally, most data layer rendering types assume that data is an array, with each datum element represented by an object: `[{a_field: 1, other_field: 1}]`
-  * Some sources, such as the UM PortalDev API, represent the data in a column-oriented format instead. (`{a_field: [1], other_field: [1]}`) The default adapter will attempt to detect this and automatically transform those columns into the row-based one-record-per-datum format.
+  * Some sources, such as the [LocusZoom API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md), represent the data in a column-oriented format instead. (`{a_field: [1], other_field: [1]}`) The default adapter will attempt to detect this and automatically transform those columns into the row-based one-record-per-datum format.
 * `_annotateRecords` - This can be used to modify the data returned in many useful ways: filtering, renaming fields, or adding new calculated fields. Example scenarios:
   * A field called `pValue` can be transformed into one called `log_pvalue`
   * If a tabix file returns two categories of data at once, then the adapter could decide which to show according to a user-selected option stored in `plot.state` (So long as both datasets are not too big, this trick works well with the `set_state` toolbar widget: it provides a cheap way to toggle between datasets, without requiring an extra trip to the server!)

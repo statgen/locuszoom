@@ -5,7 +5,7 @@
  *  and user-friendly tooltips for common kinds of genetic data.
  *
  * Many of these layouts (like the standard association plot) assume that field names are the same as those provided
- *  in the UMich [portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/). Although layouts can be used on many
+ *  in the [LocusZoom API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md). Although layouts can be used on many
  *  kinds of data, it is often less work to write an adapter that uses the same field names, rather than to modify
  *  every single reference to a field anywhere in the layout.
  *

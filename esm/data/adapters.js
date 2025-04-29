@@ -8,7 +8,7 @@
  *  two data sources, such as annotating association summary statistics with LD information.
  *
  * Most of LocusZoom's builtin layouts and adapters are written for the field names and data formats of the
- *  UMich [PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#introduction):
+ *  [LocusZoom API](https://services.locuszoom.org/docs/api/v1/#introduction):
  *  if your data is in a different format, an adapter can be used to coerce or rename fields.
  *  Although it is possible to change every part of a rendering layout to expect different fields, this is often much
  *  more work than providing data in the expected format.
@@ -267,6 +267,26 @@ class AssociationLZ extends BaseUMAdapter {
         const {chr, start, end} = request_options;
         const base = super._getURL(request_options);
         return `${base}results/?filter=analysis in ${this._source_id} and chromosome in  '${chr}' and position ge ${start} and position le ${end}`;
+    }
+}
+
+/**
+ * Retrieve GWAS associations from my.locuszoom.org
+ * @public
+ * @inheritDoc
+ * @param {Number} config.gwas_id GWAS ID
+*/
+class MyLZOrgAssociation extends AssociationLZ {
+    constructor(config = {}) {
+        super(config);
+
+        const { gwas_id } = config;
+        this._gwas_id = gwas_id;
+    }
+
+    _getURL(request_options) {
+        const {chr, start, end} = request_options;
+        return `${this._url}${this._gwas_id}/data/?chrom=${encodeURIComponent(chr)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
     }
 }
 
@@ -731,6 +751,7 @@ export { BaseLZAdapter, BaseUMAdapter };
 // Usually used as a standalone class
 export {
     AssociationLZ,
+    MyLZOrgAssociation,
     GeneConstraintLZ,
     GeneLZ,
     GwasCatalogLZ,

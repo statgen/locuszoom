@@ -64,7 +64,7 @@ If your only goal is to generate a LocusZoom plot, we provide two "plot your own
 # What does LocusZoom.js provide?
 LocusZoom-style visualizations are widely used throughout the field of genetics, and this is by no means the only tool available for creating them. However, many existing tools only create a static image. LocusZoom.js was designed to power large data-exploration hubs such as PheWeb or the HuGeAMP family of knowledge portals: it can be used by websites that want to take full advantage of what the web browser has to offer.
 
-* A public [REST API](https://portaldev.sph.umich.edu/docs/api/v1/#introduction) with "standard" datasets that are useful for any LocusZoom plot (genes, recombination rate, etc), and an associated [LDServer](https://portaldev.sph.umich.edu/playground) to calculate on-the-fly Linkage Disequilibrium for 1000G
+* A public [REST API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md) with "standard" datasets that are useful for any LocusZoom plot (genes, recombination rate, etc), and an associated [LDServer](https://github.com/statgen/LDServer) to calculate on-the-fly Linkage Disequilibrium for 1000G
 * Data Adapters that support fetching your data from a variety of sources, such as dynamic REST APIs, static blobs, or tabix-indexed files on a static web host. 
 * Visualization types for several common types of data (including scatter plot, genes, PheWAS, and chromatin coaccessibility)
 * Interactive features allow the user to change the region that is displayed, form connections between the data shown on related tracks, or filter out data elements to focus on the most interesting parts of your data   

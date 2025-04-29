@@ -65,7 +65,7 @@
       </p>
       <p>
         In this demo, tabix loaders (and built-in file format parsers) are used for association, LD, and BED track data.
-        Genes and recombination rate are fetched from the UM PortalDev API. View the source code of this page for details.
+        Genes and recombination rate are fetched from the UM LocusZoom API. View the source code of this page for details.
       </p>
       <p>
         <a href="https://github.com/statgen/locuszoom/blob/master/examples/ext/tabix_tracks.html">View source code</a>
@@ -192,7 +192,7 @@
       const bedParser = LzParsers.makeBed12Parser({normalize: true});
       const ldParser = LzParsers.makePlinkLdParser({normalize: true});
 
-      const apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+      const apiBase = "https://services.locuszoom.org";
       const data_sources = new LocusZoom.DataSources()
           .add("assoc", ["TabixUrlSource", {
               // Courtesy of https://www.ncbi.nlm.nih.gov/pubmed/25673413  - As harmonized in https://my.locuszoom.org/gwas/236887/
@@ -206,14 +206,14 @@
               parser_func: ldParser,
           }])
           // Recombination rate is a standard dataset. Note that each dataset is fetched independently- we can mix built-in public APIs with tabix data when drawing the plot
-          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+          .add("recomb", ["RecombLZ", { url: `${apiBase}/api/v1/annotation/recomb/results/`, build: 'GRCh37' }])
           .add("intervals", ["TabixUrlSource", {
               // This annotation track is courtesy of the CMDGA: https://cmdga.org/annotations/DSR953RQL/
               url_data:  'https://locuszoom-web-demos.s3.us-east-2.amazonaws.com/tabix-demo/DFF622JQK.bed.bgz',
               parser_func: bedParser,
               overfetch: 0.25,
           }])
-          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+          .add("gene", ["GeneLZ", { url: `${apiBase}/api/v1/annotation/genes/`, build: 'GRCh37' }])
           .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
       // Get the standard association plot layout from LocusZoom's built-in layouts

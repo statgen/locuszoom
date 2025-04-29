@@ -412,7 +412,7 @@ const ldlz2_pop_selector_menu = {
   state_field: 'ld_pop',
   // This list below is hardcoded to work with the UMich LDServer, default 1000G populations
   //  It can be customized to work with other LD servers that specify population differently
-  // https://portaldev.sph.umich.edu/ld/genome_builds/GRCh37/references/1000G/populations
+  // https://services.locuszoom.org/ld/genome_builds/GRCh37/references/1000G/populations
   options: [
     { display_name: 'ALL (default)', value: 'ALL' },
     { display_name: 'AFR', value: 'AFR' },

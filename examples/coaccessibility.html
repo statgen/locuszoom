@@ -75,11 +75,11 @@
 </div>
 
 <script type="text/javascript">
-    var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+    var apiBase = "https://services.locuszoom.org";
     data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45 }])
-        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+        .add("assoc", ["MyLZOrgAssociation", {url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023 }])
+        .add("ld", ["LDServer", { url: `${apiBase}/ld/`, source: '1000G', build: 'GRCh37', population: 'ALL' }])
+        .add("recomb", ["RecombLZ", { url: `${apiBase}/api/v1/annotation/recomb/results/`, build: 'GRCh37' }])
         .add("access", ["TabixUrlSource", {
             // Corresponds to: https://www.diabetesepigenome.org/files/DFF044MQE/
             //   as processed from https://www.diabetesepigenome.org/annotations/DSR299XDW/
@@ -90,7 +90,7 @@
             // Fetching 25% extra data on each side can ensure that things near the edge are returned when we query.
             overfetch: 0.25,
         }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
+        .add("gene", ["GeneLZ", { url: `${apiBase}/api/v1/annotation/genes/`, build: 'GRCh37' }])
         .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard association plot layout from LocusZoom's built-in layouts

@@ -67,15 +67,14 @@
     </div>
 
     <script type="text/javascript">
-
     // Define Data Sources
-    var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+    var apiBase = "https://services.locuszoom.org";
     var data_sources = new LocusZoom.DataSources()
-      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", source: 45 }])
-      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
-      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
-      .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", source: 19 }])
+      .add("assoc", ["MyLZOrgAssociation", { url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023 }])
+      .add("ld", ["LDServer", { url: `${apiBase}/ld/`, source: '1000G', build: 'GRCh37', population: 'ALL' }])
+      .add("gene", ["GeneLZ", { url: `${apiBase}/api/v1/annotation/genes/`, build: 'GRCh37' }])
+      .add("recomb", ["RecombLZ", { url: `${apiBase}/api/v1/annotation/recomb/results/`, build: 'GRCh37' }])
+      .add("intervals", ["IntervalLZ", { url: `${apiBase}/api/v1/annotation/intervals/results/`, source: 19 }])
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts

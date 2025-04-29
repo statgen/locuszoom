@@ -142,7 +142,7 @@ The core LocusZoom library comes equipped with several predefined layouts, organ
 
 Get any predefined layout by type and name using `LocusZoom.Layouts.get(type, name)`.
 
-If your data matches the field names and formats of the [UMich PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints), these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary. (for example, some LocusZoom features assume the presence of a field called `log_pvalue`)
+If your data matches the field names and formats of the [LocusZoom API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md), these layouts will provide a quick way to get started. If your data obeys different format rules, customization may be necessary. (for example, some LocusZoom features assume the presence of a field called `log_pvalue`)
   
 See the [guide to working with layouts](https://statgen.github.io/locuszoom/docs/guides/rendering_layouts.html) for further details.
 

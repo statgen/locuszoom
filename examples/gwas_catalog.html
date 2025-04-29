@@ -87,13 +87,13 @@
       /*
         Specify the data sources to use
        */
-      var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+      var apiBase = "https://services.locuszoom.org";
       var data_sources = new LocusZoom.DataSources()
-          .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", source: 45 }])
-          .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', population: 'ALL' }])
-          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
-          .add("catalog", ["GwasCatalogLZ", { url: apiBase + 'annotation/gwascatalog/results/' }])
-          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/" }])
+          .add("assoc", ["MyLZOrgAssociation", { url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023 }])
+          .add("ld", ["LDServer", { url: `${apiBase}/ld/`, source: '1000G', population: 'ALL' }])
+          .add("gene", ["GeneLZ", { url: `${apiBase}/api/v1/annotation/genes/` }])
+          .add("catalog", ["GwasCatalogLZ", { url: `${apiBase}/api/v1/annotation/gwascatalog/results/` }])
+          .add("recomb", ["RecombLZ", { url: `${apiBase}/api/v1/annotation/recomb/results/` }])
           .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
 
       /*

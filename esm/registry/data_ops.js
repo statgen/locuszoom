@@ -159,14 +159,14 @@ registry.add('full_outer_match', _wrap_join(joins.full_outer_match));
 registry.add('assoc_to_gwas_catalog', _wrap_join(assoc_to_gwas_catalog));
 
 /**
- * A single purpose join function that combines gene data (UM Portaldev API format) with gene constraint data (gnomAD api format).
+ * A single purpose join function that combines gene data (LocusZoom API format) with gene constraint data (gnomAD api format).
  *
  * This acts as a left join that has to perform custom operations to parse two very unusual recordset formats.
  *
  * @function
  * @name genes_to_gnomad_constraint
  * @param {Object} plot_state
- * @param {Array[]} recordsets An array with two items: UM Portaldev API gene records, then gnomAD gene constraint data
+ * @param {Array[]} recordsets An array with two items: LocusZoom API gene records, then gnomAD gene constraint data
  */
 registry.add('genes_to_gnomad_constraint', _wrap_join(genes_to_gnomad_constraint));
 

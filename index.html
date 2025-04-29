@@ -135,27 +135,6 @@
           </a>
         </div>
         <div class="four columns example">
-          <a href="examples/ext/phewas_forest.html">
-            <h6><strong>PheWAS (Forest)</strong></h6>
-            <img src="examples/ext/phewas_forest.png" alt="PheWAS (Forest)">
-          </a>
-        </div>
-        <div class="four columns example">
-          <a href="examples/phewas_scatter.html">
-            <h6><strong>PheWAS (Scatter)</strong></h6>
-            <img src="examples/phewas_scatter.png" alt="PheWAS (Scatter)">
-          </a>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="four columns example">
-          <a href="examples/ext/aggregation_tests.html">
-            <h6><strong>Aggregation Tests</strong></h6>
-            <img src="examples/ext/aggregation_tests.png" alt="Aggregation tests">
-          </a>
-        </div>
-        <div class="four columns example">
           <a href="examples/ext/credible_sets.html">
             <h6><strong>Credible Sets</strong></h6>
             <img src="examples/ext/credible_sets.png" alt="Credible Sets">
@@ -166,6 +145,27 @@
             <h6><strong>GWAS Catalog</strong></h6>
             <img src="examples/gwas_catalog.png" alt="GWAS Catalog">
           </a>
+        </div>
+        <!-- <div class="four columns example">
+          <a href="examples/ext/phewas_forest.html">
+            <h6><strong>PheWAS (Forest)</strong></h6>
+            <img src="examples/ext/phewas_forest.png" alt="PheWAS (Forest)">
+          </a>
+        </div>
+        <div class="four columns example">
+          <a href="examples/phewas_scatter.html">
+            <h6><strong>PheWAS (Scatter)</strong></h6>
+            <img src="examples/phewas_scatter.png" alt="PheWAS (Scatter)">
+          </a>
+        </div> -->
+      </div>
+
+      <div class="row">
+        <div class="four columns example">
+          <!-- <a href="examples/ext/aggregation_tests.html">
+            <h6><strong>Aggregation Tests</strong></h6>
+            <img src="examples/ext/aggregation_tests.png" alt="Aggregation tests">
+          </a> -->
         </div>
       </div>
 
@@ -202,20 +202,20 @@
     </div>
 
     <script type="text/javascript">
-
     // Determine if we're online, based on browser state or presence of an optional query parameter
-    var online = !(typeof navigator != "undefined" && !navigator.onLine);
+    // var online = !(typeof navigator != "undefined" && !navigator.onLine);
+    var online = true;
     if (window.location.search.indexOf("offline") != -1){ online = false; }
 
     // Define LocusZoom Data Sources object differently depending on online status
     var apiBase, data_sources;
     if (online) {
-      apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+      apiBase = "https://services.locuszoom.org";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", source: 45 }])
-        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", source: '1000G', build: 'GRCh37', population: 'ALL' }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", build: 'GRCh37' }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", build: 'GRCh37' }])
+        .add("assoc", ["MyLZOrgAssociation", { url: `${apiBase}/api/v1/lzorg/gwas/`, gwas_id: 117023 }])
+        .add("ld", ["LDServer", { url: `${apiBase}/ld/`, source: '1000G', build: 'GRCh37', population: 'ALL' }])
+        .add("gene", ["GeneLZ", { url: `${apiBase}/api/v1/annotation/genes/`, build: 'GRCh37' }])
+        .add("recomb", ["RecombLZ", { url: `${apiBase}/api/v1/annotation/recomb/results/`, build: 'GRCh37' }])
         .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", build: 'GRCh37' }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "examples/data/";

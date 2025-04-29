@@ -12,7 +12,7 @@ Although the individual pieces are [documented](../) in depth, many of the most 
 At the simplest, a layout is a JSON-serializable object that describes every customizable feature of a LocusZoom plot. A layout should only ever contain scalar values, arrays, and objects - no functions! 
 
 # Your first plot: defining how to render data
-We provide a set of built-in layouts for rendering common types of LocusZoom plots. If your field names match the assumptions of the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/), you should be able to create common types of visualization with very little modification.
+We provide a set of built-in layouts for rendering common types of LocusZoom plots. If your field names match the assumptions of the [LocusZoom API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md), you should be able to create common types of visualization with very little modification.
 
 ```javascript
 // Define the layout
@@ -75,7 +75,7 @@ Although the layout could be defined as a single giant object (top-down view of 
 Note that this layout is added to the registry using `LocusZoom.Layouts.add(...)`. We will cover this in "working with the registry", below.
 
 ### Will this layout work with my data?
-LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the field names (and formats) used by the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints). If your data source returns a different payload format, field names, or notation conventions, you may need to modify a pre-existing layout in order to plot that data.
+LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the field names (and formats) used by the [LocusZoom API](https://github.com/statgen/locuszoom-api/blob/master/docs/api.md). If your data source returns a different payload format, field names, or notation conventions, you may need to modify a pre-existing layout in order to plot that data.
 
 Consider this fragment of the standard association data layer, shown below: 
 
