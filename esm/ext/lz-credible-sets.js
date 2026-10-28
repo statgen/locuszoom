@@ -63,7 +63,7 @@ function install (LocusZoom) {
 
         _getCacheKey (state) {
             const threshold = state.credible_set_threshold || this._config.threshold;
-            return [threshold, state.chr, state.start, state.end].join('_');
+            return [state.ldrefvar, threshold, state.chr, state.start, state.end].join('_');
         }
 
         _buildRequestOptions(options, assoc_data) {
@@ -178,14 +178,7 @@ function install (LocusZoom) {
             tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set'),
             match: { send: 'assoc:variant', receive: 'assoc:variant' },
         });
-        base.color.unshift({
-            field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
-            scale_function: 'if',
-            parameters: {
-                field_value: true,
-                then: '#FFf000',
-            },
-        });
+
         return base;
     }();
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', association_credible_set_layer);
